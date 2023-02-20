@@ -9,13 +9,15 @@ namespace DungeonDefence
 	{
 		public enum RequestId
 		{
-			AUTH = 1
+			AUTH = 1,
+			SYNC = 2
 		}
 
 
 		private void Start()
 		{
 			RealtimeNetworking.OnLongReceived += ReceiveLong;
+			RealtimeNetworking.OnStringReceived += ReceiveString;
 			ConnectToServer();
 		}
 
@@ -25,6 +27,19 @@ namespace DungeonDefence
 			{
 				case 1:
 					Debug.Log(value);
+					Sender.TCP_Send((int)RequestId.SYNC, SystemInfo.deviceUniqueIdentifier);
+					break;
+			}
+		}
+		private void ReceiveString(int id, string value)
+		{
+			switch (id)
+			{
+				case 2:
+					Data.Player player = Data.Deserialize<Data.Player>(value);
+					UI_Main.instance._goldText.text = player.gold.ToString();
+					UI_Main.instance._elixirText.text = player.elixir.ToString();
+					UI_Main.instance._gemsText.text = player.gems.ToString();
 					break;
 			}
 		}
