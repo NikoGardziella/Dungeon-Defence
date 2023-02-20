@@ -48,10 +48,10 @@ namespace DungeonDefence
 
 		private void Start()
 		{
-			Initialize(Vector3.zero, 10.0f, 10.0f, 10.0f, 10.0f, 45.0f, 5.0f, 10.0f , 3.0f);
+			Initialize(Vector3.zero, 40.0f, 40.0f, 40.0f, 40.0f, 45.0f, 10.0f, 5.0f , 20.0f);
 		}
 
-		public void Initialize(Vector3 center, float right, float left, float up, float down, float angle, float zoom, float maxZoom, float minZoom)
+		public void Initialize(Vector3 center, float right, float left, float up, float down, float angle, float zoom, float minZoom, float maxZoom)
 		{
 			_center = center;
 			_right = right;
@@ -75,7 +75,7 @@ namespace DungeonDefence
 			_pivot.localPosition = Vector3.zero;
 			_pivot.localEulerAngles = new Vector3(_angle, 0,0);
 
-			_target.localPosition = new Vector3(0,0, - 10);
+			_target.localPosition = new Vector3(0,0, - 100);
 			_target.localEulerAngles = Vector3.zero;
 		}
 
@@ -201,7 +201,7 @@ namespace DungeonDefence
 		{
 			Vector3 point = CameraScreenPositionToWorldPosition(position);
 			float h = point.y - _root.position.y;
-			float x = h / Mathf.Sin(_angle * Mathf.Deg2Rad); // or Sign?
+			float x = h / Mathf.Sin(_angle * Mathf.Deg2Rad);
 			return point + _camera.transform.forward.normalized * x;
 		}
 
@@ -214,9 +214,15 @@ namespace DungeonDefence
 			float h = PlaneOrthographicSize();
 			float w = h * _camera.aspect;
 			if(h > (_up + _down) / 2.0f)
-				_zoom = (_up +_down)  / 2.0f;
+			{
+				float n = (_up +_down)  / 2.0f;
+				_zoom = n * Mathf.Sin(_angle * Mathf.Deg2Rad);
+			}
 			if(w > (_right + _left / 2.0f))
-				_zoom = (_right +_left)  / 2.0f / _camera.aspect;
+			{
+				float n = (_right +_left)  / 2.0f;
+				_zoom = n * Mathf.Sin(_angle * Mathf.Deg2Rad) / _camera.aspect;
+			}
 
 			h = PlaneOrthographicSize();
 			w = h * _camera.aspect;
