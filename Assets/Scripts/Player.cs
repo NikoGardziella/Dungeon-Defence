@@ -10,7 +10,8 @@ namespace DungeonDefence
 		public enum RequestId
 		{
 			AUTH = 1,
-			SYNC = 2
+			SYNC = 2,
+			BUILD = 3
 		}
 
 
