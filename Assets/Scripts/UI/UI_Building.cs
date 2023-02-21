@@ -15,7 +15,6 @@ namespace DungeonDefence
 
 		private void Start()
 		{
-
 			_button.onClick.AddListener(Clicked);
 		}
 
@@ -30,6 +29,7 @@ namespace DungeonDefence
 			building.PlacedOnGrid(20, 20);
 			Building.instance = building;
 			CameraController.instance.isPlacingBuilding = true;
+			UI_Build.instance.SetStatus(true);
 		}
 
 		public void ConfirmBuild()

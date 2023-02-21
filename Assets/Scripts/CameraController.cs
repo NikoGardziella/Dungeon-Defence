@@ -231,7 +231,7 @@ namespace DungeonDefence
 			return anchor + (_camera.transform.right.normalized * position.x / Screen.width * w) + (_camera.transform.up.normalized * position.y / Screen.height * h);
 		}
 
-		private Vector3 CameraScreenPositionToPlanePosition(Vector2 position)
+		public Vector3 CameraScreenPositionToPlanePosition(Vector2 position)
 		{
 			Vector3 point = CameraScreenPositionToWorldPosition(position);
 			float h = point.y - _root.position.y;

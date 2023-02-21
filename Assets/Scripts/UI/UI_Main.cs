@@ -35,9 +35,10 @@ namespace DungeonDefence
 
 		private void ShopButtonClicked()
 		{
-			_active = false;
+			//_active = false;
+			UI_Build.instance.Cancel();
 			UI_Shop.instance.SetStatus(true);
-			_elements.SetActive(false);
+			//_elements.SetActive(false);
 			SetStatus(false);
 		}
 

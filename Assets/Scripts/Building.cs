@@ -7,6 +7,7 @@ namespace DungeonDefence
 	public class Building : MonoBehaviour
 	{
 
+		public string id = "";
 		private static Building _instance = null; public static Building instance {get {return _instance; } set { _instance = value;} }
 		[System.Serializable] public class Level
 		{
@@ -33,6 +34,7 @@ namespace DungeonDefence
 			_Y = y;
 			Vector3 position = UI_Main.instance._grid.GetCenterPosition(x,y, _rows, _columns);
 			transform.position = position;
+			SetbaseColor();
 		}
 		public void StartMovingOnGrid()
 		{
@@ -42,20 +44,34 @@ namespace DungeonDefence
 		public void RemovedFromGrid()
 		{
 			_instance = null;
+			UI_Build.instance.SetStatus(false);
 			CameraController.instance.isPlacingBuilding = false;
 			Destroy(gameObject);
 		}
 		public void UpdateGridPosition(Vector3 basePosition, Vector3 currentPosition)
 		{
 			Vector3 dir = UI_Main.instance._grid.transform.TransformPoint(currentPosition) - UI_Main.instance._grid.transform.TransformPoint(basePosition);
-			int xDis = Mathf.RoundToInt(- dir.z / UI_Main.instance._grid.cellSize);
-			int yDis = Mathf.RoundToInt(dir.x / UI_Main.instance._grid.cellSize);
+			int xDis = Mathf.RoundToInt(dir.z / UI_Main.instance._grid.cellSize);
+			int yDis = Mathf.RoundToInt(-dir.x / UI_Main.instance._grid.cellSize);
 
 			_currentX = _X + xDis;
 			_currentY = _Y + yDis;
 
 			Vector3 position = UI_Main.instance._grid.GetCenterPosition(_currentX,_currentY, _rows, _columns);
 			transform.position = position;
+			SetbaseColor();
+		}
+
+		private void SetbaseColor()
+		{
+			if(UI_Main.instance._grid.CanPlaceBuilding(this,currentX, currentY))
+			{
+				_baseArea.sharedMaterial.color = Color.green;
+			}
+			else
+			{
+				_baseArea.sharedMaterial.color = Color.red;
+			}
 		}
 	}
 }

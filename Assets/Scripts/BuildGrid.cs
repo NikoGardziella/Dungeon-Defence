@@ -6,9 +6,13 @@ namespace DungeonDefence
 
 	public class BuildGrid : MonoBehaviour
 	{
+		// SIZE OF THE GRID
 		private int _rows = 45;
 		private int _columns = 45;
 		private float _cellSize = 1.0f; public float cellSize { get { return _cellSize; } }
+
+		public List<Building> Buildings = new List<Building>();
+
 		public Vector3 GetStartPosition(int x, int y)
 		{
 			Vector3 position = transform.position;
@@ -39,6 +43,35 @@ namespace DungeonDefence
 			position += (transform.right.normalized * columns * _cellSize) + (transform.forward.normalized * rows * _cellSize);
 			return position;
 		}
+		public Vector3 GetEndPosition(Building building)
+		{
+
+			return GetEndPosition(building.currentX, building.currentY, building.rows, building.columns);
+		}
+
+		public bool CanPlaceBuilding(Building building, int x, int y)
+		{
+			if(building.currentX < 0 || building.currentY < 0 || building.currentX + building.columns > _columns ||building.currentY + building.rows > _rows)
+			{
+				return false;
+			}
+			for (int i = 0; i < Buildings.Count; i++)
+			{
+				if(Buildings[i] != building)
+				{
+					Rect rect1 = new Rect(Buildings[i].currentX, Buildings[i].currentY,Buildings[i].columns, Buildings[i].rows);				
+					Rect rect2 = new Rect(building.currentX, building.currentY,building.columns, building.rows);
+					if(rect2.Overlaps(rect1))
+					{
+						return false;
+					}
+
+				}
+			}
+
+			return true;
+		}
+
 
 		#if UNITY_EDITOR
 		private void OnDrawGizmos()
