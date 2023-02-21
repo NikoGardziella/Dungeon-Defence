@@ -91,6 +91,15 @@ namespace DungeonDefence
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""PointerPosition"",
+                    ""type"": ""Value"",
+                    ""id"": ""508e89b1-a1bd-4554-8ab8-fe4341034d08"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -214,6 +223,28 @@ namespace DungeonDefence
                     ""action"": ""TouchPosition1"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1510abe9-8f88-4b60-a3ab-da0daa9a4595"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PointerPosition"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""46580f6e-3dab-4ec9-a347-51e7d6bafdb3"",
+                    ""path"": ""<Touchscreen>/primaryTouch/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PointerPosition"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -229,6 +260,7 @@ namespace DungeonDefence
             m_Main_TouchZoom = m_Main.FindAction("TouchZoom", throwIfNotFound: true);
             m_Main_TouchPosition0 = m_Main.FindAction("TouchPosition0", throwIfNotFound: true);
             m_Main_TouchPosition1 = m_Main.FindAction("TouchPosition1", throwIfNotFound: true);
+            m_Main_PointerPosition = m_Main.FindAction("PointerPosition", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -295,6 +327,7 @@ namespace DungeonDefence
         private readonly InputAction m_Main_TouchZoom;
         private readonly InputAction m_Main_TouchPosition0;
         private readonly InputAction m_Main_TouchPosition1;
+        private readonly InputAction m_Main_PointerPosition;
         public struct MainActions
         {
             private @Control m_Wrapper;
@@ -306,6 +339,7 @@ namespace DungeonDefence
             public InputAction @TouchZoom => m_Wrapper.m_Main_TouchZoom;
             public InputAction @TouchPosition0 => m_Wrapper.m_Main_TouchPosition0;
             public InputAction @TouchPosition1 => m_Wrapper.m_Main_TouchPosition1;
+            public InputAction @PointerPosition => m_Wrapper.m_Main_PointerPosition;
             public InputActionMap Get() { return m_Wrapper.m_Main; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -336,6 +370,9 @@ namespace DungeonDefence
                     @TouchPosition1.started -= m_Wrapper.m_MainActionsCallbackInterface.OnTouchPosition1;
                     @TouchPosition1.performed -= m_Wrapper.m_MainActionsCallbackInterface.OnTouchPosition1;
                     @TouchPosition1.canceled -= m_Wrapper.m_MainActionsCallbackInterface.OnTouchPosition1;
+                    @PointerPosition.started -= m_Wrapper.m_MainActionsCallbackInterface.OnPointerPosition;
+                    @PointerPosition.performed -= m_Wrapper.m_MainActionsCallbackInterface.OnPointerPosition;
+                    @PointerPosition.canceled -= m_Wrapper.m_MainActionsCallbackInterface.OnPointerPosition;
                 }
                 m_Wrapper.m_MainActionsCallbackInterface = instance;
                 if (instance != null)
@@ -361,6 +398,9 @@ namespace DungeonDefence
                     @TouchPosition1.started += instance.OnTouchPosition1;
                     @TouchPosition1.performed += instance.OnTouchPosition1;
                     @TouchPosition1.canceled += instance.OnTouchPosition1;
+                    @PointerPosition.started += instance.OnPointerPosition;
+                    @PointerPosition.performed += instance.OnPointerPosition;
+                    @PointerPosition.canceled += instance.OnPointerPosition;
                 }
             }
         }
@@ -374,6 +414,7 @@ namespace DungeonDefence
             void OnTouchZoom(InputAction.CallbackContext context);
             void OnTouchPosition0(InputAction.CallbackContext context);
             void OnTouchPosition1(InputAction.CallbackContext context);
+            void OnPointerPosition(InputAction.CallbackContext context);
         }
     }
 }

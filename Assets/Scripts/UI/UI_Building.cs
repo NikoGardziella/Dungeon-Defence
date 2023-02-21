@@ -27,6 +27,9 @@ namespace DungeonDefence
 			Vector3 position = Vector3.zero;
 
 			Building building = Instantiate(UI_Main.instance._buildingPrefabs[_prefabIndex], position, Quaternion.identity);
+			building.PlacedOnGrid(20, 20);
+			Building.instance = building;
+			CameraController.instance.isPlacingBuilding = true;
 		}
 
 		public void ConfirmBuild()

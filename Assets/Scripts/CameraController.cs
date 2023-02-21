@@ -8,6 +8,8 @@ namespace DungeonDefence
 	public class CameraController : MonoBehaviour
 	{
 
+		private static CameraController _instance = null; public static CameraController instance {get {return _instance; } }
+
 		[SerializeField] private Camera _camera = null;
 		[SerializeField] private float _moveSpeed = 50.0f;
 		[SerializeField] private float _moveSmooth = 5.0f;
@@ -36,8 +38,13 @@ namespace DungeonDefence
 		private Transform _pivot = null;
 		private Transform _target = null;
 
+		private bool _building = false; public bool isPlacingBuilding{ get { return _building; } set { _building = value; } }
+		private Vector3 _buildBasePosition = Vector3.zero;
+		private bool _movingBuilding = false;
+
 		private void Awake()
 		{
+			_instance = this;
 			_inputs = new Control();
 			_root = new GameObject("CameraHelper").transform;
 			_pivot = new GameObject("CameraPivot").transform;
@@ -101,11 +108,26 @@ namespace DungeonDefence
 		private void MoveStarted()
 		{
 			if(UI_Main.instance.isActive)
-				_moving = true;
+			{
+				if(_building)
+				{
+					_buildBasePosition = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
+					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(_buildBasePosition, Building.instance.currentX,Building.instance.currentY,Building.instance.rows, Building.instance.columns))
+					{
+						Building.instance.StartMovingOnGrid();
+						_movingBuilding = true;
+					}
+				}
+				if(_movingBuilding == false)
+				{
+					_moving = true;
+				}
+			}
 		}
 		private void MoveCanceled()
 		{
 			_moving = false;
+			_movingBuilding = false;
 		}
 
 		private void ZoomStarted()
@@ -190,6 +212,14 @@ namespace DungeonDefence
 			{
 				_camera.transform.rotation = _target.rotation;
 			}
+
+			if(_building && _movingBuilding)
+			{
+				Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
+				Building.instance.UpdateGridPosition(_buildBasePosition, pos);
+			}
+
+
 		}
 
 		private Vector3 CameraScreenPositionToWorldPosition(Vector2 position)
