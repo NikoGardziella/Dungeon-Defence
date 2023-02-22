@@ -11,7 +11,19 @@ namespace DungeonDefence
 		private int _columns = 45;
 		private float _cellSize = 1.0f; public float cellSize { get { return _cellSize; } }
 
-		public List<Building> Buildings = new List<Building>();
+		public List<Building> buildings = new List<Building>();
+
+		public Building GetBuilding(long databaseID)
+		{
+			for (int i = 0; i < buildings.Count; i++)
+			{
+				if(buildings[i].databaseID == databaseID)
+				{
+					return buildings[i];
+				}
+			}
+			return null;
+		}
 
 		public Vector3 GetStartPosition(int x, int y)
 		{
@@ -55,11 +67,11 @@ namespace DungeonDefence
 			{
 				return false;
 			}
-			for (int i = 0; i < Buildings.Count; i++)
+			for (int i = 0; i < buildings.Count; i++)
 			{
-				if(Buildings[i] != building)
+				if(buildings[i] != building)
 				{
-					Rect rect1 = new Rect(Buildings[i].currentX, Buildings[i].currentY,Buildings[i].columns, Buildings[i].rows);				
+					Rect rect1 = new Rect(buildings[i].currentX, buildings[i].currentY,buildings[i].columns, buildings[i].rows);				
 					Rect rect2 = new Rect(building.currentX, building.currentY,building.columns, building.rows);
 					if(rect2.Overlaps(rect1))
 					{
@@ -68,7 +80,6 @@ namespace DungeonDefence
 
 				}
 			}
-
 			return true;
 		}
 

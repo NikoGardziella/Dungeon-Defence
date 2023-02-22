@@ -3,6 +3,7 @@ namespace DungeonDefence
 	using System.Collections;
 	using System.Collections.Generic;
 	using UnityEngine;
+	using UnityEngine.EventSystems;
 
 
 	public class CameraController : MonoBehaviour
@@ -41,6 +42,9 @@ namespace DungeonDefence
 		private bool _building = false; public bool isPlacingBuilding{ get { return _building; } set { _building = value; } }
 		private Vector3 _buildBasePosition = Vector3.zero;
 		private bool _movingBuilding = false;
+		private bool _replacing = false; public bool isReplacingBuilding{ get { return _replacing; } set { _replacing = value; } }
+		private Vector3 _ReplaceBasePosition = Vector3.zero;
+		private bool _replacingBuilding = false;
 
 		private void Awake()
 		{
@@ -94,6 +98,8 @@ namespace DungeonDefence
 			_inputs.Main.Move.canceled += _ => MoveCanceled();
 			_inputs.Main.TouchZoom.started += _ => ZoomStarted();
 			_inputs.Main.TouchZoom.canceled += _ => ZoomCanceled();
+			_inputs.Main.PointerClick.performed += _ => ScreenClicked();
+
 		}
 		private void OnDisable()
 		{
@@ -102,7 +108,51 @@ namespace DungeonDefence
 			_inputs.Main.Move.canceled -= _ => MoveCanceled();
 			_inputs.Main.TouchZoom.started -= _ => ZoomStarted();
 			_inputs.Main.TouchZoom.canceled -= _ => ZoomCanceled();
+			_inputs.Main.PointerClick.performed -= _ => ScreenClicked();
 			_inputs.Disable();
+		}
+
+		private void ScreenClicked()
+		{
+			Vector2 position = _inputs.Main.PointerPosition.ReadValue<Vector2>();
+			if(IsSreenPointOverUI(position) == false)
+			{
+				bool found = false;
+				Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
+
+				for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+				{
+					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(planePosition, UI_Main.instance._grid.buildings[i].currentX, UI_Main.instance._grid.buildings[i].currentY, UI_Main.instance._grid.buildings[i].rows, UI_Main.instance._grid.buildings[i].columns))
+					{
+						found = true;
+						UI_Main.instance._grid.buildings[i].Selected();
+						break;
+					}
+				}
+				if(!found)
+				{
+					if(Building.selectedInstance != null)
+					{
+						Building.selectedInstance.Deselected();
+					}
+				}
+			}
+			else
+			{
+				if(Building.selectedInstance != null)
+				{
+					Building.selectedInstance.Deselected();
+				}
+			}
+		}
+
+		public bool IsSreenPointOverUI(Vector2 position)
+		{
+			PointerEventData data = new PointerEventData(EventSystem.current);
+			data.position = position;
+			List<RaycastResult> results = new List<RaycastResult>();
+			EventSystem.current.RaycastAll(data, results);
+			return results.Count > 0;
 		}
 
 		private void MoveStarted()
@@ -112,13 +162,28 @@ namespace DungeonDefence
 				if(_building)
 				{
 					_buildBasePosition = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
-					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(_buildBasePosition, Building.instance.currentX,Building.instance.currentY,Building.instance.rows, Building.instance.columns))
+					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(_buildBasePosition, Building.buildInstance.currentX,Building.buildInstance.currentY,Building.buildInstance.rows, Building.buildInstance.columns))
 					{
-						Building.instance.StartMovingOnGrid();
+						Building.buildInstance.StartMovingOnGrid();
 						_movingBuilding = true;
 					}
 				}
-				if(_movingBuilding == false)
+
+				if(Building.selectedInstance != null)
+				{
+					_ReplaceBasePosition = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
+					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(_ReplaceBasePosition, Building.selectedInstance.currentX, Building.selectedInstance.currentY, Building.selectedInstance.rows, Building.selectedInstance.columns))
+					{
+						if(!_replacing)
+						{
+							Building.selectedInstance._baseArea.gameObject.SetActive(true);
+							_replacing = true;
+						}
+						Building.selectedInstance.StartMovingOnGrid();
+						_replacingBuilding = true;
+					}
+				}
+				if(_movingBuilding == false && _replacingBuilding == false)
 				{
 					_moving = true;
 				}
@@ -128,6 +193,7 @@ namespace DungeonDefence
 		{
 			_moving = false;
 			_movingBuilding = false;
+			_replacingBuilding = false;
 		}
 
 		private void ZoomStarted()
@@ -216,10 +282,14 @@ namespace DungeonDefence
 			if(_building && _movingBuilding)
 			{
 				Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
-				Building.instance.UpdateGridPosition(_buildBasePosition, pos);
+				Building.buildInstance.UpdateGridPosition(_buildBasePosition, pos);
 			}
 
-
+			if(_replacing && _replacingBuilding)
+			{
+				Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
+				Building.selectedInstance.UpdateGridPosition(_ReplaceBasePosition, pos);
+			}
 		}
 
 		private Vector3 CameraScreenPositionToWorldPosition(Vector2 position)

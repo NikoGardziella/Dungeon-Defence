@@ -717,7 +717,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f97b700a2e23c424c830b5463874f4ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Buildings: []
+  buildings: []
 --- !u!1001 &329938569
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5924,7 +5924,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87cbde3803eea2f429f1c536206e0b2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _prefabIndex: 0
+  _id: goldmine
   _button: {fileID: 966881172}
 --- !u!4 &1664327660 stripped
 Transform:

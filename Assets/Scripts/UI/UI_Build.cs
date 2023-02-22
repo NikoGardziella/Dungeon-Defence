@@ -5,6 +5,7 @@ namespace DungeonDefence
 	using System.Collections.Generic;
 	using UnityEngine;
 	using UnityEngine.UI;
+	using DevelopersHub.RealtimeNetworking.Client;
 
 	public class UI_Build : MonoBehaviour
 	{
@@ -12,6 +13,7 @@ namespace DungeonDefence
 
 		public RectTransform buttonConfirm = null;
 		public RectTransform buttonCancel = null;
+		[HideInInspector] public Button clickConfirmButton = null;
 
 		private static UI_Build _instance = null; public static UI_Build instance {get {return _instance; } }
 		
@@ -19,6 +21,7 @@ namespace DungeonDefence
 		{
 			_instance = this;
 			_elements.SetActive(false);
+			clickConfirmButton = buttonConfirm.gameObject.GetComponent<Button>();
 		}
 
 		private void Start()
@@ -33,9 +36,9 @@ namespace DungeonDefence
 
 		private void Update()
 		{
-			if(Building.instance != null && CameraController.instance.isPlacingBuilding)
+			if(Building.buildInstance != null && CameraController.instance.isPlacingBuilding)
 			{
-				Vector3 end = UI_Main.instance._grid.GetEndPosition(Building.instance);
+				Vector3 end = UI_Main.instance._grid.GetEndPosition(Building.buildInstance);
 				
 				Vector3 planeDownLeft = CameraController.instance.CameraScreenPositionToPlanePosition(Vector2.zero);
 				Vector3 planeTopRight = CameraController.instance.CameraScreenPositionToPlanePosition(new Vector2(Screen.width, Screen.height));
@@ -66,14 +69,24 @@ namespace DungeonDefence
 		
 		private void Confirm()
 		{
-			
+			if(Building.buildInstance != null && UI_Main.instance._grid.CanPlaceBuilding(Building.buildInstance, Building.buildInstance.currentX,Building.buildInstance.currentY))
+			{
+				Packet packet = new Packet();
+				packet.Write((int)Player.RequestId.BUILD);
+				packet.Write(SystemInfo.deviceUniqueIdentifier);
+				packet.Write(Building.buildInstance.id);
+				packet.Write(Building.buildInstance.currentX);
+				packet.Write(Building.buildInstance.currentY);
+				Sender.TCP_Send(packet);
+				Cancel();
+			}
 		}
 		public void Cancel()
 		{
-			if(Building.instance != null)
+			if(Building.buildInstance != null)
 			{
 				CameraController.instance.isPlacingBuilding = false;
-				Building.instance.RemovedFromGrid();
+				Building.buildInstance.RemovedFromGrid();
 			}
 		}
 	}

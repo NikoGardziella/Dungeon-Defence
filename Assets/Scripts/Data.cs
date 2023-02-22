@@ -4,6 +4,7 @@ namespace DungeonDefence
 {
 	using System.Xml.Serialization;
 	using System.IO;
+	using System.Collections.Generic;
 	public static class Data
 	{
 		public class Player
@@ -11,6 +12,29 @@ namespace DungeonDefence
 			public int gold = 0;
 			public int elixir = 0;
 			public int gems = 0;
+			public List<Building> buildings = new List<Building>();
+		}
+
+		public class Building
+		{
+			public string id = "";
+			public int level = 0;
+			public long databaseID = 0;
+			public int x = 0;
+			public int y = 0;
+			public int columns = 0;
+			public int rows = 0;
+		}
+		public class ServerBuilding
+		{
+			public string id = "";
+			public int level = 0;
+			public long databaseID = 0;
+			public int requiredElixir = 0;
+			public int requiredGold = 0;
+			public int requiredGems = 0;
+			public int columns = 0;
+			public int rows = 0;
 		}
 
 		public static string Serialize<T>(this T target)
