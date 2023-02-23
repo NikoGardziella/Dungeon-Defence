@@ -11,7 +11,8 @@ namespace DungeonDefence
 		{
 			AUTH = 1,
 			SYNC = 2,
-			BUILD = 3
+			BUILD = 3,
+			REPLACE = 4
 		}
 
 
@@ -53,6 +54,33 @@ namespace DungeonDefence
 							break;
 					}
 					break;
+				case RequestId.REPLACE:
+					int replaceResponse = packet.ReadInt();
+					switch (replaceResponse)
+					{
+						case 0:
+							Debug.Log("no building");
+							break;
+						case 1:
+							Debug.Log("Replaced Succesfully");
+							int replaceX = packet.ReadInt();
+							int replaceY = packet.ReadInt();
+							long replaceID = packet.ReadLong();
+							for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+							{
+								if(UI_Main.instance._grid.buildings[i].databaseID == replaceID)
+								{
+									UI_Main.instance._grid.buildings[i].PlacedOnGrid(replaceX, replaceY);
+									UI_Main.instance._grid.buildings[i]._baseArea.gameObject.SetActive(false);
+									break;
+								}
+							}
+							break;
+						case 2:
+							Debug.Log("Place taken");
+							break;
+					}
+					break;
 			}
 		}
 
@@ -84,6 +112,7 @@ namespace DungeonDefence
 						if(prefab)
 						{
 							Building b = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+							b.databaseID = player.buildings[i].databaseID;
 							b.PlacedOnGrid(player.buildings[i].x, player.buildings[i].y);
 							b._baseArea.gameObject.SetActive(false);
 

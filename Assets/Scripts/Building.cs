@@ -3,6 +3,8 @@ namespace DungeonDefence
 	using System.Collections;
 	using System.Collections.Generic;
 	using UnityEngine;
+	using DevelopersHub.RealtimeNetworking.Client;
+		
 
 	public class Building : MonoBehaviour
 	{
@@ -106,7 +108,6 @@ namespace DungeonDefence
 
 		public void Deselected()
 		{
-			Debug.Log("DEselected");
 			UI_BuildingOptions.instance.SetStatus(false);
 			
 			CameraController.instance.isReplacingBuilding = false;
@@ -114,7 +115,12 @@ namespace DungeonDefence
 			{
 				if(UI_Main.instance._grid.CanPlaceBuilding(this, currentX, currentY))
 				{
-
+					Packet packet = new Packet();
+					packet.Write((int)Player.RequestId.REPLACE);
+					packet.Write(selectedInstance.databaseID);
+					packet.Write(selectedInstance.currentX);
+					packet.Write(selectedInstance.currentY);
+					Sender.TCP_Send(packet);
 				}
 				else
 				{

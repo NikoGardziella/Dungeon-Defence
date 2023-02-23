@@ -176,8 +176,8 @@ namespace DungeonDefence
 					{
 						if(!_replacing)
 						{
-							Building.selectedInstance._baseArea.gameObject.SetActive(true);
 							_replacing = true;
+							Building.selectedInstance._baseArea.gameObject.SetActive(true);
 						}
 						Building.selectedInstance.StartMovingOnGrid();
 						_replacingBuilding = true;
