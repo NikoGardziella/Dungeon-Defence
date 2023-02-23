@@ -9,9 +9,14 @@ namespace DungeonDefence
 	public class Building : MonoBehaviour
 	{
 
-		public string id = "";
+		public Data.BuildingID id = Data.BuildingID.townhall;
 		private static Building _buildInstance = null; public static Building buildInstance {get {return _buildInstance; } set { _buildInstance = value;} }
 		private static Building _selectedInstance = null; public static Building selectedInstance {get {return _selectedInstance; } set { _selectedInstance = value;} }
+
+		[HideInInspector]public Data.Building data = new Data.Building();
+		[HideInInspector]public UI_Button collectButton = null;
+		[HideInInspector]public bool collecting = false;
+
 
 		[System.Serializable] public class Level
 		{
@@ -35,6 +40,62 @@ namespace DungeonDefence
 
 		private int _originalX = 0;
 		private int _originalY = 0;
+
+		private void Update()
+		{
+			AdjustUI();
+		}
+		public void AdjustUI()
+		{
+			if(collectButton)
+			{
+				switch (id)
+				{
+					case Data.BuildingID.townhall:
+
+					break;
+					case Data.BuildingID.goldmine:
+					if(data.storage >= Data.midGoldCollect)
+					{
+						collectButton.gameObject.SetActive(!collecting);
+					}
+					else
+					{
+						collectButton.gameObject.SetActive(false);
+					}
+					break;
+					case Data.BuildingID.goldstorage:
+
+					break;
+					
+				}
+
+				Vector3 end = UI_Main.instance._grid.GetEndPosition(this);
+				
+				Vector3 planeDownLeft = CameraController.instance.planeDownLeft;
+				Vector3 planeTopRight = CameraController.instance.planeTopRight;
+
+				float w = planeTopRight.x - planeDownLeft.x;
+				float h = planeTopRight.z - planeDownLeft.z;
+
+				float endW = end.x - planeDownLeft.x;
+				float endH = end.z - planeDownLeft.z;
+
+				Vector2 screenPoint = new Vector2(endW / w * Screen.width, endH / h * Screen.height);
+				collectButton.rect.anchoredPosition = screenPoint;
+			}
+		}
+
+
+		public void Collect()
+		{
+			collectButton.gameObject.SetActive(false);
+			collecting = true;
+			Packet packet = new Packet();
+			packet.Write((int)Player.RequestId.COLLECT);
+			packet.Write(data.databaseID);
+			Sender.TCP_Send(packet); 
+		}
 
 		public void PlacedOnGrid(int x, int y)
 		{
@@ -148,7 +209,7 @@ namespace DungeonDefence
 			{
 				if(resetIfNot)
 				{
-					if(waitinReplaceRepsonce)
+					if(waitinReplaceRepsonce == false)
 					{
 						PlacedOnGrid(_originalX, _originalY);
 					}

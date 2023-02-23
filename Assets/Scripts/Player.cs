@@ -12,7 +12,8 @@ namespace DungeonDefence
 			AUTH = 1,
 			SYNC = 2,
 			BUILD = 3,
-			REPLACE = 4
+			REPLACE = 4,
+			COLLECT = 5
 		}
 
 
@@ -20,6 +21,26 @@ namespace DungeonDefence
 		{
 			RealtimeNetworking.OnPacketReceived += ReceivePacket;
 			ConnectToServer();
+		}
+
+		private bool connected = false;
+		private float timer = 0;
+
+		private void Update()
+		{
+			if(connected)
+			{
+				//Every 3 seconds synd player data with server
+				if(timer >= 3)
+				{
+					timer = 0;
+					SendSyncRequest();
+				}
+				else
+				{
+					timer += Time.deltaTime;
+				}
+			}
 		}
 
 
@@ -30,6 +51,8 @@ namespace DungeonDefence
 			switch ((RequestId)id)
 			{
 				case RequestId.AUTH:
+					connected = true;
+					timer = 0;
 					long accountID = packet.ReadLong();
 					SendSyncRequest();
 					break;
@@ -86,6 +109,21 @@ namespace DungeonDefence
 						}
 					}
 					break;
+				case RequestId.COLLECT:
+					long db = packet.ReadLong();
+					int collectedAmmount = packet.ReadInt();
+					Debug.Log("collecterd:" + collectedAmmount);
+
+					for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+					{
+						if(db ==  UI_Main.instance._grid.buildings[i].data.databaseID)
+						{
+							UI_Main.instance._grid.buildings[i].collecting = false; 
+							UI_Main.instance._grid.buildings[i].data.storage -= collectedAmmount;
+							UI_Main.instance._grid.buildings[i].AdjustUI();
+						}
+					}
+					break;
 			}
 		}
 
@@ -99,9 +137,17 @@ namespace DungeonDefence
 
 		private void SyncData(Data.Player player)
 		{
-			UI_Main.instance._goldText.text = player.gold.ToString();
-			UI_Main.instance._elixirText.text = player.elixir.ToString();
-			UI_Main.instance._gemsText.text = player.gems.ToString();
+			int gold = 0;
+			int maxGold = 0;
+
+			int elixir = 0;
+			int maxElixir = 0;
+
+			int darkElixir = 0;
+			int maxDarkElixir = 0;
+
+			int gems = player.gems;
+
 			if(player.buildings != null && player.buildings.Count > 0)
 			{
 				for (int i = 0; i < player.buildings.Count; i++)
@@ -116,16 +162,39 @@ namespace DungeonDefence
 						Building prefab = UI_Main.instance.GetBuildingPrefab(player.buildings[i].id);
 						if(prefab)
 						{
-							Building b = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-							b.databaseID = player.buildings[i].databaseID;
-							b.PlacedOnGrid(player.buildings[i].x, player.buildings[i].y);
-							b._baseArea.gameObject.SetActive(false);
+							building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+							building.databaseID = player.buildings[i].databaseID;
+							building.PlacedOnGrid(player.buildings[i].x, player.buildings[i].y);
+							building._baseArea.gameObject.SetActive(false);
 
-							UI_Main.instance._grid.buildings.Add(b);
+							UI_Main.instance._grid.buildings.Add(building);
 						}
 					}
+
+					building.data = player.buildings[i];
+					switch(building.id)
+					{
+						case Data.BuildingID.townhall:
+
+							break;
+						case Data.BuildingID.goldmine:
+							if(building.collectButton == null)
+							{
+								building.collectButton = Instantiate(UI_Main.instance.buttonCollectGold, UI_Main.instance.buttoonsParent);
+								building.collectButton.button.onClick.AddListener(building.Collect);
+							}
+							break;
+						case Data.BuildingID.goldstorage:
+							maxGold += building.data.capacity;
+							gold += building.data.storage;
+							break;
+					}
+					building.AdjustUI(); 
 				}			
 			}
+			UI_Main.instance._goldText.text = gold + "/" + maxGold;
+			UI_Main.instance._elixirText.text =  elixir + "/" + maxElixir;
+			UI_Main.instance._gemsText.text = gems.ToString();
 		}
 
 		private void ConnectionResponse(bool succesfull)
@@ -156,7 +225,8 @@ namespace DungeonDefence
 
 		private void DisconnectedFromServer()
 		{
-				RealtimeNetworking.OnDisconnectedFromServer -= DisconnectedFromServer;
+			connected = false;
+			RealtimeNetworking.OnDisconnectedFromServer -= DisconnectedFromServer;
 		}
 	}
 }

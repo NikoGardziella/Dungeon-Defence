@@ -46,6 +46,9 @@ namespace DungeonDefence
 		private Vector3 _ReplaceBasePosition = Vector3.zero;
 		private bool _replacingBuilding = false;
 
+
+		public Vector3 planeDownLeft = Vector3.zero;
+		public Vector3 planeTopRight = Vector3.zero;
 		private void Awake()
 		{
 			_instance = this;
@@ -297,6 +300,10 @@ namespace DungeonDefence
 				Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
 				Building.selectedInstance.UpdateGridPosition(_ReplaceBasePosition, pos);
 			}
+
+			planeDownLeft = CameraScreenPositionToPlanePosition(Vector2.zero);
+			planeTopRight = CameraScreenPositionToPlanePosition(new Vector2(Screen.width, Screen.height));
+
 		}
 
 		private Vector3 CameraScreenPositionToWorldPosition(Vector2 position)

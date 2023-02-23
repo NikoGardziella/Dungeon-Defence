@@ -40,8 +40,8 @@ namespace DungeonDefence
 			{
 				Vector3 end = UI_Main.instance._grid.GetEndPosition(Building.buildInstance);
 				
-				Vector3 planeDownLeft = CameraController.instance.CameraScreenPositionToPlanePosition(Vector2.zero);
-				Vector3 planeTopRight = CameraController.instance.CameraScreenPositionToPlanePosition(new Vector2(Screen.width, Screen.height));
+				Vector3 planeDownLeft = CameraController.instance.planeDownLeft;
+				Vector3 planeTopRight = CameraController.instance.planeTopRight;
 
 				float w = planeTopRight.x - planeDownLeft.x;
 				float h = planeTopRight.z - planeDownLeft.z;
@@ -74,7 +74,7 @@ namespace DungeonDefence
 				Packet packet = new Packet();
 				packet.Write((int)Player.RequestId.BUILD);
 				packet.Write(SystemInfo.deviceUniqueIdentifier);
-				packet.Write(Building.buildInstance.id);
+				packet.Write(Building.buildInstance.id.ToString());
 				packet.Write(Building.buildInstance.currentX);
 				packet.Write(Building.buildInstance.currentY);
 				Sender.TCP_Send(packet);

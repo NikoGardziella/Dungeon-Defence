@@ -10,7 +10,7 @@ namespace DungeonDefence
 
 	public class UI_Building : MonoBehaviour
 	{
-		[SerializeField] private string _id = "";
+		[SerializeField] private Data.BuildingID _id = Data.BuildingID.townhall;
 		[SerializeField] private Button _button = null;
 
 		private void Start()

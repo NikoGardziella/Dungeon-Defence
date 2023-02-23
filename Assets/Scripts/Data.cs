@@ -5,8 +5,11 @@ namespace DungeonDefence
 	using System.Xml.Serialization;
 	using System.IO;
 	using System.Collections.Generic;
+	using System;
 	public static class Data
 	{
+		public const int midGoldCollect = 10;
+
 		public class Player
 		{
 			public int gold = 0;
@@ -15,15 +18,27 @@ namespace DungeonDefence
 			public List<Building> buildings = new List<Building>();
 		}
 
+		public enum BuildingID
+		{
+			townhall, goldmine, goldstorage 
+		}
+
 		public class Building
 		{
-			public string id = "";
+			public BuildingID id = BuildingID.townhall;
 			public int level = 0;
 			public long databaseID = 0;
 			public int x = 0;
 			public int y = 0;
 			public int columns = 0;
 			public int rows = 0;
+			public int storage = 0;
+			public DateTime boost;
+			public int health = 100;
+			public float damage = 0;
+			public int capacity = 0;
+			public float speed = 0;
+			public float radius = 0;
 		}
 		public class ServerBuilding
 		{

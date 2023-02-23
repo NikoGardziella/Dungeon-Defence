@@ -18,6 +18,11 @@ namespace DungeonDefence
 
 		[SerializeField] public BuildGrid _grid = null;
 		[SerializeField] public Building[] _buildingPrefabs = null;
+
+		[Header("Buttons")]
+		public Transform buttoonsParent = null;
+		public UI_Button buttonCollectGold = null;
+
 		private static UI_Main _instance = null; public static UI_Main instance {get {return _instance; } }
 		private bool _active = true; public bool isActive {get { return _active; } }
 
@@ -48,7 +53,7 @@ namespace DungeonDefence
 			_elements.SetActive(status);
 		}
 
-		public Building GetBuildingPrefab(string id)
+		public Building GetBuildingPrefab(Data.BuildingID id)
 		{
 			for (int i = 0; i < _buildingPrefabs.Length; i++)
 			{
