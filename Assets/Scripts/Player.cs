@@ -56,29 +56,34 @@ namespace DungeonDefence
 					break;
 				case RequestId.REPLACE:
 					int replaceResponse = packet.ReadInt();
-					switch (replaceResponse)
+					int replaceX = packet.ReadInt();
+					int replaceY = packet.ReadInt();
+					long replaceID = packet.ReadLong();
+
+					for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
 					{
-						case 0:
-							Debug.Log("no building");
-							break;
-						case 1:
-							Debug.Log("Replaced Succesfully");
-							int replaceX = packet.ReadInt();
-							int replaceY = packet.ReadInt();
-							long replaceID = packet.ReadLong();
-							for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+						if(UI_Main.instance._grid.buildings[i].databaseID == replaceID)
+						{
+							switch (replaceResponse)
 							{
-								if(UI_Main.instance._grid.buildings[i].databaseID == replaceID)
-								{
-									UI_Main.instance._grid.buildings[i].PlacedOnGrid(replaceX, replaceY);
-									UI_Main.instance._grid.buildings[i]._baseArea.gameObject.SetActive(false);
+								case 0:
+									Debug.Log("no building");
 									break;
-								}
+								case 1:
+									Debug.Log("Replaced Succesfully");
+									UI_Main.instance._grid.buildings[i].PlacedOnGrid(replaceX, replaceY);			
+									if(UI_Main.instance._grid.buildings[i] != Building.selectedInstance)
+									{
+										
+									}
+									break;
+								case 2:
+									Debug.Log("Place taken");
+									break;
 							}
+							UI_Main.instance._grid.buildings[i].waitinReplaceRepsonce = false;
 							break;
-						case 2:
-							Debug.Log("Place taken");
-							break;
+						}
 					}
 					break;
 			}

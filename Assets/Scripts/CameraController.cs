@@ -177,7 +177,6 @@ namespace DungeonDefence
 						if(!_replacing)
 						{
 							_replacing = true;
-							Building.selectedInstance._baseArea.gameObject.SetActive(true);
 						}
 						Building.selectedInstance.StartMovingOnGrid();
 						_replacingBuilding = true;
@@ -193,7 +192,14 @@ namespace DungeonDefence
 		{
 			_moving = false;
 			_movingBuilding = false;
-			_replacingBuilding = false;
+			if(_replacingBuilding)
+			{
+				_replacingBuilding = false;
+				if(Building.selectedInstance)
+				{
+					Building.selectedInstance.SaveLocation(false);
+				}
+			}
 		}
 
 		private void ZoomStarted()
@@ -260,8 +266,8 @@ namespace DungeonDefence
 				{
 					move.x /= Screen.width;
 					move.y /= Screen.height;
-					_root.position -= _root.right.normalized * move.x * _moveSpeed;
-					_root.position -= _root.forward.normalized * move.y * _moveSpeed;
+					_root.position -= _root.right.normalized * move.x * _moveSpeed * _zoom / _maxZoom;
+					_root.position -= _root.forward.normalized * move.y * _moveSpeed * _zoom / _maxZoom;
 
 				}
 			}
@@ -272,7 +278,8 @@ namespace DungeonDefence
 			}
 			if(_camera.transform.position != _target.position)
 			{
-				_camera.transform.position =  Vector3.Lerp(_camera.transform.position, _target.position, _moveSmooth * Time.deltaTime);
+				Vector3 velocity = Vector3.zero;
+				_camera.transform.position =  Vector3.SmoothDamp(_camera.transform.position, _target.position,ref velocity, _moveSmooth * Time.deltaTime);
 			}
 			if(_camera.transform.rotation != _target.rotation)
 			{

@@ -42,6 +42,8 @@ namespace DungeonDefence
 			_currentY = y;
 			_X = x;
 			_Y = y;
+			_originalX = x;
+			_originalY = y;
 			Vector3 position = UI_Main.instance._grid.GetCenterPosition(x,y, _rows, _columns);
 			transform.position = position;
 			SetbaseColor();
@@ -69,6 +71,11 @@ namespace DungeonDefence
 
 			Vector3 position = UI_Main.instance._grid.GetCenterPosition(_currentX,_currentY, _rows, _columns);
 			transform.position = position;
+
+			if(_X != _currentX || _Y != _currentY)
+			{
+				_baseArea.gameObject.SetActive(true);
+			}
 			SetbaseColor();
 		}
 
@@ -86,6 +93,8 @@ namespace DungeonDefence
 			}
 		}
 
+		[HideInInspector]public bool waitinReplaceRepsonce = false;
+
 		public void Selected()
 		{
 			Debug.Log("selected");
@@ -100,6 +109,10 @@ namespace DungeonDefence
 					selectedInstance.Deselected();
 				}
 			}
+			if(waitinReplaceRepsonce)
+			{
+				return ;
+			}
 			UI_BuildingOptions.instance.SetStatus(true);
 			_originalX = currentX;
 			_originalY = currentY;
@@ -113,23 +126,37 @@ namespace DungeonDefence
 			CameraController.instance.isReplacingBuilding = false;
 			if(_originalX != currentX || _originalY != currentY)
 			{
-				if(UI_Main.instance._grid.CanPlaceBuilding(this, currentX, currentY))
-				{
-					Packet packet = new Packet();
-					packet.Write((int)Player.RequestId.REPLACE);
-					packet.Write(selectedInstance.databaseID);
-					packet.Write(selectedInstance.currentX);
-					packet.Write(selectedInstance.currentY);
-					Sender.TCP_Send(packet);
-				}
-				else
-				{
-					PlacedOnGrid(_originalX, _originalY);
-					_baseArea.gameObject.SetActive(false);
-				}
+				SaveLocation();
 			}
 			selectedInstance = null;
 		}
+
+		public void SaveLocation(bool resetIfNot = true)
+		{
+			if(UI_Main.instance._grid.CanPlaceBuilding(this, currentX, currentY) && (_X != currentX || _Y != currentY) &&  !waitinReplaceRepsonce)
+			{
+				waitinReplaceRepsonce = true;
+				Packet packet = new Packet();
+				packet.Write((int)Player.RequestId.REPLACE);
+				packet.Write(selectedInstance.databaseID);
+				packet.Write(selectedInstance.currentX);
+				packet.Write(selectedInstance.currentY);
+				Sender.TCP_Send(packet);
+				_baseArea.gameObject.SetActive(false);
+			}
+			else
+			{
+				if(resetIfNot)
+				{
+					if(waitinReplaceRepsonce)
+					{
+						PlacedOnGrid(_originalX, _originalY);
+					}
+					_baseArea.gameObject.SetActive(false);
+				}
+			}
+		}
+
 
 	}
 }
