@@ -10,23 +10,23 @@ namespace DungeonDefence
 	{
 		public const int minGoldCollect = 10;
 		public const int minElixirCollect = 10;
-
+		public enum BuildingID
+		{
+			townhall, goldmine, goldstorage , elixirmine, elixirstorage, darkelixirmine, darkelixirstorage
+		}
 		public class Player
 		{
 			public int gold = 0;
 			public int elixir = 0;
 			public int gems = 0;
+			public DateTime nowTime;
 			public List<Building> buildings = new List<Building>();
-		}
-
-		public enum BuildingID
-		{
-			townhall, goldmine, goldstorage , elixirmine, elixirstorage, darkelixirmine, darkelixirstorage
 		}
 
 		public class Building
 		{
 			public BuildingID id = BuildingID.townhall;
+
 			public int level = 0;
 			public long databaseID = 0;
 			public int x = 0;
@@ -40,7 +40,12 @@ namespace DungeonDefence
 			public int capacity = 0;
 			public float speed = 0;
 			public float radius = 0;
+			public DateTime constructionTime;
+			public bool isConstructing = false;
 		}
+
+
+		
 		public class ServerBuilding
 		{
 			public string id = "";

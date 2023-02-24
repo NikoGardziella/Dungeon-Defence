@@ -7,6 +7,10 @@ namespace DungeonDefence
 
 	public class Player : MonoBehaviour
 	{
+
+		public Data.Player data = new Data.Player();
+		private static Player _instance = null; public static Player instance {get {return _instance; } }
+
 		public enum RequestId
 		{
 			AUTH = 1,
@@ -21,6 +25,10 @@ namespace DungeonDefence
 		{
 			RealtimeNetworking.OnPacketReceived += ReceivePacket;
 			ConnectToServer();
+		}
+		private void Awake()
+		{
+			_instance = this;
 		}
 
 		private bool connected = false;
@@ -137,6 +145,7 @@ namespace DungeonDefence
 
 		private void SyncData(Data.Player player)
 		{
+			data = player;
 			int gold = 0;
 			int maxGold = 0;
 
@@ -169,6 +178,13 @@ namespace DungeonDefence
 
 							UI_Main.instance._grid.buildings.Add(building);
 						}
+					}
+
+					if(building.buildBar == null)
+					{
+						building.buildBar = Instantiate(UI_Main.instance.barBuild, UI_Main.instance.buttoonsParent);				
+						building.buildBar.gameObject.SetActive(false);
+						building.buildBar.building = building;
 					}
 
 					building.data = player.buildings[i];

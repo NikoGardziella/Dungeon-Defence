@@ -587,6 +587,8 @@ MonoBehaviour:
     type: 3}
   buttonCollectDarkElixir: {fileID: 2137327022773013844, guid: 9d1c4227eeed2014aaecedb5ab2c221b,
     type: 3}
+  barBuild: {fileID: 6338849155788283741, guid: d3ce0b6a8f564154d8f25d0096f17d0a,
+    type: 3}
 --- !u!1 &88947593
 GameObject:
   m_ObjectHideFlags: 0

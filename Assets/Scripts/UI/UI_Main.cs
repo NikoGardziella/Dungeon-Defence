@@ -26,6 +26,8 @@ namespace DungeonDefence
 
 		public UI_Button buttonCollectDarkElixir = null;
 
+		public UI_Bar barBuild = null;
+
 
 		private static UI_Main _instance = null; public static UI_Main instance {get {return _instance; } }
 		private bool _active = true; public bool isActive {get { return _active; } }
@@ -34,7 +36,6 @@ namespace DungeonDefence
 		{
 			_instance = this;
 			_elements.SetActive(true);
-
 		}
 
 		private void Start()

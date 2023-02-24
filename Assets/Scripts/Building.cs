@@ -16,6 +16,7 @@ namespace DungeonDefence
 		[HideInInspector]public Data.Building data = new Data.Building();
 		[HideInInspector]public UI_Button collectButton = null;
 		[HideInInspector]public bool collecting = false;
+		[HideInInspector]public UI_Bar buildBar = null;
 
 
 		[System.Serializable] public class Level
@@ -57,7 +58,7 @@ namespace DungeonDefence
 					case Data.BuildingID.goldmine:
 						if(data.storage >= Data.minGoldCollect)
 						{
-							collectButton.gameObject.SetActive(!collecting);
+							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false);
 						}
 						else
 						{
@@ -93,6 +94,32 @@ namespace DungeonDefence
 
 				Vector2 screenPoint = new Vector2(endW / w * Screen.width, endH / h * Screen.height);
 				collectButton.rect.anchoredPosition = screenPoint;
+			}
+
+			if(buildBar)
+			{
+				buildBar.AdjustUI();
+				if(data.isConstructing)
+				{
+					buildBar.gameObject.SetActive(true);
+					Vector3 end = UI_Main.instance._grid.GetEndPosition(this);
+				
+					Vector3 planeDownLeft = CameraController.instance.planeDownLeft;
+					Vector3 planeTopRight = CameraController.instance.planeTopRight;
+
+					float w = planeTopRight.x - planeDownLeft.x;
+					float h = planeTopRight.z - planeDownLeft.z;
+
+					float endW = end.x - planeDownLeft.x;
+					float endH = end.z - planeDownLeft.z;
+
+					Vector2 screenPoint = new Vector2(endW / w * Screen.width, endH / h * Screen.height);
+					buildBar.rect.anchoredPosition = screenPoint;
+				}
+				else
+				{
+					buildBar.gameObject.SetActive(false);
+				}
 			}
 		}
 
