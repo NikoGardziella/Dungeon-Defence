@@ -8,7 +8,8 @@ namespace DungeonDefence
 	using System;
 	public static class Data
 	{
-		public const int midGoldCollect = 10;
+		public const int minGoldCollect = 10;
+		public const int minElixirCollect = 10;
 
 		public class Player
 		{
@@ -20,7 +21,7 @@ namespace DungeonDefence
 
 		public enum BuildingID
 		{
-			townhall, goldmine, goldstorage 
+			townhall, goldmine, goldstorage , elixirmine, elixirstorage, darkelixirmine, darkelixirstorage
 		}
 
 		public class Building
@@ -48,6 +49,7 @@ namespace DungeonDefence
 			public int requiredElixir = 0;
 			public int requiredGold = 0;
 			public int requiredGems = 0;
+			public int requiredDarkElixir = 0;
 			public int columns = 0;
 			public int rows = 0;
 		}

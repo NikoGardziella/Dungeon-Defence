@@ -188,6 +188,28 @@ namespace DungeonDefence
 							maxGold += building.data.capacity;
 							gold += building.data.storage;
 							break;
+						case Data.BuildingID.elixirmine:
+							if(building.collectButton == null)
+							{
+								building.collectButton = Instantiate(UI_Main.instance.buttonCollectElixir, UI_Main.instance.buttoonsParent);
+								building.collectButton.button.onClick.AddListener(building.Collect);
+							}
+							break;
+						case Data.BuildingID.elixirstorage:
+							maxElixir += building.data.capacity;
+							elixir += building.data.storage;
+							break;
+						case Data.BuildingID.darkelixirmine:
+							if(building.collectButton == null)
+							{
+								building.collectButton = Instantiate(UI_Main.instance.buttonCollectDarkElixir, UI_Main.instance.buttoonsParent);
+								building.collectButton.button.onClick.AddListener(building.Collect);
+							}
+							break;
+						case Data.BuildingID.darkelixirstorage:
+							maxDarkElixir += building.data.capacity;
+							darkElixir += building.data.storage;
+							break;
 					}
 					building.AdjustUI(); 
 				}			

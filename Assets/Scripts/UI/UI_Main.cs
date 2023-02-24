@@ -22,6 +22,10 @@ namespace DungeonDefence
 		[Header("Buttons")]
 		public Transform buttoonsParent = null;
 		public UI_Button buttonCollectGold = null;
+		public UI_Button buttonCollectElixir = null;
+
+		public UI_Button buttonCollectDarkElixir = null;
+
 
 		private static UI_Main _instance = null; public static UI_Main instance {get {return _instance; } }
 		private bool _active = true; public bool isActive {get { return _active; } }

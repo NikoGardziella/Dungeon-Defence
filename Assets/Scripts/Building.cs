@@ -55,17 +55,27 @@ namespace DungeonDefence
 
 					break;
 					case Data.BuildingID.goldmine:
-					if(data.storage >= Data.midGoldCollect)
-					{
-						collectButton.gameObject.SetActive(!collecting);
-					}
-					else
-					{
-						collectButton.gameObject.SetActive(false);
-					}
-					break;
+						if(data.storage >= Data.minGoldCollect)
+						{
+							collectButton.gameObject.SetActive(!collecting);
+						}
+						else
+						{
+							collectButton.gameObject.SetActive(false);
+						}
+						break;
 					case Data.BuildingID.goldstorage:
 
+					break;
+					case Data.BuildingID.elixirmine:
+						if(data.storage >= Data.minElixirCollect)
+						{
+							collectButton.gameObject.SetActive(!collecting);
+						}
+						else
+						{
+							collectButton.gameObject.SetActive(false);
+						}
 					break;
 					
 				}
