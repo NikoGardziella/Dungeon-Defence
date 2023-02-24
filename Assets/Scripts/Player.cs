@@ -17,7 +17,9 @@ namespace DungeonDefence
 			SYNC = 2,
 			BUILD = 3,
 			REPLACE = 4,
-			COLLECT = 5
+			COLLECT = 5,
+			PREUPGRADE = 6,
+			UPGRADE = 7
 		}
 
 
@@ -48,6 +50,7 @@ namespace DungeonDefence
 				{
 					timer += Time.deltaTime;
 				}
+				data.nowTime = data.nowTime.AddSeconds(Time.deltaTime);
 			}
 		}
 
@@ -55,7 +58,7 @@ namespace DungeonDefence
 		private void ReceivePacket(Packet packet)
 		{
 			int id = packet.ReadInt();
-
+			long databaseID = 0;
 			switch ((RequestId)id)
 			{
 				case RequestId.AUTH:
@@ -132,6 +135,24 @@ namespace DungeonDefence
 						}
 					}
 					break;
+				case RequestId.PREUPGRADE:
+					databaseID = packet.ReadLong();
+					string re = packet.ReadString();
+					Data.ServerBuilding ServerBuildingData = Data.Deserialize<Data.ServerBuilding>(re);
+					UI_BuildingUpgrade.instance.Open(ServerBuildingData, databaseID);
+					break;
+				case RequestId.UPGRADE:
+					long res = packet.ReadLong();
+					if(res > 0)
+					{
+						Debug.Log("upgrading bulding");
+						//UI_BuildingUpgrade.instance.Close();
+					}
+					else
+					{
+						Debug.Log("Error upgrading building");
+					}
+					break;
 			}
 		}
 
@@ -184,8 +205,7 @@ namespace DungeonDefence
 					{
 						building.buildBar = Instantiate(UI_Main.instance.barBuild, UI_Main.instance.buttoonsParent);				
 						building.buildBar.gameObject.SetActive(false);
-						building.buildBar.building = building;
-					}
+  					}
 
 					building.data = player.buildings[i];
 					switch(building.id)
@@ -198,6 +218,8 @@ namespace DungeonDefence
 							{
 								building.collectButton = Instantiate(UI_Main.instance.buttonCollectGold, UI_Main.instance.buttoonsParent);
 								building.collectButton.button.onClick.AddListener(building.Collect);
+								building.collectButton.gameObject.SetActive(false);
+
 							}
 							break;
 						case Data.BuildingID.goldstorage:
@@ -209,6 +231,7 @@ namespace DungeonDefence
 							{
 								building.collectButton = Instantiate(UI_Main.instance.buttonCollectElixir, UI_Main.instance.buttoonsParent);
 								building.collectButton.button.onClick.AddListener(building.Collect);
+								building.collectButton.gameObject.SetActive(false);
 							}
 							break;
 						case Data.BuildingID.elixirstorage:
@@ -220,6 +243,7 @@ namespace DungeonDefence
 							{
 								building.collectButton = Instantiate(UI_Main.instance.buttonCollectDarkElixir, UI_Main.instance.buttoonsParent);
 								building.collectButton.button.onClick.AddListener(building.Collect);
+								building.collectButton.gameObject.SetActive(false);
 							}
 							break;
 						case Data.BuildingID.darkelixirstorage:

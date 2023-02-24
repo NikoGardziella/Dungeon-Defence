@@ -21,7 +21,6 @@ namespace DungeonDefence
 		private void Clicked()
 		{
 
-
 			Building prefab = UI_Main.instance.GetBuildingPrefab(_id);
 			if(prefab)
 			{
@@ -37,12 +36,8 @@ namespace DungeonDefence
 				CameraController.instance.isPlacingBuilding = true;
 				UI_Build.instance.SetStatus(true);
 			}
-
-
 			
 		}
-
-
 	}
 
 }

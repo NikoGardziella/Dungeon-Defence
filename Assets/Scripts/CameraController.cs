@@ -4,6 +4,7 @@ namespace DungeonDefence
 	using System.Collections.Generic;
 	using UnityEngine;
 	using UnityEngine.EventSystems;
+	using DevelopersHub.RealtimeNetworking.Client;
 
 
 	public class CameraController : MonoBehaviour
@@ -118,7 +119,13 @@ namespace DungeonDefence
 		private void ScreenClicked()
 		{
 			Vector2 position = _inputs.Main.PointerPosition.ReadValue<Vector2>();
-			if(IsSreenPointOverUI(position) == false)
+			
+			PointerEventData data = new PointerEventData(EventSystem.current);
+			data.position = position;
+			List<RaycastResult> results = new List<RaycastResult>();
+			EventSystem.current.RaycastAll(data, results);			
+			
+			if(results.Count <= 0)
 			{
 				bool found = false;
 				Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
@@ -144,6 +151,22 @@ namespace DungeonDefence
 			{
 				if(Building.selectedInstance != null)
 				{
+					
+					for (int i = 0; i < results.Count; i++)
+					{
+						if(results[i].gameObject == UI_BuildingOptions.instance.infoButton.gameObject)
+						{
+							
+						}
+						else if(results[i].gameObject == UI_BuildingOptions.instance.upgradeButton.gameObject)
+						{
+							Packet packet = new Packet();
+							packet.Write((int)Player.RequestId.PREUPGRADE);
+							packet.Write(Building.selectedInstance.data.databaseID);
+							Sender.TCP_Send(packet);
+						}
+					}
+					
 					Building.selectedInstance.Deselected();
 				}
 			}
@@ -373,5 +396,7 @@ namespace DungeonDefence
 			float h = _zoom * 2.0f;
 			return (h / Mathf.Sin(_angle * Mathf.Deg2Rad) / 2.0f);
 		}
+
+	
 	}
 }

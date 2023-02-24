@@ -66,7 +66,6 @@ namespace DungeonDefence
 						}
 						break;
 					case Data.BuildingID.goldstorage:
-
 					break;
 					case Data.BuildingID.elixirmine:
 						if(data.storage >= Data.minElixirCollect)
@@ -78,7 +77,16 @@ namespace DungeonDefence
 							collectButton.gameObject.SetActive(false);
 						}
 					break;
-					
+						case Data.BuildingID.darkelixirmine:
+						if(data.storage >= Data.minDarkElixirCollect)
+						{
+							collectButton.gameObject.SetActive(!collecting);
+						}
+						else
+						{
+							collectButton.gameObject.SetActive(false);
+						}
+					break;					
 				}
 
 				Vector3 end = UI_Main.instance._grid.GetEndPosition(this);
@@ -98,9 +106,21 @@ namespace DungeonDefence
 
 			if(buildBar)
 			{
-				buildBar.AdjustUI();
+
+			//	buildBar.AdjustUI();
 				if(data.isConstructing)
 				{
+					System.TimeSpan span = data.constructionTime - Player.instance.data.nowTime;
+					if(span.TotalDays > 1)
+					{
+						buildBar.texts[0].text = span.ToString(@"dd\:hh\:mm\:ss");
+					}
+					else
+					{
+						buildBar.texts[0].text = span.ToString(@"hh\:mm\:ss");
+
+					}
+					buildBar.bar.fillAmount = Mathf.Abs(1f - ((float)span.TotalSeconds / (float)data.buildTime));
 					buildBar.gameObject.SetActive(true);
 					Vector3 end = UI_Main.instance._grid.GetEndPosition(this);
 				
@@ -211,10 +231,10 @@ namespace DungeonDefence
 			{
 				return ;
 			}
-			UI_BuildingOptions.instance.SetStatus(true);
 			_originalX = currentX;
 			_originalY = currentY;
 			selectedInstance = this;
+			UI_BuildingOptions.instance.SetStatus(true);
 		}
 
 		public void Deselected()

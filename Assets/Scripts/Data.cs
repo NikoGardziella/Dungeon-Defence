@@ -10,6 +10,7 @@ namespace DungeonDefence
 	{
 		public const int minGoldCollect = 10;
 		public const int minElixirCollect = 10;
+		public const int minDarkElixirCollect = 10;
 		public enum BuildingID
 		{
 			townhall, goldmine, goldstorage , elixirmine, elixirstorage, darkelixirmine, darkelixirstorage
@@ -42,6 +43,7 @@ namespace DungeonDefence
 			public float radius = 0;
 			public DateTime constructionTime;
 			public bool isConstructing = false;
+			public int buildTime = 0;
 		}
 
 
@@ -57,6 +59,8 @@ namespace DungeonDefence
 			public int requiredDarkElixir = 0;
 			public int columns = 0;
 			public int rows = 0;
+			public int buildTime = 0;
+			public int gainedXP = 0;
 		}
 
 		public static string Serialize<T>(this T target)
