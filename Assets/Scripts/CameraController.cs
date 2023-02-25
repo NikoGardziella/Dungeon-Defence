@@ -165,6 +165,13 @@ namespace DungeonDefence
 							packet.Write(Building.selectedInstance.data.databaseID);
 							Sender.TCP_Send(packet);
 						}
+						else if(results[i].gameObject == UI_BuildingOptions.instance.instantButton.gameObject)
+						{
+							Packet packet = new Packet();
+							packet.Write((int)Player.RequestId.INSTANTBUILD);
+							packet.Write(Building.selectedInstance.data.databaseID);
+							Sender.TCP_Send(packet);
+						}
 					}
 					
 					Building.selectedInstance.Deselected();

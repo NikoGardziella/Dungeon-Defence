@@ -13,7 +13,7 @@ namespace DungeonDefence
 		public const int minDarkElixirCollect = 10;
 		public enum BuildingID
 		{
-			townhall, goldmine, goldstorage , elixirmine, elixirstorage, darkelixirmine, darkelixirstorage
+			townhall, goldmine, goldstorage , elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut
 		}
 		public class Player
 		{

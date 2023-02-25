@@ -19,7 +19,8 @@ namespace DungeonDefence
 			REPLACE = 4,
 			COLLECT = 5,
 			PREUPGRADE = 6,
-			UPGRADE = 7
+			UPGRADE = 7,
+			INSTANTBUILD = 8
 		}
 
 
@@ -59,6 +60,7 @@ namespace DungeonDefence
 		{
 			int id = packet.ReadInt();
 			long databaseID = 0;
+			int response = 0;
 			switch ((RequestId)id)
 			{
 				case RequestId.AUTH:
@@ -73,19 +75,28 @@ namespace DungeonDefence
 					SyncData(playerSyncData);
 					break;
 				case RequestId.BUILD:
-					int response = packet.ReadInt();
+					response = packet.ReadInt();
 					switch (response)
 					{
 						case 0:
-							Debug.Log("no resources");
+							Debug.Log("unknown error");
 							break;
 						case 1:
 							Debug.Log("Placed Succesfully");
 							SendSyncRequest();
 							break;
 						case 2:
+							Debug.Log("no resources");
+							break;
+						case 3:
+							Debug.Log("Max level");
+							break;
+						case 4:
 							Debug.Log("Place taken");
 							break;
+						case 5:
+							Debug.Log("no builders");
+							break;						
 					}
 					break;
 				case RequestId.REPLACE:
@@ -142,15 +153,41 @@ namespace DungeonDefence
 					UI_BuildingUpgrade.instance.Open(ServerBuildingData, databaseID);
 					break;
 				case RequestId.UPGRADE:
-					long res = packet.ReadLong();
-					if(res > 0)
+					response = packet.ReadInt();
+					switch (response)
 					{
-						Debug.Log("upgrading bulding");
-						//UI_BuildingUpgrade.instance.Close();
+						case 0:
+							Debug.Log("unknown error");
+							break;
+						case 1:
+							Debug.Log("Upgrade started");
+							SendSyncRequest();
+							break;
+						case 2:
+							Debug.Log("no resources");
+							break;
+						case 3:
+							Debug.Log("Max level");
+							break;
+						case 5:
+							Debug.Log("no builders");
+							break;						
+					}
+					break;
+				case RequestId.INSTANTBUILD:
+					response = packet.ReadInt();
+					if(response == 2)
+					{
+						Debug.Log("not enough gems for instant build");
+					}
+					else if(response == 1)
+					{
+						Debug.Log("Instant build succesfull");
 					}
 					else
 					{
-						Debug.Log("Error upgrading building");
+						Debug.Log("Instabuild not possible");
+						//UI_BuildingUpgrade.instance.Close();
 					}
 					break;
 			}
