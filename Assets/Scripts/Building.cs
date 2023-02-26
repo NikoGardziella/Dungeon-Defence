@@ -70,7 +70,7 @@ namespace DungeonDefence
 					case Data.BuildingID.elixirmine:
 						if(data.storage >= Data.minElixirCollect)
 						{
-							collectButton.gameObject.SetActive(!collecting);
+							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false);
 						}
 						else
 						{

@@ -96,6 +96,9 @@ namespace DungeonDefence
 							break;
 						case 5:
 							Debug.Log("no builders");
+							break;
+						case 6:
+							Debug.Log("Maximum level reached");
 							break;						
 					}
 					break;
@@ -171,6 +174,9 @@ namespace DungeonDefence
 							break;
 						case 5:
 							Debug.Log("no builders");
+							break;	
+						case 6:
+							Debug.Log("Maximum level reached");
 							break;						
 					}
 					break;

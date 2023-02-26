@@ -14,9 +14,12 @@ namespace DungeonDefence
 		public RectTransform upgradePanel = null;
 		public RectTransform instantPanel = null;
 
+		public RectTransform trainPanel = null;
+
 		public Button infoButton = null;
 		public Button upgradeButton = null;
 		public Button instantButton = null;
+		public Button trainButton = null;
 
 
 		private void Awake()
@@ -29,9 +32,10 @@ namespace DungeonDefence
 		{
 			if(status && Building.selectedInstance != null)
 			{
-				infoPanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == false);
+				infoPanel.gameObject.SetActive(true);
 				upgradePanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == false);
 				instantPanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == true);
+				trainPanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.armycamp || Building.selectedInstance.data.id == Data.BuildingID.barracks);
 
 			}
 			_elements.SetActive(status);
