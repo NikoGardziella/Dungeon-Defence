@@ -10,6 +10,7 @@ namespace DungeonDefence
 
 		public Data.Player data = new Data.Player();
 		private static Player _instance = null; public static Player instance {get {return _instance; } }
+	  	public Data.InitializationData initializationData = new Data.InitializationData();
 
 		public enum RequestId
 		{
@@ -20,7 +21,9 @@ namespace DungeonDefence
 			COLLECT = 5,
 			PREUPGRADE = 6,
 			UPGRADE = 7,
-			INSTANTBUILD = 8
+			INSTANTBUILD = 8,
+			TRAIN = 9,
+			CANCELTRAIN = 10
 		}
 
 
@@ -35,21 +38,27 @@ namespace DungeonDefence
 		}
 
 		private bool connected = false;
+		private bool updating = false;
+
+		
+
+		private float syncTime = 5.0f; //how often sync player data with server
+
 		private float timer = 0;
 
 		private void Update()
 		{
 			if(connected)
 			{
-				//Every 3 seconds synd player data with server
-				if(timer >= 3)
+				if(timer <= 0)
 				{
-					timer = 0;
+					updating = true;
+					timer = syncTime;
 					SendSyncRequest();
 				}
 				else
 				{
-					timer += Time.deltaTime;
+					timer -= Time.deltaTime;
 				}
 				data.nowTime = data.nowTime.AddSeconds(Time.deltaTime);
 			}
@@ -65,14 +74,17 @@ namespace DungeonDefence
 			{
 				case RequestId.AUTH:
 					connected = true;
+					updating = true;
 					timer = 0;
-					long accountID = packet.ReadLong();
+					string authData = packet.ReadString();
+					initializationData = Data.Deserialize<Data.InitializationData>(authData);
 					SendSyncRequest();
 					break;
 				case RequestId.SYNC:
 					string playerData = packet.ReadString();
 					Data.Player playerSyncData = Data.Deserialize<Data.Player>(playerData);
 					SyncData(playerSyncData);
+					updating = false;
 					break;
 				case RequestId.BUILD:
 					response = packet.ReadInt();
@@ -83,7 +95,7 @@ namespace DungeonDefence
 							break;
 						case 1:
 							Debug.Log("Placed Succesfully");
-							SendSyncRequest();
+							RushSyncRequest();
 							break;
 						case 2:
 							Debug.Log("no resources");
@@ -124,6 +136,7 @@ namespace DungeonDefence
 									{
 										
 									}
+									RushSyncRequest();
 									break;
 								case 2:
 									Debug.Log("Place taken");
@@ -164,7 +177,7 @@ namespace DungeonDefence
 							break;
 						case 1:
 							Debug.Log("Upgrade started");
-							SendSyncRequest();
+							RushSyncRequest();
 							break;
 						case 2:
 							Debug.Log("no resources");
@@ -189,6 +202,49 @@ namespace DungeonDefence
 					else if(response == 1)
 					{
 						Debug.Log("Instant build succesfull");
+						RushSyncRequest();
+					}
+					else
+					{
+						Debug.Log("Instabuild not possible");
+						//UI_BuildingUpgrade.instance.Close();
+					}
+					break;
+				case RequestId.TRAIN:
+					response = packet.ReadInt();
+					if(response == 2)
+					{
+						Debug.Log("no resources");
+					}
+					else if(response == 3)
+					{
+						Debug.Log("no capacity to train unit");
+					}
+					else if(response == 4)
+					{
+						Debug.Log("Server unit not found");
+					}
+					else if(response == 1)
+					{
+						Debug.Log("Training started");
+						RushSyncRequest();
+					}
+					else
+					{
+						Debug.Log("Instabuild not possible");
+						//UI_BuildingUpgrade.instance.Close();
+					}
+					break;
+				case RequestId.CANCELTRAIN:
+					response = packet.ReadInt();
+					if(response == 2)
+					{
+						Debug.Log("not enough gems for instant build");
+					}
+					else if(response == 1)
+					{
+						Debug.Log("Instant build succesfull");
+						RushSyncRequest();
 					}
 					else
 					{
@@ -297,10 +353,26 @@ namespace DungeonDefence
 					building.AdjustUI(); 
 				}			
 			}
+			for (int i = 0; i < player.units.Count; i++)
+			{
+				
+			}
+
 			UI_Main.instance._goldText.text = gold + "/" + maxGold;
 			UI_Main.instance._elixirText.text =  elixir + "/" + maxElixir;
 			UI_Main.instance._gemsText.text = gems.ToString();
+
+			if(UI_Train.instance.isOpen)
+			{
+				UI_Train.instance.Sync();
+			}
 		}
+
+		public void RushSyncRequest()
+		{
+			
+		}
+
 
 		private void ConnectionResponse(bool succesfull)
 		{
