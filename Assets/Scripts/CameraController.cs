@@ -119,66 +119,80 @@ namespace DungeonDefence
 		private void ScreenClicked()
 		{
 			Vector2 position = _inputs.Main.PointerPosition.ReadValue<Vector2>();
-			
 			PointerEventData data = new PointerEventData(EventSystem.current);
 			data.position = position;
 			List<RaycastResult> results = new List<RaycastResult>();
-			EventSystem.current.RaycastAll(data, results);			
-			
-			if(results.Count <= 0)
-			{
-				bool found = false;
-				Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
+			EventSystem.current.RaycastAll(data, results);
 
-				for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+			if(UI_Main.instance.isActive)
+			{
+				if(results.Count <= 0)
 				{
-					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(planePosition, UI_Main.instance._grid.buildings[i].currentX, UI_Main.instance._grid.buildings[i].currentY, UI_Main.instance._grid.buildings[i].rows, UI_Main.instance._grid.buildings[i].columns))
+					bool found = false;
+					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
+
+					for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
 					{
-						found = true;
-						UI_Main.instance._grid.buildings[i].Selected();
-						break;
+						if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(planePosition, UI_Main.instance._grid.buildings[i].currentX, UI_Main.instance._grid.buildings[i].currentY, UI_Main.instance._grid.buildings[i].rows, UI_Main.instance._grid.buildings[i].columns))
+						{
+							found = true;
+							UI_Main.instance._grid.buildings[i].Selected();
+							break;
+						}
+					}
+					if(!found)
+					{
+						if(Building.selectedInstance != null)
+						{
+							Building.selectedInstance.Deselected();
+						}
 					}
 				}
-				if(!found)
+				else
 				{
 					if(Building.selectedInstance != null)
 					{
+						
+						for (int i = 0; i < results.Count; i++)
+						{
+							if(results[i].gameObject == UI_BuildingOptions.instance.infoButton.gameObject)
+							{
+								
+							}
+							else if(results[i].gameObject == UI_BuildingOptions.instance.upgradeButton.gameObject)
+							{
+								Packet packet = new Packet();
+								packet.Write((int)Player.RequestId.PREUPGRADE);
+								packet.Write(Building.selectedInstance.data.databaseID);
+								Sender.TCP_Send(packet);
+							}
+							else if(results[i].gameObject == UI_BuildingOptions.instance.instantButton.gameObject)
+							{
+								Packet packet = new Packet();
+								packet.Write((int)Player.RequestId.INSTANTBUILD);
+								packet.Write(Building.selectedInstance.data.databaseID);
+								Sender.TCP_Send(packet);
+							}
+							else if(results[i].gameObject == UI_BuildingOptions.instance.trainButton.gameObject)
+							{
+								UI_Train.instance.SetStatus(true);
+							}
+						}
+						
 						Building.selectedInstance.Deselected();
 					}
 				}
 			}
-			else
+			else if(UI_Battle.instance.isActive)
 			{
-				if(Building.selectedInstance != null)
+				if(results.Count <= 0 && UI_Battle.instance.selectedUnit >= 0)
 				{
-					
-					for (int i = 0; i < results.Count; i++)
+					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
+					planePosition = UI_Main.instance._grid.transform.InverseTransformPoint(planePosition);
+					if(planePosition.x >= 0 && planePosition.x < Data.gridSize && planePosition.z >= 0 && planePosition.z < Data.gridSize)
 					{
-						if(results[i].gameObject == UI_BuildingOptions.instance.infoButton.gameObject)
-						{
-							
-						}
-						else if(results[i].gameObject == UI_BuildingOptions.instance.upgradeButton.gameObject)
-						{
-							Packet packet = new Packet();
-							packet.Write((int)Player.RequestId.PREUPGRADE);
-							packet.Write(Building.selectedInstance.data.databaseID);
-							Sender.TCP_Send(packet);
-						}
-						else if(results[i].gameObject == UI_BuildingOptions.instance.instantButton.gameObject)
-						{
-							Packet packet = new Packet();
-							packet.Write((int)Player.RequestId.INSTANTBUILD);
-							packet.Write(Building.selectedInstance.data.databaseID);
-							Sender.TCP_Send(packet);
-						}
-						else if(results[i].gameObject == UI_BuildingOptions.instance.trainButton.gameObject)
-						{
-							UI_Train.instance.SetStatus(true);
-						}
+						UI_Battle.instance.PlaceUnit((int)planePosition.x, (int)planePosition.z);
 					}
-					
-					Building.selectedInstance.Deselected();
 				}
 			}
 		}
@@ -194,7 +208,7 @@ namespace DungeonDefence
 
 		private void MoveStarted()
 		{
-			if(UI_Main.instance.isActive)
+			if(UI_Main.instance.isActive || UI_Battle.instance.isActive)
 			{
 				if(_building)
 				{
@@ -241,7 +255,7 @@ namespace DungeonDefence
 
 		private void ZoomStarted()
 		{
-			if(UI_Main.instance.isActive)
+			if(UI_Main.instance.isActive || UI_Battle.instance.isActive)
 			{
 				Vector2 touch0 = _inputs.Main.TouchPosition0.ReadValue<Vector2>();
 				Vector2 touch1 = _inputs.Main.TouchPosition1.ReadValue<Vector2>();

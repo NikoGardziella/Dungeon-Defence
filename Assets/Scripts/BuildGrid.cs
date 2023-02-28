@@ -84,6 +84,18 @@ namespace DungeonDefence
 		}
 
 
+		public void Clear()
+		{
+			for (int i = 0; i < buildings.Count; i++)
+			{
+				if(buildings[i])
+				{
+					Destroy(buildings[i].gameObject);
+				}
+			}
+			buildings.Clear();
+		}
+
 		#if UNITY_EDITOR
 		private void OnDrawGizmos()
 		{

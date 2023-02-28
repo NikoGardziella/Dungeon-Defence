@@ -46,6 +46,19 @@ namespace DungeonDefence
 		{
 			AdjustUI();
 		}
+
+		private void OnDestroy()
+		{
+			if(buildBar)
+			{
+				Destroy(buildBar.gameObject);
+			}
+			if(collectButton)
+			{
+				Destroy(collectButton.gameObject);
+			}
+		}
+
 		public void AdjustUI()
 		{
 			if(collectButton)
@@ -56,7 +69,7 @@ namespace DungeonDefence
 
 					break;
 					case Data.BuildingID.goldmine:
-						if(data.storage >= Data.minGoldCollect)
+						if(data.goldStorage >= Data.minGoldCollect)
 						{
 							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false);
 						}
@@ -68,7 +81,7 @@ namespace DungeonDefence
 					case Data.BuildingID.goldstorage:
 					break;
 					case Data.BuildingID.elixirmine:
-						if(data.storage >= Data.minElixirCollect)
+						if(data.elixirStorage >= Data.minElixirCollect)
 						{
 							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false);
 						}
@@ -78,7 +91,7 @@ namespace DungeonDefence
 						}
 					break;
 						case Data.BuildingID.darkelixirmine:
-						if(data.storage >= Data.minDarkElixirCollect)
+						if(data.darkStorage >= Data.minDarkElixirCollect)
 						{
 							collectButton.gameObject.SetActive(!collecting);
 						}

@@ -8,6 +8,7 @@ namespace DungeonDefence
     
 	public static class Data
 	{
+        
         public const int minGoldCollect = 10;
         public const int minElixirCollect = 10;
         public const int minDarkElixirCollect = 10;
@@ -20,10 +21,10 @@ namespace DungeonDefence
 
         public class Player
         {
-            public int gold = 0;
-            public int elixir = 0;
             public int gems = 0;
+            public int trophies = 0;
             public DateTime nowTime;
+            public DateTime shield;
             public List<Building> buildings = new List<Building>();
             public List<Unit> units = new List<Unit>();
         }
@@ -50,7 +51,78 @@ namespace DungeonDefence
 
         public enum BuildingID
         {
-            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap
+            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap, clancastle
+        }
+
+        public static int GetStorageGoldAndElixirLoot(int townhallLevel, float storage)
+        {
+            double p = 0;
+            switch (townhallLevel)
+            {
+                case 1: case 2: case 3: case 4: case 5: case 6: p = 0.2d; break;
+                case 7: p = 0.18d; break;
+                case 8: p = 0.16d; break;
+                case 9: p = 0.14d; break;
+                case 10: p = 0.12d; break;
+                default: p = 0.1d; break;
+            }
+            return (int)Math.Floor(storage * p);
+        }
+
+        public static int GetStorageDarkElixirLoot(int townhallLevel, float storage)
+        {
+            double p = 0;
+            switch (townhallLevel)
+            {
+                case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8: p = 0.06d; break;
+                case 9: p = 0.05d; break;
+                default: p = 0.04d; break;
+            }
+            return (int)Math.Floor(storage * p);
+        }
+
+        public static int GetMinesGoldAndElixirLoot(int townhallLevel, float storage)
+        {
+            return (int)Math.Floor(storage * 0.5d);
+        }
+
+        public static int GetMinesDarkElixirLoot(int townhallLevel, float storage)
+        {
+            return (int)Math.Floor(storage * 0.75d);
+        }
+
+        public static (int, int) GetBattleTrophies(int attackerTrophies, int defendderTrophies)
+        {
+            int win = 0;
+            int lose = 0;
+            if (attackerTrophies == defendderTrophies)
+            {
+                win = 30;
+                lose = 20;
+            }
+            else
+            {
+                double delta = Math.Abs(attackerTrophies - defendderTrophies);
+                if (attackerTrophies > defendderTrophies)
+                {
+                    win = 30 - (int)Math.Floor(delta * (28d / 600d));
+                    lose = 20 + (int)Math.Floor(delta * (19d / 600d));
+                    if (win < 2)
+                    {
+                        win = 2;
+                    }
+                }
+                else
+                {
+                    win = 30 + (int)Math.Floor(delta * (28d / 600d));
+                    lose = 20 - (int)Math.Floor(delta * (19d / 600d));
+                    if(lose < 1)
+                    {
+                        lose = 1;
+                    }
+                }
+            }
+            return (win, lose);
         }
 
         public class BattleFrame
@@ -64,11 +136,13 @@ namespace DungeonDefence
             public long id = 0;
             public int x = 0;
             public int y = 0;
+            public Unit unit = null;
         }
 
         public class BattleData
         {
             public Battle battle = null;
+            public List<BattleFrame> savedFrames = new List<BattleFrame>();
             public List<BattleFrame> frames = new List<BattleFrame>();
         }
 
@@ -76,6 +150,15 @@ namespace DungeonDefence
         {
             public long id = 0;
             public List<Building> buildings = null;
+        }
+
+        public class BattleStartBuildingData
+        {
+            public BuildingID id = BuildingID.townhall;
+            public long databaseID = 0;
+            public int lootGoldStorage = 0;
+            public int lootElixirStorage = 0;
+            public int lootDarkStorage = 0;
         }
 
         public class InitializationData
@@ -128,11 +211,16 @@ namespace DungeonDefence
             public int y = 0;
             public int columns = 0;
             public int rows = 0;
-            public int storage = 0;
+            public int goldStorage = 0;
+            public int elixirStorage = 0;
+            public int darkStorage = 0;
             public DateTime boost;
             public int health = 100;
             public float damage = 0;
             public int capacity = 0;
+            public int goldCapacity = 0;
+            public int elixirCapacity = 0;
+            public int darkCapacity = 0;
             public float speed = 0;
             public float radius = 0;
             public DateTime constructionTime;
@@ -142,7 +230,7 @@ namespace DungeonDefence
             public float blindRange = 0;
             public float splashRange = 0;
             public float rangedSpeed = 5;
-            public float percentage = 0;
+            public double percentage = 0;
         }
 
         public class ServerBuilding
@@ -168,7 +256,7 @@ namespace DungeonDefence
             return writer.ToString();
         }
 
-        public static T Desrialize<T>(this string target)
+        public static T Deserialize<T>(this string target)
         {
             XmlSerializer xml = new XmlSerializer(typeof(T));
             StringReader reader = new StringReader(target);
@@ -255,536 +343,536 @@ namespace DungeonDefence
 
         public static BuildingAvailability[] buildingAvailability =
         {
-                new BuildingAvailability
+            new BuildingAvailability
+            {
+                level = 0,
+                buildings = {}
+            },
+            new BuildingAvailability
+            {
+                level = 1,
+                buildings = new BuildingCount[]
                 {
-                    level = 0,
-                    buildings = {}
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "elixirmine", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "goldstorage", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "elixirstorage", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "armycamp", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "cannon", count = 2, maxLevel = 2},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 2,
+                buildings = new BuildingCount[]
                 {
-                    level = 1,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "elixirmine", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "goldstorage", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "elixirstorage", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "armycamp", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "cannon", count = 2, maxLevel = 2},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "elixirmine", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "goldstorage", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "elixirstorage", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "armycamp", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "cannon", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "archertower", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 25, maxLevel = 2},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 3,
+                buildings = new BuildingCount[]
                 {
-                    level = 2,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "elixirmine", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "goldstorage", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "elixirstorage", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "armycamp", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "cannon", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "archertower", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 25, maxLevel = 2},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "elixirmine", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "goldstorage", count = 2, maxLevel = 6},
+                    new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 6},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "armycamp", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "archertower", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "mortor", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "wall", count = 50, maxLevel = 3},
+                    new BuildingCount { id = "boomb", count = 2, maxLevel = 2},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 4,
+                buildings = new BuildingCount[]
                 {
-                    level = 3,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "elixirmine", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "goldstorage", count = 2, maxLevel = 6},
-                        new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 6},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "armycamp", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "archertower", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "mortor", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "wall", count = 50, maxLevel = 3},
-                        new BuildingCount { id = "boomb", count = 2, maxLevel = 2},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "elixirmine", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "goldstorage", count = 2, maxLevel = 8},
+                    new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 8},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "armycamp", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "cannon", count = 2, maxLevel = 5},
+                    new BuildingCount { id = "archertower", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "mortor", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "airdefense", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 75, maxLevel = 4},
+                    new BuildingCount { id = "boomb", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "springtrap", count = 2, maxLevel = 1},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 5,
+                buildings = new BuildingCount[]
                 {
-                    level = 4,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "elixirmine", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "goldstorage", count = 2, maxLevel = 8},
-                        new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 8},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "armycamp", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "cannon", count = 2, maxLevel = 5},
-                        new BuildingCount { id = "archertower", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "mortor", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "airdefense", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 75, maxLevel = 4},
-                        new BuildingCount { id = "boomb", count = 2, maxLevel = 2},
-                        new BuildingCount { id = "springtrap", count = 2, maxLevel = 1},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 5, maxLevel = 10},
+                    new BuildingCount { id = "elixirmine", count = 5, maxLevel = 10},
+                    new BuildingCount { id = "goldstorage", count = 2, maxLevel = 9},
+                    new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 9},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "armycamp", count = 3, maxLevel = 5},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "archertower", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "mortor", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "airdefense", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "wizardtower", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 100, maxLevel = 5},
+                    new BuildingCount { id = "boomb", count = 4, maxLevel = 3},
+                    new BuildingCount { id = "springtrap", count = 2, maxLevel = 1},
+                    new BuildingCount { id = "airbomb", count = 2, maxLevel = 2},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 6,
+                buildings = new BuildingCount[]
                 {
-                    level = 5,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 5, maxLevel = 10},
-                        new BuildingCount { id = "elixirmine", count = 5, maxLevel = 10},
-                        new BuildingCount { id = "goldstorage", count = 2, maxLevel = 9},
-                        new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 9},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "armycamp", count = 3, maxLevel = 5},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "archertower", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "mortor", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "airdefense", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "wizardtower", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 100, maxLevel = 5},
-                        new BuildingCount { id = "boomb", count = 4, maxLevel = 3},
-                        new BuildingCount { id = "springtrap", count = 2, maxLevel = 1},
-                        new BuildingCount { id = "airbomb", count = 2, maxLevel = 2},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 6, maxLevel = 10},
+                    new BuildingCount { id = "elixirmine", count = 6, maxLevel = 10},
+                    new BuildingCount { id = "goldstorage", count = 2, maxLevel = 10},
+                    new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 10},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "armycamp", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 8},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "cannon", count = 3, maxLevel = 7},
+                    new BuildingCount { id = "archertower", count = 3, maxLevel = 7},
+                    new BuildingCount { id = "mortor", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "airdefense", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "wizardtower", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "airsweeper", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 125, maxLevel = 6},
+                    new BuildingCount { id = "boomb", count = 4, maxLevel = 3},
+                    new BuildingCount { id = "springtrap", count = 4, maxLevel = 1},
+                    new BuildingCount { id = "airbomb", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "giantbomb", count = 1, maxLevel = 2},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 7,
+                buildings = new BuildingCount[]
                 {
-                    level = 6,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 6, maxLevel = 10},
-                        new BuildingCount { id = "elixirmine", count = 6, maxLevel = 10},
-                        new BuildingCount { id = "goldstorage", count = 2, maxLevel = 10},
-                        new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 10},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "armycamp", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 8},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "cannon", count = 3, maxLevel = 7},
-                        new BuildingCount { id = "archertower", count = 3, maxLevel = 7},
-                        new BuildingCount { id = "mortor", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "airdefense", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "wizardtower", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "airsweeper", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 125, maxLevel = 6},
-                        new BuildingCount { id = "boomb", count = 4, maxLevel = 3},
-                        new BuildingCount { id = "springtrap", count = 4, maxLevel = 1},
-                        new BuildingCount { id = "airbomb", count = 2, maxLevel = 2},
-                        new BuildingCount { id = "giantbomb", count = 1, maxLevel = 2},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 6, maxLevel = 11},
+                    new BuildingCount { id = "elixirmine", count = 6, maxLevel = 11},
+                    new BuildingCount { id = "darkelixirmine", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "goldstorage", count = 2, maxLevel = 11},
+                    new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 11},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 6},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 5, maxLevel = 8},
+                    new BuildingCount { id = "archertower", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "mortor", count = 3, maxLevel = 5},
+                    new BuildingCount { id = "airdefense", count = 3, maxLevel = 5},
+                    new BuildingCount { id = "wizardtower", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "airsweeper", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "hiddentesla", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "wall", count = 175, maxLevel = 6},
+                    new BuildingCount { id = "boomb", count = 6, maxLevel = 4},
+                    new BuildingCount { id = "springtrap", count = 4, maxLevel = 2},
+                    new BuildingCount { id = "airbomb", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "giantbomb", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "seekingairmine", count = 1, maxLevel = 1},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 8,
+                buildings = new BuildingCount[]
                 {
-                    level = 7,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 6, maxLevel = 11},
-                        new BuildingCount { id = "elixirmine", count = 6, maxLevel = 11},
-                        new BuildingCount { id = "darkelixirmine", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "goldstorage", count = 2, maxLevel = 11},
-                        new BuildingCount { id = "elixirstorage", count = 2, maxLevel = 11},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 6},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 5, maxLevel = 8},
-                        new BuildingCount { id = "archertower", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "mortor", count = 3, maxLevel = 5},
-                        new BuildingCount { id = "airdefense", count = 3, maxLevel = 5},
-                        new BuildingCount { id = "wizardtower", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "airsweeper", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "hiddentesla", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "wall", count = 175, maxLevel = 6},
-                        new BuildingCount { id = "boomb", count = 6, maxLevel = 4},
-                        new BuildingCount { id = "springtrap", count = 4, maxLevel = 2},
-                        new BuildingCount { id = "airbomb", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "giantbomb", count = 2, maxLevel = 2},
-                        new BuildingCount { id = "seekingairmine", count = 1, maxLevel = 1},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 6, maxLevel = 12},
+                    new BuildingCount { id = "elixirmine", count = 6, maxLevel = 12},
+                    new BuildingCount { id = "darkelixirmine", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "goldstorage", count = 3, maxLevel = 11},
+                    new BuildingCount { id = "elixirstorage", count = 3, maxLevel = 11},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 6},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 10},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 5, maxLevel = 10},
+                    new BuildingCount { id = "archertower", count = 5, maxLevel = 10},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 6},
+                    new BuildingCount { id = "airdefense", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "wizardtower", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "airsweeper", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "hiddentesla", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "bombtower", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 225, maxLevel = 8},
+                    new BuildingCount { id = "boomb", count = 6, maxLevel = 5},
+                    new BuildingCount { id = "springtrap", count = 6, maxLevel = 3},
+                    new BuildingCount { id = "airbomb", count = 4, maxLevel = 3},
+                    new BuildingCount { id = "giantbomb", count = 3, maxLevel = 3},
+                    new BuildingCount { id = "seekingairmine", count = 2, maxLevel = 1},
+                    new BuildingCount { id = "skeletontrap", count = 2, maxLevel = 2},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 9,
+                buildings = new BuildingCount[]
                 {
-                    level = 8,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 6, maxLevel = 12},
-                        new BuildingCount { id = "elixirmine", count = 6, maxLevel = 12},
-                        new BuildingCount { id = "darkelixirmine", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "goldstorage", count = 3, maxLevel = 11},
-                        new BuildingCount { id = "elixirstorage", count = 3, maxLevel = 11},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 6},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 10},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 5, maxLevel = 10},
-                        new BuildingCount { id = "archertower", count = 5, maxLevel = 10},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 6},
-                        new BuildingCount { id = "airdefense", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "wizardtower", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "airsweeper", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "hiddentesla", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "bombtower", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 225, maxLevel = 8},
-                        new BuildingCount { id = "boomb", count = 6, maxLevel = 5},
-                        new BuildingCount { id = "springtrap", count = 6, maxLevel = 3},
-                        new BuildingCount { id = "airbomb", count = 4, maxLevel = 3},
-                        new BuildingCount { id = "giantbomb", count = 3, maxLevel = 3},
-                        new BuildingCount { id = "seekingairmine", count = 2, maxLevel = 1},
-                        new BuildingCount { id = "skeletontrap", count = 2, maxLevel = 2},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 7, maxLevel = 12},
+                    new BuildingCount { id = "elixirmine", count = 7, maxLevel = 12},
+                    new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "goldstorage", count = 4, maxLevel = 11},
+                    new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 11},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 7},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 11},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 5, maxLevel = 11},
+                    new BuildingCount { id = "archertower", count = 6, maxLevel = 11},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 7},
+                    new BuildingCount { id = "airdefense", count = 4, maxLevel = 7},
+                    new BuildingCount { id = "wizardtower", count = 4, maxLevel = 7},
+                    new BuildingCount { id = "airsweeper", count = 2, maxLevel = 5},
+                    new BuildingCount { id = "hiddentesla", count = 4, maxLevel = 7},
+                    new BuildingCount { id = "bombtower", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "xbow", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "wall", count = 250, maxLevel = 10},
+                    new BuildingCount { id = "boomb", count = 6, maxLevel = 6},
+                    new BuildingCount { id = "springtrap", count = 6, maxLevel = 4},
+                    new BuildingCount { id = "airbomb", count = 4, maxLevel = 4},
+                    new BuildingCount { id = "giantbomb", count = 4, maxLevel = 3},
+                    new BuildingCount { id = "seekingairmine", count = 4, maxLevel = 2},
+                    new BuildingCount { id = "skeletontrap", count = 2, maxLevel = 3},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 10,
+                buildings = new BuildingCount[]
                 {
-                    level = 9,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 7, maxLevel = 12},
-                        new BuildingCount { id = "elixirmine", count = 7, maxLevel = 12},
-                        new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "goldstorage", count = 4, maxLevel = 11},
-                        new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 11},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 7},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 11},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 5, maxLevel = 11},
-                        new BuildingCount { id = "archertower", count = 6, maxLevel = 11},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 7},
-                        new BuildingCount { id = "airdefense", count = 4, maxLevel = 7},
-                        new BuildingCount { id = "wizardtower", count = 4, maxLevel = 7},
-                        new BuildingCount { id = "airsweeper", count = 2, maxLevel = 5},
-                        new BuildingCount { id = "hiddentesla", count = 4, maxLevel = 7},
-                        new BuildingCount { id = "bombtower", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "xbow", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "wall", count = 250, maxLevel = 10},
-                        new BuildingCount { id = "boomb", count = 6, maxLevel = 6},
-                        new BuildingCount { id = "springtrap", count = 6, maxLevel = 4},
-                        new BuildingCount { id = "airbomb", count = 4, maxLevel = 4},
-                        new BuildingCount { id = "giantbomb", count = 4, maxLevel = 3},
-                        new BuildingCount { id = "seekingairmine", count = 4, maxLevel = 2},
-                        new BuildingCount { id = "skeletontrap", count = 2, maxLevel = 3},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 7, maxLevel = 13},
+                    new BuildingCount { id = "elixirmine", count = 7, maxLevel = 13},
+                    new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 7},
+                    new BuildingCount { id = "goldstorage", count = 4, maxLevel = 11},
+                    new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 11},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 12},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 8},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 6, maxLevel = 13},
+                    new BuildingCount { id = "archertower", count = 7, maxLevel = 13},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "airdefense", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "wizardtower", count = 4, maxLevel = 9},
+                    new BuildingCount { id = "airsweeper", count = 2, maxLevel = 6},
+                    new BuildingCount { id = "hiddentesla", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "bombtower", count = 2, maxLevel = 4},
+                    new BuildingCount { id = "xbow", count = 3, maxLevel = 4},
+                    new BuildingCount { id = "infernotower", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "wall", count = 275, maxLevel = 11},
+                    new BuildingCount { id = "boomb", count = 6, maxLevel = 7},
+                    new BuildingCount { id = "springtrap", count = 6, maxLevel = 5},
+                    new BuildingCount { id = "airbomb", count = 5, maxLevel = 4},
+                    new BuildingCount { id = "giantbomb", count = 5, maxLevel = 4},
+                    new BuildingCount { id = "seekingairmine", count = 5, maxLevel = 3},
+                    new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 11,
+                buildings = new BuildingCount[]
                 {
-                    level = 10,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 7, maxLevel = 13},
-                        new BuildingCount { id = "elixirmine", count = 7, maxLevel = 13},
-                        new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 7},
-                        new BuildingCount { id = "goldstorage", count = 4, maxLevel = 11},
-                        new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 11},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 12},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 8},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 6, maxLevel = 13},
-                        new BuildingCount { id = "archertower", count = 7, maxLevel = 13},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "airdefense", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "wizardtower", count = 4, maxLevel = 9},
-                        new BuildingCount { id = "airsweeper", count = 2, maxLevel = 6},
-                        new BuildingCount { id = "hiddentesla", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "bombtower", count = 2, maxLevel = 4},
-                        new BuildingCount { id = "xbow", count = 3, maxLevel = 4},
-                        new BuildingCount { id = "infernotower", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "wall", count = 275, maxLevel = 11},
-                        new BuildingCount { id = "boomb", count = 6, maxLevel = 7},
-                        new BuildingCount { id = "springtrap", count = 6, maxLevel = 5},
-                        new BuildingCount { id = "airbomb", count = 5, maxLevel = 4},
-                        new BuildingCount { id = "giantbomb", count = 5, maxLevel = 4},
-                        new BuildingCount { id = "seekingairmine", count = 5, maxLevel = 3},
-                        new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 7, maxLevel = 14},
+                    new BuildingCount { id = "elixirmine", count = 7, maxLevel = 14},
+                    new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 8},
+                    new BuildingCount { id = "goldstorage", count = 4, maxLevel = 12},
+                    new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 12},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 9},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 13},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 8},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "archertower", count = 8, maxLevel = 15},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 10},
+                    new BuildingCount { id = "airdefense", count = 4, maxLevel = 9},
+                    new BuildingCount { id = "wizardtower", count = 5, maxLevel = 10},
+                    new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
+                    new BuildingCount { id = "hiddentesla", count = 4, maxLevel = 9},
+                    new BuildingCount { id = "bombtower", count = 2, maxLevel = 6},
+                    new BuildingCount { id = "xbow", count = 4, maxLevel = 5},
+                    new BuildingCount { id = "infernotower", count = 2, maxLevel = 5},
+                    new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 300, maxLevel = 12},
+                    new BuildingCount { id = "boomb", count = 6, maxLevel = 8},
+                    new BuildingCount { id = "springtrap", count = 6, maxLevel = 5},
+                    new BuildingCount { id = "airbomb", count = 5, maxLevel = 5},
+                    new BuildingCount { id = "giantbomb", count = 5, maxLevel = 5},
+                    new BuildingCount { id = "seekingairmine", count = 5, maxLevel = 3},
+                    new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
+                    new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 2},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 12,
+                buildings = new BuildingCount[]
                 {
-                    level = 11,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 7, maxLevel = 14},
-                        new BuildingCount { id = "elixirmine", count = 7, maxLevel = 14},
-                        new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 8},
-                        new BuildingCount { id = "goldstorage", count = 4, maxLevel = 12},
-                        new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 12},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 9},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 13},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 8},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "archertower", count = 8, maxLevel = 15},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 10},
-                        new BuildingCount { id = "airdefense", count = 4, maxLevel = 9},
-                        new BuildingCount { id = "wizardtower", count = 5, maxLevel = 10},
-                        new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
-                        new BuildingCount { id = "hiddentesla", count = 4, maxLevel = 9},
-                        new BuildingCount { id = "bombtower", count = 2, maxLevel = 6},
-                        new BuildingCount { id = "xbow", count = 4, maxLevel = 5},
-                        new BuildingCount { id = "infernotower", count = 2, maxLevel = 5},
-                        new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 300, maxLevel = 12},
-                        new BuildingCount { id = "boomb", count = 6, maxLevel = 8},
-                        new BuildingCount { id = "springtrap", count = 6, maxLevel = 5},
-                        new BuildingCount { id = "airbomb", count = 5, maxLevel = 5},
-                        new BuildingCount { id = "giantbomb", count = 5, maxLevel = 5},
-                        new BuildingCount { id = "seekingairmine", count = 5, maxLevel = 3},
-                        new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
-                        new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 2},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
+                    new BuildingCount { id = "goldstorage", count = 4, maxLevel = 13},
+                    new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 13},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 8},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 10},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 14},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 10},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "workshop", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 7, maxLevel = 17},
+                    new BuildingCount { id = "archertower", count = 8, maxLevel = 17},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 12},
+                    new BuildingCount { id = "airdefense", count = 4, maxLevel = 10},
+                    new BuildingCount { id = "wizardtower", count = 5, maxLevel = 11},
+                    new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
+                    new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 10},
+                    new BuildingCount { id = "bombtower", count = 2, maxLevel = 7},
+                    new BuildingCount { id = "xbow", count = 4, maxLevel = 6},
+                    new BuildingCount { id = "infernotower", count = 3, maxLevel = 6},
+                    new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 3},
+                    new BuildingCount { id = "wall", count = 300, maxLevel = 13},
+                    new BuildingCount { id = "boomb", count = 6, maxLevel = 8},
+                    new BuildingCount { id = "springtrap", count = 8, maxLevel = 5},
+                    new BuildingCount { id = "airbomb", count = 6, maxLevel = 6},
+                    new BuildingCount { id = "giantbomb", count = 6, maxLevel = 5},
+                    new BuildingCount { id = "seekingairmine", count = 6, maxLevel = 3},
+                    new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
+                    new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 13,
+                buildings = new BuildingCount[]
                 {
-                    level = 12,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
-                        new BuildingCount { id = "goldstorage", count = 4, maxLevel = 13},
-                        new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 13},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 8},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 10},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 14},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 10},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "workshop", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 7, maxLevel = 17},
-                        new BuildingCount { id = "archertower", count = 8, maxLevel = 17},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 12},
-                        new BuildingCount { id = "airdefense", count = 4, maxLevel = 10},
-                        new BuildingCount { id = "wizardtower", count = 5, maxLevel = 11},
-                        new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
-                        new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 10},
-                        new BuildingCount { id = "bombtower", count = 2, maxLevel = 7},
-                        new BuildingCount { id = "xbow", count = 4, maxLevel = 6},
-                        new BuildingCount { id = "infernotower", count = 3, maxLevel = 6},
-                        new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 3},
-                        new BuildingCount { id = "wall", count = 300, maxLevel = 13},
-                        new BuildingCount { id = "boomb", count = 6, maxLevel = 8},
-                        new BuildingCount { id = "springtrap", count = 8, maxLevel = 5},
-                        new BuildingCount { id = "airbomb", count = 6, maxLevel = 6},
-                        new BuildingCount { id = "giantbomb", count = 6, maxLevel = 5},
-                        new BuildingCount { id = "seekingairmine", count = 6, maxLevel = 3},
-                        new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
-                        new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
+                    new BuildingCount { id = "goldstorage", count = 4, maxLevel = 14},
+                    new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 14},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 8},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 11},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 11},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "workshop", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "championaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 7, maxLevel = 19},
+                    new BuildingCount { id = "archertower", count = 8, maxLevel = 19},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 13},
+                    new BuildingCount { id = "airdefense", count = 4, maxLevel = 11},
+                    new BuildingCount { id = "wizardtower", count = 5, maxLevel = 13},
+                    new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
+                    new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 12},
+                    new BuildingCount { id = "bombtower", count = 2, maxLevel = 8},
+                    new BuildingCount { id = "xbow", count = 4, maxLevel = 8},
+                    new BuildingCount { id = "infernotower", count = 3, maxLevel = 7},
+                    new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "scattershot", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 300, maxLevel = 14},
+                    new BuildingCount { id = "boomb", count = 7, maxLevel = 9},
+                    new BuildingCount { id = "springtrap", count = 9, maxLevel = 5},
+                    new BuildingCount { id = "airbomb", count = 6, maxLevel = 8},
+                    new BuildingCount { id = "giantbomb", count = 6, maxLevel = 7},
+                    new BuildingCount { id = "seekingairmine", count = 7, maxLevel = 4},
+                    new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
+                    new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 14,
+                buildings = new BuildingCount[]
                 {
-                    level = 13,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
-                        new BuildingCount { id = "goldstorage", count = 4, maxLevel = 14},
-                        new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 14},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 8},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 11},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 11},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "workshop", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "championaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 7, maxLevel = 19},
-                        new BuildingCount { id = "archertower", count = 8, maxLevel = 19},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 13},
-                        new BuildingCount { id = "airdefense", count = 4, maxLevel = 11},
-                        new BuildingCount { id = "wizardtower", count = 5, maxLevel = 13},
-                        new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
-                        new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 12},
-                        new BuildingCount { id = "bombtower", count = 2, maxLevel = 8},
-                        new BuildingCount { id = "xbow", count = 4, maxLevel = 8},
-                        new BuildingCount { id = "infernotower", count = 3, maxLevel = 7},
-                        new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "scattershot", count = 2, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 300, maxLevel = 14},
-                        new BuildingCount { id = "boomb", count = 7, maxLevel = 9},
-                        new BuildingCount { id = "springtrap", count = 9, maxLevel = 5},
-                        new BuildingCount { id = "airbomb", count = 6, maxLevel = 8},
-                        new BuildingCount { id = "giantbomb", count = 6, maxLevel = 7},
-                        new BuildingCount { id = "seekingairmine", count = 7, maxLevel = 4},
-                        new BuildingCount { id = "skeletontrap", count = 3, maxLevel = 4},
-                        new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
-                    }
-                },
-                new BuildingAvailability
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
+                    new BuildingCount { id = "goldstorage", count = 4, maxLevel = 15},
+                    new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 15},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 10},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 11},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 16},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 12},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "workshop", count = 1, maxLevel = 6},
+                    new BuildingCount { id = "pethouse", count = 1, maxLevel = 4},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "championaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 7, maxLevel = 20},
+                    new BuildingCount { id = "archertower", count = 8, maxLevel = 20},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 14},
+                    new BuildingCount { id = "airdefense", count = 4, maxLevel = 12},
+                    new BuildingCount { id = "wizardtower", count = 5, maxLevel = 14},
+                    new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
+                    new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 13},
+                    new BuildingCount { id = "bombtower", count = 2, maxLevel = 9},
+                    new BuildingCount { id = "xbow", count = 4, maxLevel = 9},
+                    new BuildingCount { id = "infernotower", count = 3, maxLevel = 8},
+                    new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "scattershot", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "wall", count = 325, maxLevel = 15},
+                    new BuildingCount { id = "boomb", count = 8, maxLevel = 10},
+                    new BuildingCount { id = "springtrap", count = 9, maxLevel = 5},
+                    new BuildingCount { id = "airbomb", count = 7, maxLevel = 9},
+                    new BuildingCount { id = "giantbomb", count = 7, maxLevel = 8},
+                    new BuildingCount { id = "seekingairmine", count = 8, maxLevel = 4},
+                    new BuildingCount { id = "skeletontrap", count = 4, maxLevel = 4},
+                    new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
+                }
+            },
+            new BuildingAvailability
+            {
+                level = 15,
+                buildings = new BuildingCount[]
                 {
-                    level = 14,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
-                        new BuildingCount { id = "goldstorage", count = 4, maxLevel = 15},
-                        new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 15},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 10},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 11},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 16},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 12},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "workshop", count = 1, maxLevel = 6},
-                        new BuildingCount { id = "pethouse", count = 1, maxLevel = 4},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "championaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 7, maxLevel = 20},
-                        new BuildingCount { id = "archertower", count = 8, maxLevel = 20},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 14},
-                        new BuildingCount { id = "airdefense", count = 4, maxLevel = 12},
-                        new BuildingCount { id = "wizardtower", count = 5, maxLevel = 14},
-                        new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
-                        new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 13},
-                        new BuildingCount { id = "bombtower", count = 2, maxLevel = 9},
-                        new BuildingCount { id = "xbow", count = 4, maxLevel = 9},
-                        new BuildingCount { id = "infernotower", count = 3, maxLevel = 8},
-                        new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "scattershot", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "wall", count = 325, maxLevel = 15},
-                        new BuildingCount { id = "boomb", count = 8, maxLevel = 10},
-                        new BuildingCount { id = "springtrap", count = 9, maxLevel = 5},
-                        new BuildingCount { id = "airbomb", count = 7, maxLevel = 9},
-                        new BuildingCount { id = "giantbomb", count = 7, maxLevel = 8},
-                        new BuildingCount { id = "seekingairmine", count = 8, maxLevel = 4},
-                        new BuildingCount { id = "skeletontrap", count = 4, maxLevel = 4},
-                        new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
-                    }
-                },
-                new BuildingAvailability
-                {
-                    level = 15,
-                    buildings = new BuildingCount[]
-                    {
-                        new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
-                        new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
-                        new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
-                        new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
-                        new BuildingCount { id = "goldstorage", count = 4, maxLevel = 16},
-                        new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 16},
-                        new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 10},
-                        new BuildingCount { id = "clancastle", count = 1, maxLevel = 11},
-                        new BuildingCount { id = "armycamp", count = 4, maxLevel = 12},
-                        new BuildingCount { id = "barracks", count = 1, maxLevel = 16},
-                        new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
-                        new BuildingCount { id = "laboratory", count = 1, maxLevel = 13},
-                        new BuildingCount { id = "spellfactory", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "workshop", count = 1, maxLevel = 7},
-                        new BuildingCount { id = "pethouse", count = 1, maxLevel = 8},
-                        new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "championaltar", count = 1, maxLevel = 1},
-                        new BuildingCount { id = "cannon", count = 7, maxLevel = 21},
-                        new BuildingCount { id = "archertower", count = 8, maxLevel = 21},
-                        new BuildingCount { id = "mortor", count = 4, maxLevel = 15},
-                        new BuildingCount { id = "airdefense", count = 4, maxLevel = 13},
-                        new BuildingCount { id = "wizardtower", count = 5, maxLevel = 15},
-                        new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
-                        new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 13},
-                        new BuildingCount { id = "bombtower", count = 2, maxLevel = 10},
-                        new BuildingCount { id = "xbow", count = 4, maxLevel = 10},
-                        new BuildingCount { id = "infernotower", count = 3, maxLevel = 9},
-                        new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 5},
-                        new BuildingCount { id = "scattershot", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "spelltower", count = 2, maxLevel = 3},
-                        new BuildingCount { id = "monolith", count = 1, maxLevel = 2},
-                        new BuildingCount { id = "wall", count = 325, maxLevel = 16},
-                        new BuildingCount { id = "boomb", count = 8, maxLevel = 11},
-                        new BuildingCount { id = "springtrap", count = 9, maxLevel = 5},
-                        new BuildingCount { id = "airbomb", count = 7, maxLevel = 10},
-                        new BuildingCount { id = "giantbomb", count = 7, maxLevel = 8},
-                        new BuildingCount { id = "seekingairmine", count = 8, maxLevel = 4},
-                        new BuildingCount { id = "skeletontrap", count = 4, maxLevel = 4},
-                        new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
-                    }
-                },
-            };
+                    new BuildingCount { id = "townhall", count = 1, maxLevel = 15},
+                    new BuildingCount { id = "buildershut", count = 5, maxLevel = 1},
+                    new BuildingCount { id = "goldmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "elixirmine", count = 7, maxLevel = 15},
+                    new BuildingCount { id = "darkelixirmine", count = 3, maxLevel = 9},
+                    new BuildingCount { id = "goldstorage", count = 4, maxLevel = 16},
+                    new BuildingCount { id = "elixirstorage", count = 4, maxLevel = 16},
+                    new BuildingCount { id = "darkelixirstorage", count = 1, maxLevel = 10},
+                    new BuildingCount { id = "clancastle", count = 1, maxLevel = 11},
+                    new BuildingCount { id = "armycamp", count = 4, maxLevel = 12},
+                    new BuildingCount { id = "barracks", count = 1, maxLevel = 16},
+                    new BuildingCount { id = "darkbarracks", count = 1, maxLevel = 9},
+                    new BuildingCount { id = "laboratory", count = 1, maxLevel = 13},
+                    new BuildingCount { id = "spellfactory", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "darkspellfactory", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "workshop", count = 1, maxLevel = 7},
+                    new BuildingCount { id = "pethouse", count = 1, maxLevel = 8},
+                    new BuildingCount { id = "kingaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "qeenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "wardenaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "championaltar", count = 1, maxLevel = 1},
+                    new BuildingCount { id = "cannon", count = 7, maxLevel = 21},
+                    new BuildingCount { id = "archertower", count = 8, maxLevel = 21},
+                    new BuildingCount { id = "mortor", count = 4, maxLevel = 15},
+                    new BuildingCount { id = "airdefense", count = 4, maxLevel = 13},
+                    new BuildingCount { id = "wizardtower", count = 5, maxLevel = 15},
+                    new BuildingCount { id = "airsweeper", count = 2, maxLevel = 7},
+                    new BuildingCount { id = "hiddentesla", count = 5, maxLevel = 13},
+                    new BuildingCount { id = "bombtower", count = 2, maxLevel = 10},
+                    new BuildingCount { id = "xbow", count = 4, maxLevel = 10},
+                    new BuildingCount { id = "infernotower", count = 3, maxLevel = 9},
+                    new BuildingCount { id = "eagleartillery", count = 1, maxLevel = 5},
+                    new BuildingCount { id = "scattershot", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "spelltower", count = 2, maxLevel = 3},
+                    new BuildingCount { id = "monolith", count = 1, maxLevel = 2},
+                    new BuildingCount { id = "wall", count = 325, maxLevel = 16},
+                    new BuildingCount { id = "boomb", count = 8, maxLevel = 11},
+                    new BuildingCount { id = "springtrap", count = 9, maxLevel = 5},
+                    new BuildingCount { id = "airbomb", count = 7, maxLevel = 10},
+                    new BuildingCount { id = "giantbomb", count = 7, maxLevel = 8},
+                    new BuildingCount { id = "seekingairmine", count = 8, maxLevel = 4},
+                    new BuildingCount { id = "skeletontrap", count = 4, maxLevel = 4},
+                    new BuildingCount { id = "tornadotrap", count = 1, maxLevel = 3},
+                }
+            },
+        };
 
     }
 }

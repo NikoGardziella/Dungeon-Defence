@@ -15,6 +15,8 @@ namespace DungeonDefence
 		[SerializeField] public TextMeshProUGUI _gemsText = null;
 
 		[SerializeField] public Button _shopButton = null;
+		[SerializeField] public Button _battleButton = null;
+
 
 		[SerializeField] public BuildGrid _grid = null;
 		[SerializeField] public Building[] _buildingPrefabs = null;
@@ -41,19 +43,36 @@ namespace DungeonDefence
 		private void Start()
 		{
 			_shopButton.onClick.AddListener(ShopButtonClicked);
+			_battleButton.onClick.AddListener(BattleButtonClicked);
+
 		}
 
 		private void ShopButtonClicked()
 		{
-			//_active = false;
-			UI_Build.instance.Cancel();
+		//	UI_Build.instance.Cancel();
 			UI_Shop.instance.SetStatus(true);
-			//_elements.SetActive(false);
 			SetStatus(false);
+		}
+
+		private void BattleButtonClicked()
+		{
+			//UI_Build.instance.Cancel();
+			UI_Search.instance.SetStatus(true);
+			SetStatus(false);
+		}
+
+		private void OnLeave()
+		{
+			UI_Build.instance.Cancel();
+
 		}
 
 		public void SetStatus(bool status)
 		{
+			if(!status)
+			{
+				OnLeave();
+			}
 			_active = status;
 			_elements.SetActive(status);
 		}
@@ -69,6 +88,11 @@ namespace DungeonDefence
 				
 			}
 			return null;
+		}
+
+		public void Clear()
+		{
+
 		}
 
 	}

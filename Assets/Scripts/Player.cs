@@ -23,9 +23,18 @@ namespace DungeonDefence
 			UPGRADE = 7,
 			INSTANTBUILD = 8,
 			TRAIN = 9,
-			CANCELTRAIN = 10
+			CANCELTRAIN = 10,
+			BATTLEFIND = 11,
+			BATTLESTART = 12,
+			BATTLEFRAME = 13,
+			BATTLEEND = 14
 		}
 
+
+
+		private bool connected = false;
+		private bool updating = false;
+		private bool _inBattle = false; public static bool inBattle {get {return instance._inBattle; }  set { instance._inBattle = value;  } }
 
 		private void Start()
 		{
@@ -36,10 +45,6 @@ namespace DungeonDefence
 		{
 			_instance = this;
 		}
-
-		private bool connected = false;
-		private bool updating = false;
-
 		
 
 		private float syncTime = 5.0f; //how often sync player data with server
@@ -50,17 +55,21 @@ namespace DungeonDefence
 		{
 			if(connected)
 			{
-				if(timer <= 0)
+				if(!_inBattle)
 				{
-					updating = true;
-					timer = syncTime;
-					SendSyncRequest();
+					if(timer <= 0)
+					{
+						updating = true;
+						timer = syncTime;
+						SendSyncRequest();
+					}
+					else
+					{
+						timer -= Time.deltaTime;
+					}
+					data.nowTime = data.nowTime.AddSeconds(Time.deltaTime);
 				}
-				else
-				{
-					timer -= Time.deltaTime;
-				}
-				data.nowTime = data.nowTime.AddSeconds(Time.deltaTime);
+
 			}
 		}
 
@@ -157,7 +166,7 @@ namespace DungeonDefence
 						if(db ==  UI_Main.instance._grid.buildings[i].data.databaseID)
 						{
 							UI_Main.instance._grid.buildings[i].collecting = false; 
-							UI_Main.instance._grid.buildings[i].data.storage -= collectedAmmount;
+							//UI_Main.instance._grid.buildings[i].data.storage -= collectedAmmount;
 							UI_Main.instance._grid.buildings[i].AdjustUI();
 						}
 					}
@@ -235,6 +244,7 @@ namespace DungeonDefence
 						//UI_BuildingUpgrade.instance.Close();
 					}
 					break;
+
 				case RequestId.CANCELTRAIN:
 					response = packet.ReadInt();
 					if(response == 2)
@@ -252,6 +262,46 @@ namespace DungeonDefence
 						//UI_BuildingUpgrade.instance.Close();
 					}
 					break;
+
+				case RequestId.BATTLEFIND:
+					long targetID = packet.ReadLong();
+					Data.OpponentData opponent = null;
+					if(targetID > 0)
+					{
+						string d = packet.ReadString();
+						opponent = Data.Deserialize<Data.OpponentData>(d);
+					}
+					UI_Search.instance.FindResponded(targetID, opponent);
+					break;
+
+				case RequestId.BATTLESTART:
+					bool matched = packet.ReadBool();
+					bool attack = packet.ReadBool();
+					bool confirmed = matched && attack;
+					List<Data.BattleStartBuildingData> buildings = null;
+					int winTrophies = 0;
+					int loseTrophies = 0;
+					if(confirmed)
+					{
+						winTrophies = packet.ReadInt();
+						loseTrophies = packet.ReadInt();
+						string BattleStartBuildingData = packet.ReadString();
+						buildings = Data.Deserialize<List<Data.BattleStartBuildingData>>(BattleStartBuildingData);
+					}
+					UI_Battle.instance.StartBattleConfirm(confirmed, buildings, winTrophies, loseTrophies);
+					break;
+
+				case RequestId.BATTLEEND:
+					var looted = packet.ReadInt();;
+					int stars = packet.ReadInt();;
+					int unitsDeployed = packet.ReadInt();;
+					int lootedGold = packet.ReadInt();;
+					int lootedElixir = packet.ReadInt();;
+					int lootedDark = packet.ReadInt();;
+					int trophies = packet.ReadInt();;
+					int frame = packet.ReadInt();
+					UI_Battle.instance.BattleEnded(stars, unitsDeployed, lootedGold, lootedElixir, lootedDark, trophies, frame);
+					break;
 			}
 		}
 
@@ -263,9 +313,15 @@ namespace DungeonDefence
 			Sender.TCP_Send(p);
 		}
 
-		private void SyncData(Data.Player player)
+		public void SyncData(Data.Player player)
 		{
 			data = player;
+
+			if(_inBattle)
+			{
+				return ;
+			}
+
 			int gold = 0;
 			int maxGold = 0;
 
@@ -310,7 +366,12 @@ namespace DungeonDefence
 					switch(building.id)
 					{
 						case Data.BuildingID.townhall:
-
+							maxGold += building.data.goldCapacity;
+							gold += building.data.goldStorage;
+							maxElixir += building.data.elixirCapacity;
+							elixir += building.data.elixirStorage;
+							maxDarkElixir += building.data.darkCapacity;
+							darkElixir += building.data.darkStorage;
 							break;
 						case Data.BuildingID.goldmine:
 							if(building.collectButton == null)
@@ -322,8 +383,8 @@ namespace DungeonDefence
 							}
 							break;
 						case Data.BuildingID.goldstorage:
-							maxGold += building.data.capacity;
-							gold += building.data.storage;
+							maxGold += building.data.goldCapacity;
+							gold += building.data.goldStorage;
 							break;
 						case Data.BuildingID.elixirmine:
 							if(building.collectButton == null)
@@ -334,8 +395,8 @@ namespace DungeonDefence
 							}
 							break;
 						case Data.BuildingID.elixirstorage:
-							maxElixir += building.data.capacity;
-							elixir += building.data.storage;
+							maxElixir += building.data.elixirCapacity;
+							elixir += building.data.elixirStorage;
 							break;
 						case Data.BuildingID.darkelixirmine:
 							if(building.collectButton == null)
@@ -346,8 +407,8 @@ namespace DungeonDefence
 							}
 							break;
 						case Data.BuildingID.darkelixirstorage:
-							maxDarkElixir += building.data.capacity;
-							darkElixir += building.data.storage;
+							maxDarkElixir += building.data.darkCapacity;
+							darkElixir += building.data.darkStorage;
 							break;
 					}
 					building.AdjustUI(); 
