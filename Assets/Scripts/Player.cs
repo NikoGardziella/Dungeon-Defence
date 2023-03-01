@@ -1,11 +1,10 @@
 namespace DungeonDefence
 {
-	using System.Collections;
-	using System.Collections.Generic;
-	using UnityEngine;
-	using DevelopersHub.RealtimeNetworking.Client;
+    using System.Collections.Generic;
+    using UnityEngine;
+    using DevelopersHub.RealtimeNetworking.Client;
 
-	public class Player : MonoBehaviour
+    public class Player : MonoBehaviour
 	{
 
 		public Data.Player data = new Data.Player();
@@ -59,9 +58,12 @@ namespace DungeonDefence
 				{
 					if(timer <= 0)
 					{
-						updating = true;
-						timer = syncTime;
-						SendSyncRequest();
+						if(updating == false)
+						{
+							updating = true;
+							timer = syncTime;
+							SendSyncRequest();
+						}
 					}
 					else
 					{
@@ -166,6 +168,18 @@ namespace DungeonDefence
 						if(db ==  UI_Main.instance._grid.buildings[i].data.databaseID)
 						{
 							UI_Main.instance._grid.buildings[i].collecting = false; 
+							switch (UI_Main.instance._grid.buildings[i].id)
+							{
+								case Data.BuildingID.goldmine:
+									UI_Main.instance._grid.buildings[i].data.goldStorage -= collectedAmmount;
+									break;
+								case Data.BuildingID.elixirmine:
+									UI_Main.instance._grid.buildings[i].data.elixirStorage -= collectedAmmount;
+									break;
+								case Data.BuildingID.darkelixirmine:
+									UI_Main.instance._grid.buildings[i].data.darkStorage -= collectedAmmount;
+									break;
+							}
 							//UI_Main.instance._grid.buildings[i].data.storage -= collectedAmmount;
 							UI_Main.instance._grid.buildings[i].AdjustUI();
 						}
@@ -292,7 +306,6 @@ namespace DungeonDefence
 					break;
 
 				case RequestId.BATTLEEND:
-					var looted = packet.ReadInt();;
 					int stars = packet.ReadInt();;
 					int unitsDeployed = packet.ReadInt();;
 					int lootedGold = packet.ReadInt();;
@@ -312,6 +325,14 @@ namespace DungeonDefence
 			p.Write(SystemInfo.deviceUniqueIdentifier);
 			Sender.TCP_Send(p);
 		}
+			[HideInInspector] public int gold = 0;
+			[HideInInspector] public int maxGold = 0;
+
+			[HideInInspector] public int elixir = 0;
+			[HideInInspector] public int maxElixir = 0; 
+			[HideInInspector] public int darkElixir = 0;
+			[HideInInspector] public int maxDarkElixir = 0;
+			[HideInInspector] public int gems = 0;
 
 		public void SyncData(Data.Player player)
 		{
@@ -322,16 +343,13 @@ namespace DungeonDefence
 				return ;
 			}
 
-			int gold = 0;
-			int maxGold = 0;
-
-			int elixir = 0;
-			int maxElixir = 0;
-
-			int darkElixir = 0;
-			int maxDarkElixir = 0;
-
-			int gems = player.gems;
+			gold = 0;
+			maxGold = 0;
+			elixir = 0;
+			maxElixir = 0;
+			darkElixir = 0;
+			maxDarkElixir = 0;
+			gems = player.gems;
 
 			if(player.buildings != null && player.buildings.Count > 0)
 			{

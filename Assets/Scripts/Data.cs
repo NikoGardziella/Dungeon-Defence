@@ -13,6 +13,8 @@ namespace DungeonDefence
         public const int minElixirCollect = 10;
         public const int minDarkElixirCollect = 10;
         public static readonly int battleDuration = 120;
+        public static readonly int battlePreDuration = 30;
+
         public static readonly int gridSize = 45;
         public static readonly float gridCellSize = 1;
         public static readonly float battleFrameRate = 0.1f;

@@ -293,7 +293,7 @@ namespace DungeonDefence
                             starCallback.Invoke();
                         }
                     }
-                    int p = (int)Math.Floor(percentage);
+                    int p = (int)Math.Floor(percentage * 100d);
                     if(p >= 50 && !fiftySatar)
                     {
                         fiftySatar = true;

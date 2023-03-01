@@ -71,7 +71,7 @@ namespace DungeonDefence
 					case Data.BuildingID.goldmine:
 						if(data.goldStorage >= Data.minGoldCollect)
 						{
-							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false);
+							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false && Player.instance.gold < Player.instance.maxGold);
 						}
 						else
 						{
@@ -83,7 +83,7 @@ namespace DungeonDefence
 					case Data.BuildingID.elixirmine:
 						if(data.elixirStorage >= Data.minElixirCollect)
 						{
-							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false);
+							collectButton.gameObject.SetActive(!collecting && data.isConstructing == false && Player.instance.elixir < Player.instance.maxElixir);
 						}
 						else
 						{
@@ -93,7 +93,7 @@ namespace DungeonDefence
 						case Data.BuildingID.darkelixirmine:
 						if(data.darkStorage >= Data.minDarkElixirCollect)
 						{
-							collectButton.gameObject.SetActive(!collecting);
+							collectButton.gameObject.SetActive(!!collecting && data.isConstructing == false && Player.instance.darkElixir < Player.instance.maxDarkElixir);
 						}
 						else
 						{

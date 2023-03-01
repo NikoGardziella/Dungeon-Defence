@@ -48,6 +48,7 @@ namespace DungeonDefence
 
         public void Select()
         {
+            Debug.Log("unit clicked in battleunit");
             UI_Battle.instance.UnitSelected(id);
         }
 
