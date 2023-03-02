@@ -46,7 +46,8 @@ namespace DungeonDefence
 			{
 				if (_unit.trainTime <= 0 || _unit.trainedTime >= _unit.trainTime)
 				{
-					  UI_Train.instance.RemoveTrainingItem(index);
+					_bar.fillAmount = 1f;
+					Player.instance.RushSyncRequest();
 				}
 				else
 				{

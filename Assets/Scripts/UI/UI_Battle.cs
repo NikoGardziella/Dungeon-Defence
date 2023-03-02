@@ -161,7 +161,7 @@ namespace DungeonDefence
 				battleBuildings.Add(building);
 			}
 
-			_timerText.text = TimeSpan.FromSeconds(Data.battlePreDuration).ToString(@"mm\:ss");
+			_timerText.text = TimeSpan.FromSeconds(Data.battlePrepDuration).ToString(@"mm\:ss");
 
 			ClearBuildingsOnGrid();
 			ClearUnitsOnGrid();
@@ -476,13 +476,13 @@ namespace DungeonDefence
 				else if(readyToStart)
 				{
 					TimeSpan span = DateTime.Now - baseTime;
-					if(span.TotalSeconds >= Data.battlePreDuration)
+					if(span.TotalSeconds >= Data.battlePrepDuration)
 					{
 						StartBattle();
 					}
 					else
 					{
-						_timerText.text = TimeSpan.FromSeconds(Data.battlePreDuration - span.TotalSeconds).ToString(@"mm\:ss");
+						_timerText.text = TimeSpan.FromSeconds(Data.battlePrepDuration - span.TotalSeconds).ToString(@"mm\:ss");
 					}
 
 				}

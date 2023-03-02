@@ -71,6 +71,7 @@ namespace DungeonDefence
 		{
 			if(Building.buildInstance != null && UI_Main.instance._grid.CanPlaceBuilding(Building.buildInstance, Building.buildInstance.currentX,Building.buildInstance.currentY))
 			{
+				
 				Packet packet = new Packet();
 				packet.Write((int)Player.RequestId.BUILD);
 				packet.Write(SystemInfo.deviceUniqueIdentifier);
@@ -79,6 +80,7 @@ namespace DungeonDefence
 				packet.Write(Building.buildInstance.currentY);
 				Sender.TCP_Send(packet);
 				Cancel();
+				
 			}
 		}
 		public void Cancel()

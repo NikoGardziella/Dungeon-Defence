@@ -177,6 +177,10 @@ namespace DungeonDefence
 							{
 								UI_Train.instance.SetStatus(true);
 							}
+							else if(results[i].gameObject == UI_BuildingOptions.instance.clanButton.gameObject)
+							{
+								UI_Clan.instance.Open();
+							}
 						}
 						
 						Building.selectedInstance.Deselected();

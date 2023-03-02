@@ -73,6 +73,11 @@ namespace DungeonDefence
 			{
 				OnLeave();
 			}
+			else
+			{
+				Player.instance.RushSyncRequest();
+			}
+
 			_active = status;
 			_elements.SetActive(status);
 		}

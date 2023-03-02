@@ -228,7 +228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bb4c2f48e54d4040965c48ac6b59f7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  id: 11
+  id: 12
   collectButton: {fileID: 0}
   collecting: 0
   buildBar: {fileID: 0}

@@ -27,7 +27,14 @@ namespace DungeonDefence
 			BATTLEFIND = 11,
 			BATTLESTART = 12,
 			BATTLEFRAME = 13,
-			BATTLEEND = 14
+			BATTLEEND = 14,
+			OPENCLAN = 15,
+			GETCLANS = 16,
+			JOINCLAN = 17,
+			LEAVECLAN = 18,
+			EDITCLAN = 19,
+			CREATECLAN = 20
+
 		}
 
 
@@ -314,6 +321,44 @@ namespace DungeonDefence
 					int trophies = packet.ReadInt();;
 					int frame = packet.ReadInt();
 					UI_Battle.instance.BattleEnded(stars, unitsDeployed, lootedGold, lootedElixir, lootedDark, trophies, frame);
+					break;
+
+				case RequestId.OPENCLAN:
+					bool haveClan = packet.ReadBool();
+					Data.Clan clan = null;
+					List<Data.ClanMember> warMembers = null;
+					if (haveClan)
+					{
+						string clanData = packet.ReadString();
+						clan = Data.Deserialize<Data.Clan>(clanData);
+						if(clan.war.id > 0)
+						{
+							string warData = packet.ReadString();
+							warMembers = Data.Deserialize<List<Data.ClanMember>>(warData);
+						}
+					}
+					UI_Clan.instance.ClanOpen(clan, warMembers);
+					break;
+				case RequestId.GETCLANS:
+					string clansData = packet.ReadString();
+					Data.ClansList clans = Data.Deserialize<Data.ClansList>(clansData);
+					UI_Clan.instance.ClansListOpen(clans);
+					break;
+				case RequestId.CREATECLAN:
+					response = packet.ReadInt();
+					UI_Clan.instance.CreateResponse(response);
+					break;
+				case RequestId.JOINCLAN:
+					response = packet.ReadInt();
+					UI_Clan.instance.JoinResponse(response);
+					break;
+				case RequestId.LEAVECLAN:
+					response = packet.ReadInt();
+					UI_Clan.instance.LeaveResponse(response);
+					break;
+				case RequestId.EDITCLAN:
+					response = packet.ReadInt();
+					UI_Clan.instance.EditResponse(response);
 					break;
 			}
 			}
