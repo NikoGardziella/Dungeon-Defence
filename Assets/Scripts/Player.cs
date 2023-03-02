@@ -1,8 +1,9 @@
 namespace DungeonDefence
 {
-    using System.Collections.Generic;
-    using UnityEngine;
-    using DevelopersHub.RealtimeNetworking.Client;
+	using System.Collections.Generic;
+	using UnityEngine;
+	using DevelopersHub.RealtimeNetworking.Client;
+    using UnityEngine.SceneManagement;
 
     public class Player : MonoBehaviour
 	{
@@ -38,7 +39,7 @@ namespace DungeonDefence
 		private void Start()
 		{
 			RealtimeNetworking.OnPacketReceived += ReceivePacket;
-			ConnectToServer();
+			InitializeConnection();
 		}
 		private void Awake()
 		{
@@ -78,7 +79,10 @@ namespace DungeonDefence
 
 		private void ReceivePacket(Packet packet)
 		{
-			int id = packet.ReadInt();
+
+			try
+			{
+				int id = packet.ReadInt();
 			long databaseID = 0;
 			int response = 0;
 			switch ((RequestId)id)
@@ -316,6 +320,13 @@ namespace DungeonDefence
 					UI_Battle.instance.BattleEnded(stars, unitsDeployed, lootedGold, lootedElixir, lootedDark, trophies, frame);
 					break;
 			}
+			}
+			catch (System.Exception ex)
+			{
+				Debug.Log(ex.Message);				
+			}
+
+			
 		}
 
 		public void SendSyncRequest()
@@ -453,36 +464,37 @@ namespace DungeonDefence
 		}
 
 
-		private void ConnectionResponse(bool succesfull)
+		private void InitializeConnection()
 		{
-			if(succesfull)
-			{
-				RealtimeNetworking.OnDisconnectedFromServer += DisconnectedFromServer;
-				string device = SystemInfo.deviceUniqueIdentifier;
-				Packet packet = new Packet();
-				packet.Write((int)RequestId.AUTH);
-				packet.Write(device);
-				Sender.TCP_Send(packet);
-			}
-			else
-			{
-
-			}
-			RealtimeNetworking.OnConnectingToServerResult -= ConnectionResponse;
-
+			RealtimeNetworking.OnDisconnectedFromServer += DisconnectedFromServer;
+			string device = SystemInfo.deviceUniqueIdentifier;
+			Packet packet = new Packet();
+			packet.Write((int)RequestId.AUTH);
+			packet.Write(device);
+			Sender.TCP_Send(packet);
 		}
 
-		private void ConnectToServer()
-		{
-			RealtimeNetworking.OnConnectingToServerResult += ConnectionResponse;
-			RealtimeNetworking.Connect();
-		
-		}
+	
 
 		private void DisconnectedFromServer()
 		{
+			ThreadDispatcher.instance.Enqueue(() => Disconnected() );
+		}
+
+		private void Disconnected()
+		{
 			connected = false;
 			RealtimeNetworking.OnDisconnectedFromServer -= DisconnectedFromServer;
+			MessageBox.Open(0, 0.8f, false, MessageResponded, new string[] { "Failed to connect to server. Please check you internet connection and try again." }, new string[] { "Try Again" });
+
+		}
+
+		private void MessageResponded(int layoutIndex, int buttonIndex)
+		{
+			if (layoutIndex == 0)
+			{
+				SceneManager.LoadSceneAsync(0);
+			}
 		}
 	}
 }

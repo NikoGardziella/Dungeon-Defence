@@ -74,6 +74,15 @@ namespace DungeonDefence
 		private void CloseEndPanel()
 		{
 		   Close();
+
+		}
+
+		private void MessageResponded(int layoutIndex, int buttonIndex)
+		{
+			if (layoutIndex == 1)
+			{
+				MessageBox.Close();
+			}
 		}
 
 
@@ -81,6 +90,7 @@ namespace DungeonDefence
 		{
 			Player.instance.SyncData(Player.instance.data);
 			isStarted = false;
+			readyToStart = false;
 			SetStatus(false);
 			UI_Main.instance.SetStatus(true);
 		}
@@ -99,6 +109,7 @@ namespace DungeonDefence
 		public void NoTarget()
 		{
 			Close();
+			MessageBox.Open(1, 0.8f, true, MessageResponded, new string[] { "There is no opponent at the moment. Please try again later." }, new string[] { "OK" });
 		}
 
 		public void Display(List<Data.Building> buildings, long defender)

@@ -21,7 +21,7 @@ namespace DungeonDefence
         private AStarSearch search = null;
         private AStarSearch unlimitedSearch = null;
         private List<Tile> blockedTiles = new List<Tile>();
-        private List<Projectile> projectiles = new List<Projectile>();
+        public List<Projectile> projectiles = new List<Projectile>();
         public double percentage = 0;
         public bool end = false;
         public bool surrender = false;
@@ -35,6 +35,7 @@ namespace DungeonDefence
 
         public int winTrophies = 0;
         public int loseTrophies = 0;
+        private int projectileCount = 0;
 
         public (int, int, int, int, int, int) GetlootedResources()
         {
@@ -87,13 +88,15 @@ namespace DungeonDefence
         public delegate void FloatCallback(long index, float value);
         public delegate void DoubleCallback(long index, double value);
         public delegate void BlankCallback();
+        public delegate void ProjectileCallback(int id, BattleVector2 current, BattleVector2 target);
+        public ProjectileCallback projectileCallback = null;
 
         public int GetTrophies()
         {
             int s = stars;
-            if(s > 0)
+            if (s > 0)
             {
-                if(s >= 3)
+                if (s >= 3)
                 {
                     return winTrophies;
                 }
@@ -111,12 +114,15 @@ namespace DungeonDefence
 
         public class Projectile
         {
+            public int id = 0;
             public int target = -1;
             public float damage = 0;
             public float splash = 0;
             public float timer = 0;
             public TargetType type = TargetType.unit;
             public bool heal = false;
+            public bool follow = true;
+            public BattleVector2 position = new BattleVector2();
         }
 
         public enum TargetType
@@ -194,13 +200,13 @@ namespace DungeonDefence
             {
                 if (health <= 0) { return; }
                 health -= damage;
-                if(damageCallback != null)
+                if (damageCallback != null)
                 {
                     damageCallback.Invoke(unit.databaseID, damage);
                 }
                 if (health < 0) { health = 0; }
                 if (health <= 0)
-                {                    
+                {
                     if (dieCallback != null)
                     {
                         dieCallback.Invoke(unit.databaseID);
@@ -277,7 +283,7 @@ namespace DungeonDefence
                             }
                         }
                     }
-                    if(this.percentage > 0)
+                    if (this.percentage > 0)
                     {
                         percentage += this.percentage;
                     }
@@ -285,16 +291,16 @@ namespace DungeonDefence
                     {
                         destroyCallback.Invoke(building.databaseID, this.percentage);
                     }
-                    if(building.id == Data.BuildingID.townhall && !hallStar)
+                    if (building.id == Data.BuildingID.townhall && !hallStar)
                     {
                         hallStar = true;
-                        if(starCallback != null)
+                        if (starCallback != null)
                         {
                             starCallback.Invoke();
                         }
                     }
                     int p = (int)Math.Floor(percentage * 100d);
-                    if(p >= 50 && !fiftySatar)
+                    if (p >= 50 && !fiftySatar)
                     {
                         fiftySatar = true;
                         if (starCallback != null)
@@ -334,7 +340,7 @@ namespace DungeonDefence
             public FloatCallback healCallback = null;
         }
 
-        public void Initialize(List<Building> buildings, DateTime time, AttackCallback attackCallback = null, DoubleCallback destroyCallback = null, FloatCallback damageCallback = null, BlankCallback starGained = null) // ok
+        public void Initialize(List<Building> buildings, DateTime time, AttackCallback attackCallback = null, DoubleCallback destroyCallback = null, FloatCallback damageCallback = null, BlankCallback starGained = null, ProjectileCallback projectileCallback = null)
         {
             baseTime = time;
             duration = Data.battleDuration;
@@ -345,8 +351,9 @@ namespace DungeonDefence
             townhallDestroyed = false;
             completelyDestroyed = false;
             end = false;
+            projectileCount = 0;
             surrender = false;
-
+            this.projectileCallback = projectileCallback;
             _buildings = buildings;
             grid = new Grid(Data.gridSize, Data.gridSize);
             unlimitedGrid = new Grid(Data.gridSize, Data.gridSize);
@@ -368,13 +375,13 @@ namespace DungeonDefence
                 int startY = _buildings[i].building.y;
                 int endY = _buildings[i].building.y + _buildings[i].building.rows;
 
-                if(_buildings[i].building.id != Data.BuildingID.wall && _buildings[i].building.columns > 1 && _buildings[i].building.rows > 1)
+                if (_buildings[i].building.id != Data.BuildingID.wall && _buildings[i].building.columns > 1 && _buildings[i].building.rows > 1)
                 {
                     startX++;
                     startY++;
                     endX--;
                     endY--;
-                    if(endX <= startX || endY <= startY)
+                    if (endX <= startX || endY <= startY)
                     {
                         continue;
                     }
@@ -395,7 +402,7 @@ namespace DungeonDefence
         {
             for (int i = 0; i < _units.Count; i++)
             {
-                if(_units[i].health > 0)
+                if (_units[i].health > 0)
                 {
                     return true;
                 }
@@ -420,7 +427,7 @@ namespace DungeonDefence
         {
             for (int i = 0; i < _buildings.Count; i++)
             {
-                if(_buildings[i].health <= 0)
+                if (_buildings[i].health <= 0)
                 {
                     continue;
                 }
@@ -435,7 +442,7 @@ namespace DungeonDefence
                 {
                     for (int y2 = startY; y2 < endY; y2++)
                     {
-                        if(x == x2 && y == y2)
+                        if (x == x2 && y == y2)
                         {
                             return false;
                         }
@@ -476,6 +483,7 @@ namespace DungeonDefence
                 {
                     unitsDeployed += _unitsToAdd[i].unit.unit.hosing;
                     _units.Insert(addIndex, _unitsToAdd[i].unit);
+                    addIndex++;
                     if (_unitsToAdd[i].callback != null)
                     {
                         _unitsToAdd[i].callback.Invoke(_unitsToAdd[i].unit.unit.databaseID);
@@ -565,12 +573,12 @@ namespace DungeonDefence
                     // If the building's target is dead or not in range then remove it as target
                     _buildings[index].target = -1;
                 }
-                else 
-                { 
+                else
+                {
                     // Building has a target
                     _buildings[index].attackTimer += deltaTime;
                     int attacksCount = (int)Math.Floor(_buildings[index].attackTimer / _buildings[index].building.speed);
-                    if(attacksCount > 0)
+                    if (attacksCount > 0)
                     {
                         _buildings[index].attackTimer -= (attacksCount * _buildings[index].building.speed);
                         for (int i = 1; i <= attacksCount; i++)
@@ -584,7 +592,15 @@ namespace DungeonDefence
                                 projectile.timer = distance / _buildings[index].building.rangedSpeed;
                                 projectile.damage = _buildings[index].building.damage;
                                 projectile.splash = _buildings[index].building.splashRange;
+                                projectile.follow = true;
+                                projectile.position = _buildings[index].worldCenterPosition;
+                                projectileCount++;
+                                projectile.id = projectileCount;
                                 projectiles.Add(projectile);
+                                if(projectileCallback != null)
+                                {
+                                    projectileCallback.Invoke(projectile.id, _buildings[index].worldCenterPosition, _units[_buildings[index].target].position);
+                                }
                             }
                             else
                             {
@@ -656,7 +672,7 @@ namespace DungeonDefence
             float distance = BattleVector2.Distance(_buildings[buildingIndex].worldCenterPosition, _units[unitIndex].position);
             if (distance <= _buildings[buildingIndex].building.radius)
             {
-                if(_buildings[buildingIndex].building.blindRange > 0 && distance <= _buildings[buildingIndex].building.blindRange)
+                if (_buildings[buildingIndex].building.blindRange > 0 && distance <= _buildings[buildingIndex].building.blindRange)
                 {
                     return false;
                 }
@@ -667,7 +683,7 @@ namespace DungeonDefence
 
         private void HandleUnit(int index, double deltaTime)
         {
-            if(_units[index].unit.id == Data.UnitID.healer)
+            if (_units[index].unit.id == Data.UnitID.healer)
             {
                 if (_units[index].target >= 0 && _units[_units[index].target].health <= 0 || _units[_units[index].target].health >= _units[_units[index].target].unit.health)
                 {
@@ -689,8 +705,16 @@ namespace DungeonDefence
                             projectile.target = _units[index].target;
                             projectile.timer = distance / _units[index].unit.rangedSpeed;
                             projectile.damage = _units[index].unit.damage;
+                            projectile.follow = true;
+                            projectile.position = _units[index].position;
                             projectile.heal = true;
+                            projectileCount++;
+                            projectile.id = projectileCount;
                             projectiles.Add(projectile);
+                            if (projectileCallback != null)
+                            {
+                                projectileCallback.Invoke(projectile.id, _units[index].position, _units[_units[index].target].position);
+                            }
                         }
                         else
                         {
@@ -769,7 +793,7 @@ namespace DungeonDefence
                 {
                     if (_buildings[_units[index].target].health > 0)
                     {
-                        if(_buildings[_units[index].target].building.id == Data.BuildingID.wall && _units[index].mainTarget >= 0 && _buildings[_units[index].mainTarget].health <= 0)
+                        if (_buildings[_units[index].target].building.id == Data.BuildingID.wall && _units[index].mainTarget >= 0 && _buildings[_units[index].mainTarget].health <= 0)
                         {
                             _units[index].target = -1;
                         }
@@ -790,7 +814,7 @@ namespace DungeonDefence
                                         case Data.BuildingID.elixirstorage:
                                         case Data.BuildingID.darkelixirmine:
                                         case Data.BuildingID.darkelixirstorage:
-                                            if(_units[index].unit.priority != Data.TargetPriority.resources)
+                                            if (_units[index].unit.priority != Data.TargetPriority.resources)
                                             {
                                                 multiplier = _units[index].unit.priorityMultiplier;
                                             }
@@ -828,7 +852,15 @@ namespace DungeonDefence
                                         projectile.target = _units[index].target;
                                         projectile.timer = distance / _units[index].unit.rangedSpeed;
                                         projectile.damage = _units[index].unit.damage * multiplier;
+                                        projectile.follow = true;
+                                        projectile.position = _units[index].position;
+                                        projectileCount++;
+                                        projectile.id = projectileCount;
                                         projectiles.Add(projectile);
+                                        if (projectileCallback != null)
+                                        {
+                                            projectileCallback.Invoke(projectile.id, _units[index].position, _buildings[_units[index].target].worldCenterPosition);
+                                        }
                                     }
                                     else
                                     {
@@ -872,18 +904,18 @@ namespace DungeonDefence
             // TODO: Larger mass of units is priority
             for (int i = 0; i < _units.Count; i++)
             {
-                if(_units[i].health <= 0 || i == index || _units[i].health >= _units[i].unit.health || _units[i].unit.movement == Data.UnitMoveType.fly)
+                if (_units[i].health <= 0 || i == index || _units[i].health >= _units[i].unit.health || _units[i].unit.movement == Data.UnitMoveType.fly)
                 {
                     continue;
                 }
                 float d = BattleVector2.Distance(_units[i].position, _units[index].position);
-                if(d < distance)
+                if (d < distance)
                 {
                     target = i;
                     distance = d;
                 }
             }
-            if(target >= 0)
+            if (target >= 0)
             {
                 _units[index].AssignHealerTarget(target, distance + Data.gridCellSize);
             }
@@ -899,8 +931,8 @@ namespace DungeonDefence
                 priority = Data.TargetPriority.all;
             }
             for (int i = 0; i < _buildings.Count; i++)
-            { 
-                if(_buildings[i].health <= 0 || _buildings[i].building.id == Data.BuildingID.wall || priority != _units[index].unit.priority || !IsBuildingCanBeAttacked(_buildings[i].building.id))
+            {
+                if (_buildings[i].health <= 0 || _buildings[i].building.id == Data.BuildingID.wall || !IsBuildingCanBeAttacked(_buildings[i].building.id))
                 {
                     continue;
                 }
@@ -971,10 +1003,6 @@ namespace DungeonDefence
                 {
                     AssignTarget(index, ref temp, priority == Data.TargetPriority.walls);
                 }
-                else
-                {
-                    return;
-                }
             }
         }
 
@@ -983,7 +1011,7 @@ namespace DungeonDefence
             if (wallsPriority)
             {
                 var wallPath = GetPathToWall(index, ref targets);
-                if(wallPath.Item1 >= 0)
+                if (wallPath.Item1 >= 0)
                 {
                     _units[index].AssignTarget(wallPath.Item1, wallPath.Item2);
                     return;
@@ -1037,7 +1065,7 @@ namespace DungeonDefence
                         }
                     }
                     Path path = new Path();
-                    if(path.Create(ref unlimitedSearch, unitGridPosition, new BattleVector2Int(_buildings[target.Key].building.x, _buildings[target.Key].building.y)))
+                    if (path.Create(ref unlimitedSearch, unitGridPosition, new BattleVector2Int(_buildings[target.Key].building.x, _buildings[target.Key].building.y)))
                     {
                         path.length = GetPathLength(path.points);
                         for (int i = 0; i < path.points.Count; i++)
@@ -1075,7 +1103,7 @@ namespace DungeonDefence
             }
 
             BattleVector2Int unitGridPosition = WorldToGridPosition(_units[unitIndex].position);
-            
+
             // Get the x and y list of the building's surrounding tiles
             List<int> columns = new List<int>();
             List<int> rows = new List<int>();
@@ -1099,7 +1127,7 @@ namespace DungeonDefence
             List<Path> tiles = new List<Path>();
             if (_units[unitIndex].unit.movement == Data.UnitMoveType.ground)
             {
-#region With Walls Effect
+                #region With Walls Effect
                 int closest = -1;
                 float distance = 99999;
                 int blocks = 999;
@@ -1159,7 +1187,7 @@ namespace DungeonDefence
                 {
                     for (int i = 0; i < _units.Count; i++)
                     {
-                        if(_units[i].health <= 0 || _units[i].unit.movement != Data.UnitMoveType.ground || i != unitIndex || _units[i].target < 0 || _units[i].mainTarget != buildingIndex || _units[i].mainTarget < 0 || _buildings[_units[i].mainTarget].building.id != Data.BuildingID.wall || _buildings[_units[i].mainTarget].health <= 0)
+                        if (_units[i].health <= 0 || _units[i].unit.movement != Data.UnitMoveType.ground || i != unitIndex || _units[i].target < 0 || _units[i].mainTarget != buildingIndex || _units[i].mainTarget < 0 || _buildings[_units[i].mainTarget].building.id != Data.BuildingID.wall || _buildings[_units[i].mainTarget].health <= 0)
                         {
                             continue;
                         }
@@ -1170,7 +1198,7 @@ namespace DungeonDefence
                             continue;
                         }
                         // float dis = GetPathLength(points, false);
-                        if(id <= Data.battleGroupWallAttackRadius)
+                        if (id <= Data.battleGroupWallAttackRadius)
                         {
                             Vector2Int end = _units[i].path.points.Last().Location;
                             Path path = new Path();
@@ -1202,11 +1230,11 @@ namespace DungeonDefence
                 {
                     return (buildingIndex, tiles[closest]);
                 }
-#endregion
+                #endregion
             }
             else
             {
-#region Without Walls Effect
+                #region Without Walls Effect
                 int closest = -1;
                 float distance = 99999;
                 for (int x = 0; x < columns.Count; x++)
@@ -1216,7 +1244,7 @@ namespace DungeonDefence
                         if (columns[x] >= 0 && rows[y] >= 0 && columns[x] < Data.gridSize && rows[y] < Data.gridSize)
                         {
                             Path path = new Path();
-                            if(path.Create(ref unlimitedSearch, new BattleVector2Int(columns[x], rows[y]), unitGridPosition))
+                            if (path.Create(ref unlimitedSearch, new BattleVector2Int(columns[x], rows[y]), unitGridPosition))
                             {
                                 path.length = GetPathLength(path.points);
                                 if (path.length < distance)
@@ -1229,12 +1257,12 @@ namespace DungeonDefence
                         }
                     }
                 }
-                if(closest >= 0)
+                if (closest >= 0)
                 {
                     tiles[closest].points.Reverse();
                     return (buildingIndex, tiles[closest]);
                 }
-#endregion
+                #endregion
             }
             return (-1, null);
         }
@@ -1246,7 +1274,7 @@ namespace DungeonDefence
                 for (int y = _buildings[buildingIndex].building.y; y < _buildings[buildingIndex].building.y + _buildings[buildingIndex].building.columns; y++)
                 {
                     float distance = BattleVector2.Distance(GridToWorldPosition(new BattleVector2Int(x, y)), _units[unitIndex].position);
-                    if(distance <= _units[unitIndex].unit.attackRange)
+                    if (distance <= _units[unitIndex].unit.attackRange)
                     {
                         return true;
                     }
@@ -1258,7 +1286,7 @@ namespace DungeonDefence
         private static float GetPathLength(IList<Cell> path, bool includeCellSize = true)
         {
             float length = 0;
-            if(path != null && path.Count > 1)
+            if (path != null && path.Count > 1)
             {
                 for (int i = 1; i < path.Count; i++)
                 {
@@ -1278,7 +1306,7 @@ namespace DungeonDefence
             {
                 length = 0;
                 points = null;
-                blocks = new List<Tile>(); 
+                blocks = new List<Tile>();
             }
             public bool Create(ref AStarSearch search, BattleVector2Int start, BattleVector2Int end)
             {
@@ -1315,8 +1343,8 @@ namespace DungeonDefence
 
         private static BattleVector2 GetPathPosition(IList<Cell> path, float t)
         {
-            if(t < 0) { t = 0; }
-            if(t > 1) { t = 1; }
+            if (t < 0) { t = 0; }
+            if (t > 1) { t = 1; }
             float totalLength = GetPathLength(path);
             float length = 0;
             if (path != null && path.Count > 1)
@@ -1366,7 +1394,7 @@ namespace DungeonDefence
                 float diff_y = a.y - b.y;
                 return (float)Math.Sqrt(diff_x * diff_x + diff_y * diff_y);
             }
-            
+
             public static float Distance(BattleVector2Int a, BattleVector2Int b)
             {
                 return Distance(new BattleVector2(a.x, a.y), new BattleVector2(b.x, b.y));
@@ -1412,6 +1440,6 @@ namespace DungeonDefence
             }
             return true;
         }
-    
+
     }
 }
