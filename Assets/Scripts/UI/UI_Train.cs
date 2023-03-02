@@ -65,6 +65,7 @@ namespace DungeonDefence
 			ClearTrainingItems();
 			if (status)
 			{
+				Initialize();
 				Sync();
 			}
 			_elements.SetActive(status);

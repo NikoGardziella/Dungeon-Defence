@@ -51,30 +51,26 @@ namespace DungeonDefence
 
 		private float timer = 0;
 
-		private void Update()
-		{
-			if(connected)
-			{
-				if(!_inBattle)
-				{
-					if(timer <= 0)
-					{
-						if(updating == false)
-						{
-							updating = true;
-							timer = syncTime;
-							SendSyncRequest();
-						}
-					}
-					else
-					{
-						timer -= Time.deltaTime;
-					}
-					data.nowTime = data.nowTime.AddSeconds(Time.deltaTime);
-				}
-
-			}
-		}
+	  	private void Update()
+        {
+            if (connected)
+            {
+                if (!_inBattle)
+                {
+                    if (timer <= 0)
+                    {
+                        updating = true;
+                        timer = syncTime;
+                        SendSyncRequest();
+                    }
+                    else
+                    {
+                        timer -= Time.deltaTime;
+                    }
+                }
+                data.nowTime = data.nowTime.AddSeconds(Time.deltaTime);
+            }
+        }
 
 
 		private void ReceivePacket(Packet packet)
@@ -460,7 +456,7 @@ namespace DungeonDefence
 
 		public void RushSyncRequest()
 		{
-			
+			timer = 0;
 		}
 
 

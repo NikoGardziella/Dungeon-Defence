@@ -17,7 +17,7 @@ namespace DungeonDefence
 		[SerializeField] private TextMeshProUGUI _haveUnitsText = null;
 		[SerializeField] private TextMeshProUGUI _reqResourceText = null;
 		private int count = 0; public int haveCount { get { return count; } set { count = value; _haveUnitsText.text = count.ToString(); } }
-
+		private bool canTrain = false;
 
 		private void Start()
 		{
@@ -27,6 +27,25 @@ namespace DungeonDefence
 
 		public void Initialize(Data.ServerUnit unit)
 		{
+			int barracksLevel = 0;
+			int darkBarracksLevel = 0;
+			for (int i = 0; i < Player.instance.data.buildings.Count; i++)
+			{
+				if(Player.instance.data.buildings[i].id == Data.BuildingID.barracks)
+				{
+					barracksLevel = Player.instance.data.buildings[i].level;
+				}
+				else if(Player.instance.data.buildings[i].id == Data.BuildingID.darkbarracks)
+				{
+					darkBarracksLevel = Player.instance.data.buildings[i].level;
+				}
+				if(barracksLevel > 0 && darkBarracksLevel > 0)
+					break;
+			}
+
+			canTrain = Data.IsUnitUnlocked(_id, barracksLevel, darkBarracksLevel);
+			_button.interactable = canTrain;
+
 			if (unit.requiredGold > 0)
 			{
 				_reqResourceText.text = "Gold: " + unit.requiredGold.ToString();
