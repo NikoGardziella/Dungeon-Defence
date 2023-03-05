@@ -481,7 +481,7 @@ namespace DungeonDefence
             {
                 if (CanAddUnit(_unitsToAdd[i].x, _unitsToAdd[i].y))
                 {
-                    unitsDeployed += _unitsToAdd[i].unit.unit.hosing;
+                    unitsDeployed += _unitsToAdd[i].unit.unit.housing;
                     _units.Insert(addIndex, _unitsToAdd[i].unit);
                     addIndex++;
                     if (_unitsToAdd[i].callback != null)

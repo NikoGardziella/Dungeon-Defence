@@ -33,7 +33,11 @@ namespace DungeonDefence
 			JOINCLAN = 17,
 			LEAVECLAN = 18,
 			EDITCLAN = 19,
-			CREATECLAN = 20
+			CREATECLAN = 20,
+			OPENWAR = 21,
+			STARTWAR = 22,
+			CANCELWAR = 23,
+			WARSTARTED = 24
 
 		}
 
@@ -359,6 +363,23 @@ namespace DungeonDefence
 				case RequestId.EDITCLAN:
 					response = packet.ReadInt();
 					UI_Clan.instance.EditResponse(response);
+					break;
+				 case RequestId.OPENWAR:
+					string clanWarData = packet.ReadString();
+					Data.ClanWarData war = Data.Deserialize<Data.ClanWarData>(clanWarData);
+					UI_Clan.instance.WarOpen(war);
+					break;
+				case RequestId.STARTWAR:
+					response = packet.ReadInt();
+					UI_Clan.instance.WarStartResponse(response);
+					break;
+				case RequestId.CANCELWAR:
+					response = packet.ReadInt();
+					UI_Clan.instance.WarSearchCancelResponse(response);
+					break;
+				case RequestId.WARSTARTED:
+					databaseID = packet.ReadInt();
+					UI_Clan.instance.WarStarted(databaseID);
 					break;
 			}
 			}

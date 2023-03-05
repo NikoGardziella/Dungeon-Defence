@@ -18,6 +18,10 @@ namespace DungeonDefence
 		[SerializeField] private float _zoomSmooth = 5.0f;
 		[SerializeField] private float _zoomSpeed = 5f;
 
+
+		[SerializeField] private float _scrollZoomSpeed = 20f;
+		
+
 		private Control _inputs = null;
 		private bool _zooming = false;
 		private bool _moving = false;
@@ -288,11 +292,11 @@ namespace DungeonDefence
 				float mouseScroll = _inputs.Main.MouseScroll.ReadValue<float>();
 				if(mouseScroll > 0)
 				{
-					_zoom -= 3f * Time.deltaTime;
+					_zoom -= _scrollZoomSpeed * Time.deltaTime;
 				}
 				else if (mouseScroll < 0)
 				{
-					_zoom += 3f * Time.deltaTime;
+					_zoom += _scrollZoomSpeed * Time.deltaTime;
 
 				}
 			}
