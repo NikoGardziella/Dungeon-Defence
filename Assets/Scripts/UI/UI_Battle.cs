@@ -277,6 +277,7 @@ namespace DungeonDefence
 			opponent.buildings = startbuildings;
 			string data = Data.Serialize<Data.OpponentData>(opponent);
 			packet.Write(data);
+			packet.Write((int)_battleType);
 			Sender.TCP_Send(packet);
 		}
 
@@ -569,7 +570,7 @@ namespace DungeonDefence
 			{
 				if (battle._units[unitsOnGrid[i].index].health > 0)
 				{
-					Vector3 position = new Vector3(battle._units[unitsOnGrid[i].index].position.x, 0, battle._units[unitsOnGrid[i].index].position.y);
+					Vector3 position = new Vector3(battle._units[unitsOnGrid[i].index].positionOnGrid.x, 0, battle._units[unitsOnGrid[i].index].positionOnGrid.y);
 					unitsOnGrid[i].transform.localPosition = position;
 				  
 					if(battle._units[unitsOnGrid[i].index].health < battle._units[unitsOnGrid[i].index].unit.health)
@@ -629,7 +630,7 @@ namespace DungeonDefence
 				if (prefab)
 				{
 					BattleUnit unit = Instantiate(prefab, UI_Main.instance._grid.transform);
-					unit.transform.localPosition = new Vector3(battle._units[u].position.x, 0, battle._units[u].position.y);
+					unit.transform.localPosition = new Vector3(battle._units[u].positionOnGrid.x, 0, battle._units[u].positionOnGrid.y);
 					unit.Initialize(u, battle._units[u].unit.databaseID);
 
 					unit.healthBar = Instantiate(healthBarPrefab, healthBarGrid);

@@ -65,6 +65,7 @@ namespace DungeonDefence
 			ClearTrainingItems();
 			if (status)
 			{
+				UI_Main.instance.SetStatus(false);
 				Initialize();
 				Sync();
 			}

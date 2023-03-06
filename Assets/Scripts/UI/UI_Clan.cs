@@ -241,6 +241,7 @@ namespace DungeonDefence
 			selectedWarMember = item;
 			_warSelectedName.text = selectedWarMember._data.name;
 			_warSelectedAttack.gameObject.SetActive(selectedWarMember._data.clanID != Player.instance.data.clanID);
+			_warSelectedAttack.interactable = (warData.clan1.war.stage == 2);
 			selectedWarMember.selectedEffects.SetActive(true);
 			_warMapSelectPanel.gameObject.SetActive(true);
 		}
@@ -260,9 +261,16 @@ namespace DungeonDefence
 		{
 			if (target > 0 && opponent != null)
 			{
-				UI_Main.instance.SetStatus(false);
-				Close();
-				UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.war);
+				bool attack = UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.war);
+				if(attack)
+				{
+					UI_Main.instance.SetStatus(false);
+					Close();
+				}
+				else
+				{
+					WarOpen();
+				}
 			}
 			else
 			{

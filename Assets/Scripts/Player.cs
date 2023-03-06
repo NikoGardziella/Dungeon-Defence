@@ -382,6 +382,16 @@ namespace DungeonDefence
 					databaseID = packet.ReadInt();
 					UI_Clan.instance.WarStarted(databaseID);
 					break;
+				case RequestId.WARATTACK:
+					databaseID = packet.ReadLong();
+					Data.OpponentData warOpponent = null;
+					if(databaseID > 0)
+					{
+						string s = packet.ReadString();
+						warOpponent = Data.Deserialize<Data.OpponentData>(s);
+					}
+					UI_Clan.instance.AttackResponse(databaseID, warOpponent);
+					break;
 			}
 			}
 			catch (System.Exception ex)

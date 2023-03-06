@@ -197,9 +197,9 @@ namespace DungeonDefence
 				{
 					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
 					planePosition = UI_Main.instance._grid.transform.InverseTransformPoint(planePosition);
-					if(planePosition.x >= 0 && planePosition.x < Data.gridSize && planePosition.z >= 0 && planePosition.z < Data.gridSize)
+					if(planePosition.x >= (0 - Data.battleGridOffset) && planePosition.x < (Data.gridSize + Data.battleGridOffset) && planePosition.z >= (0 - Data.battleGridOffset)  && planePosition.z < (Data.gridSize + Data.battleGridOffset))
 					{
-						UI_Battle.instance.PlaceUnit((int)planePosition.x, (int)planePosition.z);
+						UI_Battle.instance.PlaceUnit(Mathf.FloorToInt(planePosition.x), Mathf.FloorToInt(planePosition.z));
 					}
 				}
 			}
