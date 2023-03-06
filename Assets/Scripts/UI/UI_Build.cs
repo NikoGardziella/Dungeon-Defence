@@ -78,6 +78,15 @@ namespace DungeonDefence
 				packet.Write(Building.buildInstance.id.ToString());
 				packet.Write(Building.buildInstance.currentX);
 				packet.Write(Building.buildInstance.currentY);
+
+				packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+				packet.Write(UI_WarLayout.instance.placingID);
+				if(UI_WarLayout.instance.isActive && UI_WarLayout.instance.placingItem != null)
+				{
+					Destroy(UI_WarLayout.instance.placingItem);
+					UI_WarLayout.instance.placingItem = null;
+				}
+
 				Sender.TCP_Send(packet);
 				Cancel();
 				
@@ -89,6 +98,11 @@ namespace DungeonDefence
 			{
 				CameraController.instance.isPlacingBuilding = false;
 				Building.buildInstance.RemovedFromGrid();
+				if(UI_WarLayout.instance.isActive && UI_WarLayout.instance.placingItem != null)
+				{
+					UI_WarLayout.instance.placingItem.SetActive(true);
+					UI_WarLayout.instance.placingItem = null;
+				}
 			}
 		}
 	}

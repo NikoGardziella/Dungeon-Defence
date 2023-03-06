@@ -37,7 +37,8 @@ namespace DungeonDefence
 			OPENWAR = 21,
 			STARTWAR = 22,
 			CANCELWAR = 23,
-			WARSTARTED = 24
+			WARSTARTED = 24,
+			WARATTACK = 25
 
 		}
 
@@ -398,127 +399,84 @@ namespace DungeonDefence
 			p.Write(SystemInfo.deviceUniqueIdentifier);
 			Sender.TCP_Send(p);
 		}
-			[HideInInspector] public int gold = 0;
-			[HideInInspector] public int maxGold = 0;
+		[HideInInspector] public int gold = 0;
+		[HideInInspector] public int maxGold = 0;
 
-			[HideInInspector] public int elixir = 0;
-			[HideInInspector] public int maxElixir = 0; 
-			[HideInInspector] public int darkElixir = 0;
-			[HideInInspector] public int maxDarkElixir = 0;
-			[HideInInspector] public int gems = 0;
+		[HideInInspector] public int elixir = 0;
+		[HideInInspector] public int maxElixir = 0; 
+		[HideInInspector] public int darkElixir = 0;
+		[HideInInspector] public int maxDarkElixir = 0;
+		[HideInInspector] public int gems = 0;
+
 
 		public void SyncData(Data.Player player)
 		{
 			data = player;
 
-			if(_inBattle)
-			{
-				return ;
-			}
-
 			gold = 0;
 			maxGold = 0;
+
 			elixir = 0;
 			maxElixir = 0;
+
 			darkElixir = 0;
 			maxDarkElixir = 0;
-			gems = player.gems;
 
-			if(player.buildings != null && player.buildings.Count > 0)
+			int gems = player.gems;
+
+			if (player.buildings != null && player.buildings.Count > 0)
 			{
 				for (int i = 0; i < player.buildings.Count; i++)
 				{
-					Building building = UI_Main.instance._grid.GetBuilding(player.buildings[i].databaseID);
-					if(building != null)
-					{
-
-					}
-					else
-					{
-						Building prefab = UI_Main.instance.GetBuildingPrefab(player.buildings[i].id);
-						if(prefab)
-						{
-							building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-							building.databaseID = player.buildings[i].databaseID;
-							building.PlacedOnGrid(player.buildings[i].x, player.buildings[i].y);
-							building._baseArea.gameObject.SetActive(false);
-
-							UI_Main.instance._grid.buildings.Add(building);
-						}
-					}
-
-					if(building.buildBar == null)
-					{
-						building.buildBar = Instantiate(UI_Main.instance.barBuild, UI_Main.instance.buttoonsParent);				
-						building.buildBar.gameObject.SetActive(false);
-  					}
-
-					building.data = player.buildings[i];
-					switch(building.id)
+					switch (player.buildings[i].id)
 					{
 						case Data.BuildingID.townhall:
-							maxGold += building.data.goldCapacity;
-							gold += building.data.goldStorage;
-							maxElixir += building.data.elixirCapacity;
-							elixir += building.data.elixirStorage;
-							maxDarkElixir += building.data.darkCapacity;
-							darkElixir += building.data.darkStorage;
-							break;
-						case Data.BuildingID.goldmine:
-							if(building.collectButton == null)
-							{
-								building.collectButton = Instantiate(UI_Main.instance.buttonCollectGold, UI_Main.instance.buttoonsParent);
-								building.collectButton.button.onClick.AddListener(building.Collect);
-								building.collectButton.gameObject.SetActive(false);
-
-							}
+							maxGold += player.buildings[i].goldCapacity;
+							gold += player.buildings[i].goldStorage;
+							maxElixir += player.buildings[i].elixirCapacity;
+							elixir += player.buildings[i].elixirStorage;
+							maxDarkElixir += player.buildings[i].darkCapacity;
+							darkElixir += player.buildings[i].darkStorage;
 							break;
 						case Data.BuildingID.goldstorage:
-							maxGold += building.data.goldCapacity;
-							gold += building.data.goldStorage;
-							break;
-						case Data.BuildingID.elixirmine:
-							if(building.collectButton == null)
-							{
-								building.collectButton = Instantiate(UI_Main.instance.buttonCollectElixir, UI_Main.instance.buttoonsParent);
-								building.collectButton.button.onClick.AddListener(building.Collect);
-								building.collectButton.gameObject.SetActive(false);
-							}
+							maxGold += player.buildings[i].goldCapacity;
+							gold += player.buildings[i].goldStorage;
 							break;
 						case Data.BuildingID.elixirstorage:
-							maxElixir += building.data.elixirCapacity;
-							elixir += building.data.elixirStorage;
-							break;
-						case Data.BuildingID.darkelixirmine:
-							if(building.collectButton == null)
-							{
-								building.collectButton = Instantiate(UI_Main.instance.buttonCollectDarkElixir, UI_Main.instance.buttoonsParent);
-								building.collectButton.button.onClick.AddListener(building.Collect);
-								building.collectButton.gameObject.SetActive(false);
-							}
+							maxElixir += player.buildings[i].elixirCapacity;
+							elixir += player.buildings[i].elixirStorage;
 							break;
 						case Data.BuildingID.darkelixirstorage:
-							maxDarkElixir += building.data.darkCapacity;
-							darkElixir += building.data.darkStorage;
+							maxDarkElixir += player.buildings[i].darkCapacity;
+							darkElixir += player.buildings[i].darkStorage;
 							break;
 					}
-					building.AdjustUI(); 
-				}			
+				}
 			}
+
 			for (int i = 0; i < player.units.Count; i++)
 			{
-				
+
 			}
 
 			UI_Main.instance._goldText.text = gold + "/" + maxGold;
-			UI_Main.instance._elixirText.text =  elixir + "/" + maxElixir;
+			UI_Main.instance._elixirText.text = elixir + "/" + maxElixir;
 			UI_Main.instance._gemsText.text = gems.ToString();
 
-			if(UI_Train.instance.isOpen)
+			if (UI_Main.instance.isActive && !UI_WarLayout.instance.isActive)
+			{
+				UI_Main.instance.DataSynced();
+			}
+			else if (UI_WarLayout.instance.isActive)
+			{
+				UI_WarLayout.instance.DataSynced();
+			}
+			else if (UI_Train.instance.isOpen)
 			{
 				UI_Train.instance.Sync();
 			}
 		}
+
 
 		public void RushSyncRequest()
 		{

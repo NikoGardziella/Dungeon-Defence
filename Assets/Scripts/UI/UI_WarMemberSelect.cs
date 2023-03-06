@@ -14,7 +14,8 @@ namespace DungeonDefence
         [SerializeField] private Button _in = null;
         [SerializeField] private Button _out = null;
 
-        private Data.ClanMember _data = null;
+        private Data.ClanMember _data = null; 
+
 
         public void Initialize(Data.ClanMember data)
         {

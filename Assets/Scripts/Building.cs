@@ -272,6 +272,8 @@ namespace DungeonDefence
 				packet.Write(selectedInstance.databaseID);
 				packet.Write(selectedInstance.currentX);
 				packet.Write(selectedInstance.currentY);
+				packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+
 				Sender.TCP_Send(packet);
 				_baseArea.gameObject.SetActive(false);
 			}
@@ -284,6 +286,13 @@ namespace DungeonDefence
 						PlacedOnGrid(_originalX, _originalY);
 					}
 					_baseArea.gameObject.SetActive(false);
+				}
+				else
+				{
+					if(_originalX == currentX && _originalY == currentY)
+					{
+						_baseArea.gameObject.SetActive(false);
+					}
 				}
 			}
 		}

@@ -150,6 +150,7 @@ namespace DungeonDefence
             public int target = -1;
             public int mainTarget = -1;
             public BattleVector2 position;
+            public BattleVector2 positionOnGrid { get { return new BattleVector2(position.x - Data.battleGridOffset, position.y - Data.battleGridOffset); } }
             public Path path = null;
             public double pathTime = 0;
             public double pathTraveledTime = 0;
@@ -355,8 +356,8 @@ namespace DungeonDefence
             surrender = false;
             this.projectileCallback = projectileCallback;
             _buildings = buildings;
-            grid = new Grid(Data.gridSize, Data.gridSize);
-            unlimitedGrid = new Grid(Data.gridSize, Data.gridSize);
+            grid = new Grid(Data.gridSize + (Data.battleGridOffset * 2), Data.gridSize + (Data.battleGridOffset * 2));
+            unlimitedGrid = new Grid(Data.gridSize + (Data.battleGridOffset * 2), Data.gridSize + (Data.battleGridOffset * 2));
             search = new AStarSearch(grid);
             unlimitedSearch = new AStarSearch(unlimitedGrid);
             for (int i = 0; i < _buildings.Count; i++)
@@ -425,6 +426,9 @@ namespace DungeonDefence
 
         public bool CanAddUnit(int x, int y)
         {
+            x += Data.battleGridOffset;
+            y += Data.battleGridOffset;
+
             for (int i = 0; i < _buildings.Count; i++)
             {
                 if (_buildings[i].health <= 0)
@@ -458,6 +462,8 @@ namespace DungeonDefence
             {
                 return;
             }
+            x += Data.battleGridOffset;
+            y += Data.battleGridOffset;
             UnitToAdd unitToAdd = new UnitToAdd();
             unitToAdd.callback = callback;
             Unit battleUnit = new Unit();
@@ -479,15 +485,19 @@ namespace DungeonDefence
             int addIndex = _units.Count;
             for (int i = _unitsToAdd.Count - 1; i >= 0; i--)
             {
+                /*
                 if (CanAddUnit(_unitsToAdd[i].x, _unitsToAdd[i].y))
                 {
-                    unitsDeployed += _unitsToAdd[i].unit.unit.housing;
-                    _units.Insert(addIndex, _unitsToAdd[i].unit);
-                    addIndex++;
-                    if (_unitsToAdd[i].callback != null)
-                    {
-                        _unitsToAdd[i].callback.Invoke(_unitsToAdd[i].unit.unit.databaseID);
-                    }
+                    
+                }*/
+                unitsDeployed += _unitsToAdd[i].unit.unit.housing;
+                _unitsToAdd[i].x += Data.battleGridOffset;
+                _unitsToAdd[i].y += Data.battleGridOffset;
+                _units.Insert(addIndex, _unitsToAdd[i].unit);
+                addIndex++;
+                if (_unitsToAdd[i].callback != null)
+                {
+                    _unitsToAdd[i].callback.Invoke(_unitsToAdd[i].unit.unit.databaseID);
                 }
                 _unitsToAdd.RemoveAt(i);
             }
@@ -597,7 +607,7 @@ namespace DungeonDefence
                                 projectileCount++;
                                 projectile.id = projectileCount;
                                 projectiles.Add(projectile);
-                                if(projectileCallback != null)
+                                if (projectileCallback != null)
                                 {
                                     projectileCallback.Invoke(projectile.id, _buildings[index].worldCenterPosition, _units[_buildings[index].target].position);
                                 }
@@ -1440,6 +1450,5 @@ namespace DungeonDefence
             }
             return true;
         }
-
     }
 }

@@ -203,6 +203,38 @@ namespace DungeonDefence
 					}
 				}
 			}
+			else if(UI_WarLayout.instance.isActive)
+			{
+				if(results.Count <= 0)
+				{
+					bool found = false;
+					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
+
+					for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+					{
+						if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(planePosition, UI_Main.instance._grid.buildings[i].currentX, UI_Main.instance._grid.buildings[i].currentY, UI_Main.instance._grid.buildings[i].rows, UI_Main.instance._grid.buildings[i].columns))
+						{
+							found = true;
+							UI_Main.instance._grid.buildings[i].Selected();
+							break;
+						}
+					}
+					if(!found)
+					{
+						if(Building.selectedInstance != null)
+						{
+							Building.selectedInstance.Deselected();
+						}
+					}
+				}
+				else
+				{
+					if(Building.selectedInstance != null)
+					{
+						Building.selectedInstance.Deselected();
+					}
+				}
+			}
 		}
 
 		public bool IsSreenPointOverUI(Vector2 position)
@@ -216,7 +248,7 @@ namespace DungeonDefence
 
 		private void MoveStarted()
 		{
-			if(UI_Main.instance.isActive || UI_Battle.instance.isActive)
+			if(UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive)
 			{
 				if(_building)
 				{
@@ -263,7 +295,7 @@ namespace DungeonDefence
 
 		private void ZoomStarted()
 		{
-			if(UI_Main.instance.isActive || UI_Battle.instance.isActive)
+			if(UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive)
 			{
 				Vector2 touch0 = _inputs.Main.TouchPosition0.ReadValue<Vector2>();
 				Vector2 touch1 = _inputs.Main.TouchPosition1.ReadValue<Vector2>();

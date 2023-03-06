@@ -39,6 +39,7 @@ namespace DungeonDefence
 		private List<UnitToAdd> toAdd = new List<UnitToAdd>();
 		private long target = 0;
 		private bool surrender = false;
+		private Data.BattleType _battleType = Data.BattleType.normal;
 
 		public class BuildingOnGrid
 		{
@@ -112,127 +113,145 @@ namespace DungeonDefence
 			MessageBox.Open(1, 0.8f, true, MessageResponded, new string[] { "There is no opponent at the moment. Please try again later." }, new string[] { "OK" });
 		}
 
-		public void Display(List<Data.Building> buildings, long defender)
-		{
-			target = defender;
-			startbuildings = buildings;
-			battleBuildings.Clear();
+		 public bool Display(List<Data.Building> buildings, long defender, Data.BattleType battleType)
+    {
+        ClearUnits();
+        for (int i = 0; i < Player.instance.data.units.Count; i++)
+        {
+            if (!Player.instance.data.units[i].ready)
+            {
+                continue;
+            }
+            int k = -1;
+            for (int j = 0; j < units.Count; j++)
+            {
+                if (units[j].id == Player.instance.data.units[i].id)
+                {
+                    k = j;
+                    break;
+                }
+            }
+            if (k < 0)
+            {
+                k = units.Count;
+                UI_BattleUnit bu = Instantiate(unitsPrefab, unitsGrid);
+                bu.Initialize(Player.instance.data.units[i].id);
+                units.Add(bu);
+            }
+            units[k].Add(Player.instance.data.units[i].databaseID);
+        }
 
-			int townhallLevel = 1;
-			for (int i = 0; i < buildings.Count; i++)
-			{
-				if (buildings[i].id == Data.BuildingID.townhall)
-				{
-					townhallLevel = buildings[i].level;
-					break;
-				}
-			}
+        if (units.Count <= 0)
+        {
+            MessageBox.Open(1, 0.8f, true, MessageResponded, new string[] { "You do not have any units for battle.." }, new string[] { "OK" });
+            return false;
+        }
 
-			for (int i = 0; i < buildings.Count; i++)
-			{
-				Battle.Building building = new Battle.Building();
-				building.building = buildings[i];
-				switch (building.building.id)
-				{
-					case Data.BuildingID.townhall:
-						building.lootGoldStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.goldStorage);
-						building.lootElixirStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.elixirStorage);
-						building.lootDarkStorage = Data.GetStorageDarkElixirLoot(townhallLevel, building.building.darkStorage);
-						break;
-					case Data.BuildingID.goldmine:
-						building.lootGoldStorage = Data.GetMinesGoldAndElixirLoot(townhallLevel, building.building.goldStorage);
-						break;
-					case Data.BuildingID.goldstorage:
-						building.lootGoldStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.goldStorage);
-						break;
-					case Data.BuildingID.elixirmine:
-						building.lootElixirStorage = Data.GetMinesGoldAndElixirLoot(townhallLevel, building.building.elixirStorage);
-						break;
-					case Data.BuildingID.elixirstorage:
-						building.lootElixirStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.elixirStorage);
-						break;
-					case Data.BuildingID.darkelixirmine:
-						building.lootDarkStorage = Data.GetMinesDarkElixirLoot(townhallLevel, building.building.darkStorage);
-						break;
-					case Data.BuildingID.darkelixirstorage:
-						building.lootDarkStorage = Data.GetStorageDarkElixirLoot(townhallLevel, building.building.darkStorage);
-						break;
-				}
-				battleBuildings.Add(building);
-			}
+        _battleType = battleType;
+        int townhallLevel = 1;
+        for (int i = 0; i < buildings.Count; i++)
+        {
+            if (buildings[i].id == Data.BuildingID.townhall)
+            {
+                townhallLevel = buildings[i].level;
+                if (_battleType == Data.BattleType.normal)
+                {
+                    break;
+                }
+            }
+            if (_battleType == Data.BattleType.war)
+            {
+                buildings[i].x = buildings[i].warX;
+                buildings[i].y = buildings[i].warY;
+            }
+        }
 
-			_timerText.text = TimeSpan.FromSeconds(Data.battlePrepDuration).ToString(@"mm\:ss");
+        target = defender;
+        startbuildings = buildings;
+        battleBuildings.Clear();
 
-			ClearBuildingsOnGrid();
-			ClearUnitsOnGrid();
-			ClearUnits();
+        for (int i = 0; i < buildings.Count; i++)
+        {
+            Battle.Building building = new Battle.Building();
+            building.building = buildings[i];
+            switch (building.building.id)
+            {
+                case Data.BuildingID.townhall:
+                    building.lootGoldStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.goldStorage);
+                    building.lootElixirStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.elixirStorage);
+                    building.lootDarkStorage = Data.GetStorageDarkElixirLoot(townhallLevel, building.building.darkStorage);
+                    break;
+                case Data.BuildingID.goldmine:
+                    building.lootGoldStorage = Data.GetMinesGoldAndElixirLoot(townhallLevel, building.building.goldStorage);
+                    break;
+                case Data.BuildingID.goldstorage:
+                    building.lootGoldStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.goldStorage);
+                    break;
+                case Data.BuildingID.elixirmine:
+                    building.lootElixirStorage = Data.GetMinesGoldAndElixirLoot(townhallLevel, building.building.elixirStorage);
+                    break;
+                case Data.BuildingID.elixirstorage:
+                    building.lootElixirStorage = Data.GetStorageGoldAndElixirLoot(townhallLevel, building.building.elixirStorage);
+                    break;
+                case Data.BuildingID.darkelixirmine:
+                    building.lootDarkStorage = Data.GetMinesDarkElixirLoot(townhallLevel, building.building.darkStorage);
+                    break;
+                case Data.BuildingID.darkelixirstorage:
+                    building.lootDarkStorage = Data.GetStorageDarkElixirLoot(townhallLevel, building.building.darkStorage);
+                    break;
+            }
+            battleBuildings.Add(building);
+        }
 
-			UI_Main.instance._grid.Clear();
-			for (int i = 0; i < battleBuildings.Count; i++)
-			{
-				Building prefab = UI_Main.instance.GetBuildingPrefab(battleBuildings[i].building.id);
-				if (prefab)
-				{
-					BuildingOnGrid building = new BuildingOnGrid();
-					building.building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-					building.building.databaseID = battleBuildings[i].building.databaseID;
-					building.building.PlacedOnGrid(battleBuildings[i].building.x, battleBuildings[i].building.y);
-					building.building._baseArea.gameObject.SetActive(false);
+        _timerText.text = TimeSpan.FromSeconds(Data.battlePrepDuration).ToString(@"mm\:ss");
 
-					building.healthBar = Instantiate(healthBarPrefab, healthBarGrid);
-					building.healthBar.bar.fillAmount = 1;
-					building.healthBar.gameObject.SetActive(false);
+        ClearBuildingsOnGrid();
+        ClearUnitsOnGrid();
 
-					building.id = battleBuildings[i].building.databaseID;
-					building.index = i;
-					buildingsOnGrid.Add(building);
-				}
-			}
+        UI_Main.instance._grid.Clear();
+        for (int i = 0; i < battleBuildings.Count; i++)
+        {
+            Building prefab = UI_Main.instance.GetBuildingPrefab(battleBuildings[i].building.id);
+            if (prefab)
+            {
+                BuildingOnGrid building = new BuildingOnGrid();
+                building.building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+                building.building.databaseID = battleBuildings[i].building.databaseID;
+                building.building.PlacedOnGrid(battleBuildings[i].building.x, battleBuildings[i].building.y);
+                building.building._baseArea.gameObject.SetActive(false);
 
-			for (int i = 0; i < Player.instance.data.units.Count; i++)
-			{
-				if (!Player.instance.data.units[i].ready)
-				{
-					continue;
-				}
-				int k = -1;
-				for (int j = 0; j < units.Count; j++)
-				{
-					if (units[j].id == Player.instance.data.units[i].id)
-					{
-						k = j;
-						break;
-					}
-				}
-				if (k < 0)
-				{
-					k = units.Count;
-					UI_BattleUnit bu = Instantiate(unitsPrefab, unitsGrid);
-					bu.Initialize(Player.instance.data.units[i].id);
-					units.Add(bu);
-				}
-				units[k].Add(Player.instance.data.units[i].databaseID);
-			}
+                building.healthBar = Instantiate(healthBarPrefab, healthBarGrid);
+                building.healthBar.bar.fillAmount = 1;
+                building.healthBar.gameObject.SetActive(false);
 
-			_findButton.gameObject.SetActive(true);
-			_closeButton.gameObject.SetActive(true);
-			_surrenderButton.gameObject.SetActive(false);
-			baseTime = DateTime.Now; 
+                building.id = battleBuildings[i].building.databaseID;
+                building.index = i;
+                buildingsOnGrid.Add(building);
+            }
 
-			SetStatus(true);
+            battleBuildings[i].building.x += Data.battleGridOffset;
+            battleBuildings[i].building.y += Data.battleGridOffset;
+        }
 
-			toAdd.Clear();
-			battle = new Battle();
-			battle.Initialize(battleBuildings, DateTime.Now, BuildingAttackCallBack, BuildingDestroyedCallBack, BuildingDamageCallBack, StarGained);
+        _findButton.gameObject.SetActive(_battleType == Data.BattleType.normal);
+        _closeButton.gameObject.SetActive(true);
+        _surrenderButton.gameObject.SetActive(false);
+        baseTime = DateTime.Now;
+        SetStatus(true);
 
-			_percentageText.text = (battle.percentage * 100f).ToString("F2") + "%";
-			UpdateLoots();
+        toAdd.Clear();
+        battle = new Battle();
+        battle.Initialize(battleBuildings, DateTime.Now, BuildingAttackCallBack, BuildingDestroyedCallBack, BuildingDamageCallBack, StarGained);
 
-			surrender = false;
-			readyToStart = true;
-			isStarted = false;
-		}
+        _percentageText.text = (battle.percentage * 100f).ToString("F2") + "%";
+        UpdateLoots();
 
+        surrender = false;
+        readyToStart = true;
+        isStarted = false;
+
+        return true;
+    }
 
 		private void UpdateLoots()
 		{
@@ -330,7 +349,7 @@ namespace DungeonDefence
 		[SerializeField] private RectTransform unitsGrid = null;
 		[SerializeField] private UI_BattleUnit unitsPrefab = null;
 		private static UI_Battle _instance = null; public static UI_Battle instance { get { return _instance; } }
-		private bool _active = true; public bool isActive { get { return _active; } }
+		private bool _active = false; public bool isActive { get { return _active; } }
 
 		[HideInInspector] public int selectedUnit = -1;
 

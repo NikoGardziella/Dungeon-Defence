@@ -57,7 +57,7 @@ namespace DungeonDefence
             if(target > 0 && opponent != null && target != lastTarget)
             {
                 lastTarget = target;
-                UI_Battle.instance.Display(opponent.buildings, target);
+                UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.normal);
                 SetStatus(false);
             }
             else

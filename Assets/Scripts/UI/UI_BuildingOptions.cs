@@ -35,11 +35,11 @@ namespace DungeonDefence
 		{
 			if(status && Building.selectedInstance != null)
 			{
-				infoPanel.gameObject.SetActive(true);
-				upgradePanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == false);
-				instantPanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == true);
-				trainPanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.armycamp || Building.selectedInstance.data.id == Data.BuildingID.barracks);
-				clanPanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.clancastle);
+				infoPanel.gameObject.SetActive(UI_Main.instance.isActive);
+				upgradePanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == false && UI_Main.instance.isActive);
+				instantPanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == true && UI_Main.instance.isActive);
+				trainPanel.gameObject.SetActive((Building.selectedInstance.data.id == Data.BuildingID.armycamp || Building.selectedInstance.data.id == Data.BuildingID.barracks) && UI_Main.instance.isActive);
+				clanPanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.clancastle && UI_Main.instance.isActive);
 
 			}
 			_elements.SetActive(status);
