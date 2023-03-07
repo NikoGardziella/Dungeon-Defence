@@ -172,6 +172,10 @@ namespace DungeonDefence
 
         for (int i = 0; i < buildings.Count; i++)
         {
+			if(buildings[i].x < 0 || buildings[i].y < 0)
+			{
+				continue;
+			}
             Battle.Building building = new Battle.Building();
             building.building = buildings[i];
             switch (building.building.id)

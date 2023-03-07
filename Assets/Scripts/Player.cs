@@ -4,6 +4,7 @@ namespace DungeonDefence
 	using UnityEngine;
 	using DevelopersHub.RealtimeNetworking.Client;
     using UnityEngine.SceneManagement;
+    using System;
 
     public class Player : MonoBehaviour
 	{
@@ -38,7 +39,13 @@ namespace DungeonDefence
 			STARTWAR = 22,
 			CANCELWAR = 23,
 			WARSTARTED = 24,
-			WARATTACK = 25
+			WARATTACK = 25,
+			WARREPORTLIST = 26,
+			WARREPORT = 27,
+			JOINREQUESTS = 28,
+			 JOINRESPONSE = 29,
+			  GETCHATS = 30,
+			   SENDCHAT = 31
 
 		}
 
@@ -392,6 +399,44 @@ namespace DungeonDefence
 					}
 					UI_Clan.instance.AttackResponse(databaseID, warOpponent);
 					break;
+				case RequestId.WARREPORTLIST:
+					string warReportsData = packet.ReadString();
+					List<Data.ClanWarData> warReports = Data.Deserialize<List<Data.ClanWarData>>(warReportsData);
+					UI_Clan.instance.OpenWarHistoryList(warReports);
+					break;
+				case RequestId.WARREPORT:
+					bool hasReport = packet.ReadBool();
+					Data.ClanWarData warReport = null;
+					if (hasReport)
+					{
+						string warReportData = packet.ReadString();
+						warReport = Data.Deserialize<Data.ClanWarData>(warReportData);
+					}
+					UI_Clan.instance.WarOpen(warReport, true);
+					break;
+				case RequestId.JOINREQUESTS:
+					string requstsData = packet.ReadString();
+					List<Data.JoinRequest> requests = Data.Deserialize<List<Data.JoinRequest>>(requstsData);
+					UI_Clan.instance.OpenRequestsList(requests);
+					break;
+				case RequestId.JOINRESPONSE:
+					response = packet.ReadInt();
+					if(UI_ClanJoinRequest.active != null)
+					{
+						UI_ClanJoinRequest.active.Response(response);
+						UI_ClanJoinRequest.active = null;
+					}
+					break;
+				case RequestId.SENDCHAT:
+					response = packet.ReadInt();
+					UI_Chat.instanse.ChatSendResponse(response);
+					break;
+				case RequestId.GETCHATS:
+					string chatsData = packet.ReadString();
+					List<Data.CharMessage> messages = Data.Deserialize<List<Data.CharMessage>>(chatsData);
+					int chatType = packet.ReadInt();
+					UI_Chat.instanse.ChatSynced(messages, (Data.ChatType)chatType);
+					break;
 			}
 			}
 			catch (System.Exception ex)
@@ -402,7 +447,12 @@ namespace DungeonDefence
 			
 		}
 
-		public void SendSyncRequest()
+        private void OpenWarHistoryList(List<Data.ClanWarData> warReports)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SendSyncRequest()
 		{
 			Packet p = new Packet();
 			p.Write((int)RequestId.SYNC);
