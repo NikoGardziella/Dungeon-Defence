@@ -429,13 +429,13 @@ namespace DungeonDefence
 					break;
 				case RequestId.SENDCHAT:
 					response = packet.ReadInt();
-					UI_Chat.instanse.ChatSendResponse(response);
+					UI_Chat.instance.ChatSendResponse(response);
 					break;
 				case RequestId.GETCHATS:
 					string chatsData = packet.ReadString();
 					List<Data.CharMessage> messages = Data.Deserialize<List<Data.CharMessage>>(chatsData);
 					int chatType = packet.ReadInt();
-					UI_Chat.instanse.ChatSynced(messages, (Data.ChatType)chatType);
+					UI_Chat.instance.ChatSynced(messages, (Data.ChatType)chatType);
 					break;
 			}
 			}

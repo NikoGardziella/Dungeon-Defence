@@ -248,7 +248,7 @@ namespace DungeonDefence
 
 		private void MoveStarted()
 		{
-			if(UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive)
+			if((UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive) && UI_Chat.instance.isActive == false)
 			{
 				if(_building)
 				{
@@ -295,7 +295,7 @@ namespace DungeonDefence
 
 		private void ZoomStarted()
 		{
-			if(UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive)
+			if((UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive)  && UI_Chat.instance.isActive == false)
 			{
 				Vector2 touch0 = _inputs.Main.TouchPosition0.ReadValue<Vector2>();
 				Vector2 touch1 = _inputs.Main.TouchPosition1.ReadValue<Vector2>();

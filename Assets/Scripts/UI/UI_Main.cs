@@ -16,6 +16,7 @@ namespace DungeonDefence
 
 		[SerializeField] public Button _shopButton = null;
 		[SerializeField] public Button _battleButton = null;
+		[SerializeField] public Button _chatButton = null;
 
 
 		[SerializeField] public BuildGrid _grid = null;
@@ -44,6 +45,7 @@ namespace DungeonDefence
 		{
 			_shopButton.onClick.AddListener(ShopButtonClicked);
 			_battleButton.onClick.AddListener(BattleButtonClicked);
+			_chatButton.onClick.AddListener(ChatButtonClicked);
 
 		}
 
@@ -52,6 +54,10 @@ namespace DungeonDefence
 		//	UI_Build.instance.Cancel();
 			UI_Shop.instance.SetStatus(true);
 			SetStatus(false);
+		}
+		private void ChatButtonClicked()
+		{
+			UI_Chat.instance.Open();
 		}
 
 		private void BattleButtonClicked()

@@ -23,7 +23,7 @@ namespace DungeonDefence
         [SerializeField] private RectTransform _chatGridGlobal = null;
         //[SerializeField] private GameObject _loadingPrefab = null;
 
-        private static UI_Chat _instance = null; public static UI_Chat instanse { get { return _instance; } }
+        private static UI_Chat _instance = null; public static UI_Chat instance { get { return _instance; } }
         private bool _active = false; public bool isActive { get { return _active; } }
 
         private List<UI_ChatItem> clanChats = new List<UI_ChatItem>();
@@ -247,7 +247,7 @@ namespace DungeonDefence
             }
             else
             {
-                _buttonClan.interactable = true;
+                _buttonClan.interactable = (Player.instance.data.clanID > 0);
                 _chatGridGlobal.gameObject.SetActive(true);
             }
             _inputMessage.interactable = true;
