@@ -228,7 +228,7 @@ namespace DungeonDefence
 
 		public void Selected()
 		{
-			Debug.Log("selected");
+	
 			if(selectedInstance != null)
 			{
 				if(selectedInstance == this)

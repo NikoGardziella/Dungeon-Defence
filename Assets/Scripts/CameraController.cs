@@ -185,6 +185,10 @@ namespace DungeonDefence
 							{
 								UI_Clan.instance.Open();
 							}
+							else if(results[i].gameObject == UI_BuildingOptions.instance.spellButton.gameObject)
+							{
+								UI_Spell.instance.SetStatus(true);
+							}
 						}
 						
 						Building.selectedInstance.Deselected();
@@ -193,7 +197,7 @@ namespace DungeonDefence
 			}
 			else if(UI_Battle.instance.isActive)
 			{
-				if(results.Count <= 0 && UI_Battle.instance.selectedUnit >= 0)
+				if(results.Count <= 0 && (UI_Battle.instance.selectedUnit >= 0 ||UI_Battle.instance.selectedSpell >= 0))
 				{
 					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
 					planePosition = UI_Main.instance._grid.transform.InverseTransformPoint(planePosition);
@@ -248,7 +252,7 @@ namespace DungeonDefence
 
 		private void MoveStarted()
 		{
-			if((UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive) && UI_Chat.instance.isActive == false)
+			if((UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive) && UI_Chat.instance.isActive == false && UI_Settings.instance.isActive == false)
 			{
 				if(_building)
 				{
@@ -295,7 +299,7 @@ namespace DungeonDefence
 
 		private void ZoomStarted()
 		{
-			if((UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive)  && UI_Chat.instance.isActive == false)
+			if((UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive)  && UI_Chat.instance.isActive == false && UI_Settings.instance.isActive == false)
 			{
 				Vector2 touch0 = _inputs.Main.TouchPosition0.ReadValue<Vector2>();
 				Vector2 touch1 = _inputs.Main.TouchPosition1.ReadValue<Vector2>();

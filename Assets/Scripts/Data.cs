@@ -5,6 +5,8 @@ namespace DungeonDefence
 	using System.Collections.Generic;
 	using System;
 	using System.Threading.Tasks;
+    using System.Text;
+    using System.Security.Cryptography;
 	
 	public static class Data
 	{
@@ -17,7 +19,7 @@ namespace DungeonDefence
         public static readonly int gridSize = 45;
         public static readonly float gridCellSize = 1;
 
-        public static readonly float battleFrameRate = 0.1f;
+        public static readonly float battleFrameRate = 0.05f;
         public static readonly int battleTilesWorthOfOneWall = 15;
         public static readonly int battleGroupWallAttackRadius = 5;
         public static readonly int battleGridOffset = 1;
@@ -33,14 +35,15 @@ namespace DungeonDefence
         public static readonly double clanWarMatchMinPercentage = 0.70d;
 
         public static readonly double clanWarMatchTownHallEffectPercentage = 0.60d;
-        public static readonly double clanWarMatchSpellFactoryEffectPercentage = 0.5d;
-        public static readonly double clanWarMatchDarkSpellFactoryEffectPercentage = 0.5d;
-        public static readonly double clanWarMatchBarracksEffectPercentage = 0.5d;
-        public static readonly double clanWarMatchDarkBarracksEffectPercentage = 0.5d;
+        public static readonly double clanWarMatchSpellFactoryEffectPercentage = 0.05d;
+        public static readonly double clanWarMatchDarkSpellFactoryEffectPercentage = 0.05d;
+        public static readonly double clanWarMatchBarracksEffectPercentage = 0.05d;
+        public static readonly double clanWarMatchDarkBarracksEffectPercentage = 0.05d;
         public static readonly double clanWarMatchCampsEffectPercentage = 0.20d;
 
         public static readonly int[] clanRanksWithEditPermission = { 1, 2 };
         public static readonly int[] clanRanksWithWarPermission = { 1, 2 };
+        public static readonly int[] clanRanksWithKickMembersPermission = { 1, 2 };
         public static readonly int[] clanRanksWithAcceptJoinRequstsPermission = { 1, 2 };
         public static readonly int[] clanWarAvailableCounts = { 5, 10, 15, 20, 30, 40, 50 };
 
@@ -50,9 +53,60 @@ namespace DungeonDefence
 
         public static readonly string mysqlDateTimeFormat = "%Y-%m-%d %H:%i:%s";
 
+        public static readonly int recoveryCodeExpiration = 300;
+        public static readonly int confirmationCodeExpiration = 300;
+        public static readonly int recoveryCodeLength = 6;
+
+        public static bool IsEmailValid(string email)
+        {
+            email = email.Trim();
+            if (email.EndsWith(".")) { return false; }
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch { return false; }
+        }
+
+        public static string RandomCode(int length)
+        {
+            if (length <= 0)
+            {
+                return "";
+            }
+            Random random = new Random();
+            const string chars = "0123456789";
+            string value = "";
+            while (value.Length < length)
+            {
+                value += chars[random.Next(0, chars.Length)].ToString();
+            }
+            return value;
+        }
+
+        public static string EncrypteToMD5(string data)
+        {
+            UTF8Encoding ue = new UTF8Encoding();
+            byte[] bytes = ue.GetBytes(data);
+            MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
+            byte[] hashBytes = md5.ComputeHash(bytes);
+            string hashString = "";
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                hashString = hashString + Convert.ToString(hashBytes[i], 16).PadLeft(2, '0');
+            }
+            return hashString.PadLeft(32, '0');
+        }
+
         public enum ChatType
         {
             global = 1, clan = 2
+        }
+
+        public enum ClanRank
+        {
+            member = 0, leader = 1, coleader = 2
         }
 
         public enum ClanJoinType
@@ -222,13 +276,58 @@ namespace DungeonDefence
             public long clanID = 0;
             public int clanRank = 0;
             public long warID = 0;
+            public string email = "";
             public List<Building> buildings = new List<Building>();
             public List<Unit> units = new List<Unit>();
+            public List<Spell> spells = new List<Spell>();
         }
 
         public enum UnitID
         {
-            barbarian, archer, goblin, healer, wallbreaker, giant, miner, balloon, wizard, dragon, pekka, babydragon, electrodragon, yeti, dragonrider, electrotitan, minion, hogrider, valkyrie, golem, witch, lavahound, bowler, icegolem, headhunter
+            barbarian, archer, goblin, healer, wallbreaker, giant, miner, balloon, wizard, dragon, pekka, babydragon, electrodragon, yeti, dragonrider, electrotitan, minion, hogrider, valkyrie, golem, witch, lavahound, bowler, icegolem, headhunter, skeleton, bat
+        }
+
+        // Spells that their effects have been applied to the project: lightning, healing, rage, freeze, invisibility, haste
+        public enum SpellID
+        {
+            lightning, healing, rage, jump, freeze, invisibility, recall, earthquake, haste, skeleton, bat
+        }
+
+        public class ServerSpell
+        {
+            public long databaseID = 0;
+            public SpellID id = SpellID.lightning;
+            public int level = 0;
+            public int requiredGold = 0;
+            public int requiredElixir = 0;
+            public int requiredGems = 0;
+            public int requiredDarkElixir = 0;
+            public int brewTime = 0;
+            public int housing = 1;
+            public float radius = 0;
+            public int pulsesCount = 0;
+            public float pulsesDuration = 0;
+            public float pulsesValue = 0;
+            public float pulsesValue2 = 0;
+            public float researchTime = 0;
+            public int researchGold = 0;
+            public int researchElixir = 0;
+            public int researchDarkElixir = 0;
+            public int researchGems = 0;
+        }
+
+        public class Spell
+        {
+            public long databaseID = 0;
+            public SpellID id = SpellID.lightning;
+            public int level = 0;
+            public int hosing = 1;
+            public bool brewed = false;
+            public bool ready = false;
+            public int brewTime = 0;
+            public float brewedTime = 0;
+            public int housing = 1;
+            public ServerSpell server = null;
         }
 
         public static int GetClanWarGainedXP(int gainedStars, int enemyGainedStars, int maxStars, bool didWonFirstAttack)
@@ -347,6 +446,24 @@ namespace DungeonDefence
                 case UnitID.bowler: return darkBarracksLevel >= 7;
                 case UnitID.icegolem: return darkBarracksLevel >= 8;
                 case UnitID.headhunter: return darkBarracksLevel >= 9;
+                default: return false;
+            }
+        }
+
+        public static bool IsSpellUnlocked(SpellID id, int spellFactoryLevel, int darkSpellFactoryLevel)
+        {
+            switch (id)
+            {
+                case SpellID.lightning: return spellFactoryLevel >= 1;
+                case SpellID.healing: return spellFactoryLevel >= 2;
+                case SpellID.rage: return spellFactoryLevel >= 3;
+                case SpellID.jump: return spellFactoryLevel >= 4;
+                case SpellID.freeze: return spellFactoryLevel >= 5;
+                case SpellID.invisibility: return spellFactoryLevel >= 6;
+                case SpellID.earthquake: return darkSpellFactoryLevel >= 1;
+                case SpellID.haste: return darkSpellFactoryLevel >= 2;
+                case SpellID.skeleton: return darkSpellFactoryLevel >= 3;
+                case SpellID.bat: return darkSpellFactoryLevel >= 4;
                 default: return false;
             }
         }
@@ -490,6 +607,7 @@ namespace DungeonDefence
         {
             public int frame = 0;
             public List<BattleFrameUnit> units = new List<BattleFrameUnit>();
+            public List<BattleFrameSpell> spells = new List<BattleFrameSpell>();
         }
 
         public class BattleFrameUnit
@@ -498,6 +616,14 @@ namespace DungeonDefence
             public int x = 0;
             public int y = 0;
             public Unit unit = null;
+        }
+
+        public class BattleFrameSpell
+        {
+            public long id = 0;
+            public int x = 0;
+            public int y = 0;
+            public Spell spell = null;
         }
 
         public enum BattleType
@@ -531,7 +657,9 @@ namespace DungeonDefence
         public class InitializationData
         {
             public long accountID = 0;
+            public string password = "";
             public List<ServerUnit> serverUnits = new List<ServerUnit>();
+            public List<ServerSpell> serverSpells = new List<ServerSpell>();
         }
 
         public class ServerUnit
@@ -1242,7 +1370,6 @@ namespace DungeonDefence
                 }
             },
         };
-
 
 	}
 }

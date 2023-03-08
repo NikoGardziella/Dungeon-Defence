@@ -7,9 +7,11 @@ namespace DungeonDefence
 	using UnityEngine;
 	using UnityEngine.UI;
 	using System;
+	using System.Linq; 
 
 	public class UI_Clan : MonoBehaviour
 	{
+
 
         [SerializeField] private GameObject _elements = null;
         [SerializeField] private GameObject _profilePanel = null;
@@ -65,6 +67,8 @@ namespace DungeonDefence
         [SerializeField] private TextMeshProUGUI _profileName = null;
         [SerializeField] private Image _profileBackground = null;
         [SerializeField] private Image _profileIcon = null;
+        [SerializeField] private UI_ClanMember _profileMemberPrefab = null;
+        [SerializeField] private RectTransform _profileMembersGrid = null;
 
         [Header("Clan War Start")]
         [SerializeField] private GameObject _warNormalPanel = null;
@@ -215,6 +219,7 @@ namespace DungeonDefence
 
         public void Close()
         {
+            ClearClanMembers();
             ClearRequestItems();
             ClearWarHistoryItems();
             ClearWarMembersSelect();
@@ -323,12 +328,51 @@ namespace DungeonDefence
             _profileIcon.color = Tools.HexToColor(profileClan.patternColor);
             _profileRequestsClose.interactable = true;
             _profileJoinRequests.gameObject.SetActive(Player.instance.data.clanID > 0 && Player.instance.data.clanID == clan.id);
+            CreateMembersList(clan.members, clan.id);
             _profileRequestsPanel.SetActive(false);
             _profileHistoryPanel.SetActive(false);
             _listPanel.SetActive(false);
             _createPanel.SetActive(false);
             _warPanel.SetActive(false);
             _profilePanel.SetActive(true);
+        }
+
+        private List<UI_ClanMember> clanMembers = new List<UI_ClanMember>();
+
+        private void CreateMembersList(List<Data.ClanMember> members, long clanID)
+        {
+            ClearClanMembers();
+            bool haveKickPermission = false;
+            if(Player.instance.data.clanID > 0 && Player.instance.data.clanID == clanID)
+            {
+                for (int i = 0; i < Data.clanRanksWithKickMembersPermission.Length; i++)
+                {
+                    if (Data.clanRanksWithKickMembersPermission[i] == Player.instance.data.clanRank)
+                    {
+                        haveKickPermission = true;
+                        break;
+                    }
+                }
+            }
+            List<Data.ClanMember>  _members = members.OrderBy(p => p.townHallLevel).ToList();
+            for (int i = 0; i < _members.Count; i++)
+            {
+                UI_ClanMember member = Instantiate(_profileMemberPrefab, _profileMembersGrid);
+                member.Initialize(_members[i], haveKickPermission);
+                clanMembers.Add(member);
+            }
+        }
+
+        public void kickResponse(long id, int response)
+        {
+            for (int i = 0; i < clanMembers.Count; i++)
+            {
+                if(clanMembers[i].id == id)
+                {
+                    clanMembers[i].kickResponse(response);
+                    break;
+                }
+            }
         }
 
         public void RequestsOpen()
@@ -349,7 +393,7 @@ namespace DungeonDefence
             UI_ClanJoinRequest.active = null;
             ClearRequestItems();
             bool havePermission = false;
-            if(Player.instance.data.clanID > 0)
+            if (Player.instance.data.clanID > 0)
             {
                 for (int i = 0; i < Data.clanRanksWithAcceptJoinRequstsPermission.Length; i++)
                 {
@@ -1098,6 +1142,18 @@ namespace DungeonDefence
             clanItems.Clear();
         }
 
+        private void ClearClanMembers()
+        {
+            for (int i = 0; i < clanMembers.Count; i++)
+            {
+                if (clanMembers[i])
+                {
+                    Destroy(clanMembers[i].gameObject);
+                }
+            }
+            clanMembers.Clear();
+        }
+
         private void ClearWarMembers()
         {
             for (int i = 0; i < warMembers.Count; i++)
@@ -1145,7 +1201,6 @@ namespace DungeonDefence
             }
             requestItems.Clear();
         }
-
 
 	}
 }

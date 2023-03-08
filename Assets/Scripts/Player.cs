@@ -43,9 +43,18 @@ namespace DungeonDefence
 			WARREPORTLIST = 26,
 			WARREPORT = 27,
 			JOINREQUESTS = 28,
-			 JOINRESPONSE = 29,
-			  GETCHATS = 30,
-			   SENDCHAT = 31
+			JOINRESPONSE = 29,
+			 GETCHATS = 30,
+			SENDCHAT = 31,
+			SENDCODE = 32,
+			CONFIRMCODE = 33, 
+			EMAILCODE = 34,
+			EMAILCONFIRM = 35,
+			LOGOUT = 36,
+			KICKMEMBER = 37,
+			BREW = 38,
+			CANCELBREW = 39
+
 
 		}
 
@@ -55,10 +64,30 @@ namespace DungeonDefence
 		private bool updating = false;
 		private bool _inBattle = false; public static bool inBattle {get {return instance._inBattle; }  set { instance._inBattle = value;  } }
 
+		 public static readonly string username_key = "username";
+		public static readonly string password_key = "password";
+
 		private void Start()
 		{
 			RealtimeNetworking.OnPacketReceived += ReceivePacket;
-			InitializeConnection();
+			RealtimeNetworking.OnDisconnectedFromServer += DisconnectedFromServer;
+			string device = SystemInfo.deviceUniqueIdentifier;
+			string password = "";
+			string username = "";
+			if (PlayerPrefs.HasKey(password_key))
+			{
+				password = PlayerPrefs.GetString(password_key);
+			}
+			if (PlayerPrefs.HasKey(password_key))
+			{
+				username = PlayerPrefs.GetString(username_key);
+			}
+			Packet packet = new Packet();
+			packet.Write((int)RequestId.AUTH);
+			packet.Write(device);
+			packet.Write(password);
+			packet.Write(username);
+			Sender.TCP_Send(packet);
 		}
 		private void Awake()
 		{
@@ -98,346 +127,405 @@ namespace DungeonDefence
 			try
 			{
 				int id = packet.ReadInt();
-			long databaseID = 0;
-			int response = 0;
-			switch ((RequestId)id)
-			{
-				case RequestId.AUTH:
-					connected = true;
-					updating = true;
-					timer = 0;
-					string authData = packet.ReadString();
-					initializationData = Data.Deserialize<Data.InitializationData>(authData);
-					SendSyncRequest();
-					break;
-				case RequestId.SYNC:
-					string playerData = packet.ReadString();
-					Data.Player playerSyncData = Data.Deserialize<Data.Player>(playerData);
-					SyncData(playerSyncData);
-					updating = false;
-					break;
-				case RequestId.BUILD:
-					response = packet.ReadInt();
-					switch (response)
-					{
-						case 0:
-							Debug.Log("unknown error");
-							break;
-						case 1:
-							Debug.Log("Placed Succesfully");
-							RushSyncRequest();
-							break;
-						case 2:
-							Debug.Log("no resources");
-							break;
-						case 3:
-							Debug.Log("Max level");
-							break;
-						case 4:
-							Debug.Log("Place taken");
-							break;
-						case 5:
-							Debug.Log("no builders");
-							break;
-						case 6:
-							Debug.Log("Maximum level reached");
-							break;						
-					}
-					break;
-				case RequestId.REPLACE:
-					int replaceResponse = packet.ReadInt();
-					int replaceX = packet.ReadInt();
-					int replaceY = packet.ReadInt();
-					long replaceID = packet.ReadLong();
-
-					for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
-					{
-						if(UI_Main.instance._grid.buildings[i].databaseID == replaceID)
+				long databaseID = 0;
+				int response = 0;
+				switch ((RequestId)id)
+				{
+					case RequestId.AUTH:
+						connected = true;
+						updating = true;
+						timer = 0;
+						string authData = packet.ReadString();
+						initializationData = Data.Deserialize<Data.InitializationData>(authData);
+						PlayerPrefs.SetString(password_key, initializationData.password);
+						SendSyncRequest();
+						break;
+					case RequestId.SYNC:
+						string playerData = packet.ReadString();
+						Data.Player playerSyncData = Data.Deserialize<Data.Player>(playerData);
+						SyncData(playerSyncData);
+						updating = false;
+						break;
+					case RequestId.BUILD:
+						response = packet.ReadInt();
+						switch (response)
 						{
-							switch (replaceResponse)
+							case 0:
+								Debug.Log("unknown error");
+								break;
+							case 1:
+								Debug.Log("Placed Succesfully");
+								RushSyncRequest();
+								break;
+							case 2:
+								Debug.Log("no resources");
+								break;
+							case 3:
+								Debug.Log("Max level");
+								break;
+							case 4:
+								Debug.Log("Place taken");
+								break;
+							case 5:
+								Debug.Log("no builders");
+								break;
+							case 6:
+								Debug.Log("Maximum level reached");
+								break;						
+						}
+						break;
+					case RequestId.REPLACE:
+						int replaceResponse = packet.ReadInt();
+						int replaceX = packet.ReadInt();
+						int replaceY = packet.ReadInt();
+						long replaceID = packet.ReadLong();
+
+						for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+						{
+							if(UI_Main.instance._grid.buildings[i].databaseID == replaceID)
 							{
-								case 0:
-									Debug.Log("no building");
-									break;
-								case 1:
-									Debug.Log("Replaced Succesfully");
-									UI_Main.instance._grid.buildings[i].PlacedOnGrid(replaceX, replaceY);			
-									if(UI_Main.instance._grid.buildings[i] != Building.selectedInstance)
-									{
-										
-									}
-									RushSyncRequest();
-									break;
-								case 2:
-									Debug.Log("Place taken");
-									break;
+								switch (replaceResponse)
+								{
+									case 0:
+										Debug.Log("no building");
+										break;
+									case 1:
+										Debug.Log("Replaced Succesfully");
+										UI_Main.instance._grid.buildings[i].PlacedOnGrid(replaceX, replaceY);			
+										if(UI_Main.instance._grid.buildings[i] != Building.selectedInstance)
+										{
+											
+										}
+										RushSyncRequest();
+										break;
+									case 2:
+										Debug.Log("Place taken");
+										break;
+								}
+								UI_Main.instance._grid.buildings[i].waitinReplaceRepsonce = false;
+								break;
 							}
-							UI_Main.instance._grid.buildings[i].waitinReplaceRepsonce = false;
-							break;
 						}
-					}
-					break;
-				case RequestId.COLLECT:
-					long db = packet.ReadLong();
-					int collectedAmmount = packet.ReadInt();
-					Debug.Log("collecterd:" + collectedAmmount);
+						break;
+					case RequestId.COLLECT:
+						long db = packet.ReadLong();
+						int collectedAmmount = packet.ReadInt();
+						Debug.Log("collecterd:" + collectedAmmount);
 
-					for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
-					{
-						if(db ==  UI_Main.instance._grid.buildings[i].data.databaseID)
+						for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
 						{
-							UI_Main.instance._grid.buildings[i].collecting = false; 
-							switch (UI_Main.instance._grid.buildings[i].id)
+							if(db ==  UI_Main.instance._grid.buildings[i].data.databaseID)
 							{
-								case Data.BuildingID.goldmine:
-									UI_Main.instance._grid.buildings[i].data.goldStorage -= collectedAmmount;
-									break;
-								case Data.BuildingID.elixirmine:
-									UI_Main.instance._grid.buildings[i].data.elixirStorage -= collectedAmmount;
-									break;
-								case Data.BuildingID.darkelixirmine:
-									UI_Main.instance._grid.buildings[i].data.darkStorage -= collectedAmmount;
-									break;
+								UI_Main.instance._grid.buildings[i].collecting = false; 
+								switch (UI_Main.instance._grid.buildings[i].id)
+								{
+									case Data.BuildingID.goldmine:
+										UI_Main.instance._grid.buildings[i].data.goldStorage -= collectedAmmount;
+										break;
+									case Data.BuildingID.elixirmine:
+										UI_Main.instance._grid.buildings[i].data.elixirStorage -= collectedAmmount;
+										break;
+									case Data.BuildingID.darkelixirmine:
+										UI_Main.instance._grid.buildings[i].data.darkStorage -= collectedAmmount;
+										break;
+								}
+								//UI_Main.instance._grid.buildings[i].data.storage -= collectedAmmount;
+								UI_Main.instance._grid.buildings[i].AdjustUI();
 							}
-							//UI_Main.instance._grid.buildings[i].data.storage -= collectedAmmount;
-							UI_Main.instance._grid.buildings[i].AdjustUI();
 						}
-					}
-					break;
-				case RequestId.PREUPGRADE:
-					databaseID = packet.ReadLong();
-					string re = packet.ReadString();
-					Data.ServerBuilding ServerBuildingData = Data.Deserialize<Data.ServerBuilding>(re);
-					UI_BuildingUpgrade.instance.Open(ServerBuildingData, databaseID);
-					break;
-				case RequestId.UPGRADE:
-					response = packet.ReadInt();
-					switch (response)
-					{
-						case 0:
-							Debug.Log("unknown error");
-							break;
-						case 1:
-							Debug.Log("Upgrade started");
-							RushSyncRequest();
-							break;
-						case 2:
-							Debug.Log("no resources");
-							break;
-						case 3:
-							Debug.Log("Max level");
-							break;
-						case 5:
-							Debug.Log("no builders");
-							break;	
-						case 6:
-							Debug.Log("Maximum level reached");
-							break;						
-					}
-					break;
-				case RequestId.INSTANTBUILD:
-					response = packet.ReadInt();
-					if(response == 2)
-					{
-						Debug.Log("not enough gems for instant build");
-					}
-					else if(response == 1)
-					{
-						Debug.Log("Instant build succesfull");
-						RushSyncRequest();
-					}
-					else
-					{
-						Debug.Log("Instabuild not possible");
-						//UI_BuildingUpgrade.instance.Close();
-					}
-					break;
-				case RequestId.TRAIN:
-					response = packet.ReadInt();
-					if(response == 2)
-					{
-						Debug.Log("no resources");
-					}
-					else if(response == 3)
-					{
-						Debug.Log("no capacity to train unit");
-					}
-					else if(response == 4)
-					{
-						Debug.Log("Server unit not found");
-					}
-					else if(response == 1)
-					{
-						Debug.Log("Training started");
-						RushSyncRequest();
-					}
-					else
-					{
-						Debug.Log("Instabuild not possible");
-						//UI_BuildingUpgrade.instance.Close();
-					}
-					break;
-
-				case RequestId.CANCELTRAIN:
-					response = packet.ReadInt();
-					if(response == 2)
-					{
-						Debug.Log("not enough gems for instant build");
-					}
-					else if(response == 1)
-					{
-						Debug.Log("Instant build succesfull");
-						RushSyncRequest();
-					}
-					else
-					{
-						Debug.Log("Instabuild not possible");
-						//UI_BuildingUpgrade.instance.Close();
-					}
-					break;
-
-				case RequestId.BATTLEFIND:
-					long targetID = packet.ReadLong();
-					Data.OpponentData opponent = null;
-					if(targetID > 0)
-					{
-						string d = packet.ReadString();
-						opponent = Data.Deserialize<Data.OpponentData>(d);
-					}
-					UI_Search.instance.FindResponded(targetID, opponent);
-					break;
-
-				case RequestId.BATTLESTART:
-					bool matched = packet.ReadBool();
-					bool attack = packet.ReadBool();
-					bool confirmed = matched && attack;
-					List<Data.BattleStartBuildingData> buildings = null;
-					int winTrophies = 0;
-					int loseTrophies = 0;
-					if(confirmed)
-					{
-						winTrophies = packet.ReadInt();
-						loseTrophies = packet.ReadInt();
-						string BattleStartBuildingData = packet.ReadString();
-						buildings = Data.Deserialize<List<Data.BattleStartBuildingData>>(BattleStartBuildingData);
-					}
-					UI_Battle.instance.StartBattleConfirm(confirmed, buildings, winTrophies, loseTrophies);
-					break;
-
-				case RequestId.BATTLEEND:
-					int stars = packet.ReadInt();;
-					int unitsDeployed = packet.ReadInt();;
-					int lootedGold = packet.ReadInt();;
-					int lootedElixir = packet.ReadInt();;
-					int lootedDark = packet.ReadInt();;
-					int trophies = packet.ReadInt();;
-					int frame = packet.ReadInt();
-					UI_Battle.instance.BattleEnded(stars, unitsDeployed, lootedGold, lootedElixir, lootedDark, trophies, frame);
-					break;
-
-				case RequestId.OPENCLAN:
-					bool haveClan = packet.ReadBool();
-					Data.Clan clan = null;
-					List<Data.ClanMember> warMembers = null;
-					if (haveClan)
-					{
-						string clanData = packet.ReadString();
-						clan = Data.Deserialize<Data.Clan>(clanData);
-						if(clan.war.id > 0)
+						break;
+					case RequestId.PREUPGRADE:
+						databaseID = packet.ReadLong();
+						string re = packet.ReadString();
+						Data.ServerBuilding ServerBuildingData = Data.Deserialize<Data.ServerBuilding>(re);
+						UI_BuildingUpgrade.instance.Open(ServerBuildingData, databaseID);
+						break;
+					case RequestId.UPGRADE:
+						response = packet.ReadInt();
+						switch (response)
 						{
-							string warData = packet.ReadString();
-							warMembers = Data.Deserialize<List<Data.ClanMember>>(warData);
+							case 0:
+								Debug.Log("unknown error");
+								break;
+							case 1:
+								Debug.Log("Upgrade started");
+								RushSyncRequest();
+								break;
+							case 2:
+								Debug.Log("no resources");
+								break;
+							case 3:
+								Debug.Log("Max level");
+								break;
+							case 5:
+								Debug.Log("no builders");
+								break;	
+							case 6:
+								Debug.Log("Maximum level reached");
+								break;						
 						}
-					}
-					UI_Clan.instance.ClanOpen(clan, warMembers);
-					break;
-				case RequestId.GETCLANS:
-					string clansData = packet.ReadString();
-					Data.ClansList clans = Data.Deserialize<Data.ClansList>(clansData);
-					UI_Clan.instance.ClansListOpen(clans);
-					break;
-				case RequestId.CREATECLAN:
-					response = packet.ReadInt();
-					UI_Clan.instance.CreateResponse(response);
-					break;
-				case RequestId.JOINCLAN:
-					response = packet.ReadInt();
-					UI_Clan.instance.JoinResponse(response);
-					break;
-				case RequestId.LEAVECLAN:
-					response = packet.ReadInt();
-					UI_Clan.instance.LeaveResponse(response);
-					break;
-				case RequestId.EDITCLAN:
-					response = packet.ReadInt();
-					UI_Clan.instance.EditResponse(response);
-					break;
-				 case RequestId.OPENWAR:
-					string clanWarData = packet.ReadString();
-					Data.ClanWarData war = Data.Deserialize<Data.ClanWarData>(clanWarData);
-					UI_Clan.instance.WarOpen(war);
-					break;
-				case RequestId.STARTWAR:
-					response = packet.ReadInt();
-					UI_Clan.instance.WarStartResponse(response);
-					break;
-				case RequestId.CANCELWAR:
-					response = packet.ReadInt();
-					UI_Clan.instance.WarSearchCancelResponse(response);
-					break;
-				case RequestId.WARSTARTED:
-					databaseID = packet.ReadInt();
-					UI_Clan.instance.WarStarted(databaseID);
-					break;
-				case RequestId.WARATTACK:
-					databaseID = packet.ReadLong();
-					Data.OpponentData warOpponent = null;
-					if(databaseID > 0)
-					{
-						string s = packet.ReadString();
-						warOpponent = Data.Deserialize<Data.OpponentData>(s);
-					}
-					UI_Clan.instance.AttackResponse(databaseID, warOpponent);
-					break;
-				case RequestId.WARREPORTLIST:
-					string warReportsData = packet.ReadString();
-					List<Data.ClanWarData> warReports = Data.Deserialize<List<Data.ClanWarData>>(warReportsData);
-					UI_Clan.instance.OpenWarHistoryList(warReports);
-					break;
-				case RequestId.WARREPORT:
-					bool hasReport = packet.ReadBool();
-					Data.ClanWarData warReport = null;
-					if (hasReport)
-					{
-						string warReportData = packet.ReadString();
-						warReport = Data.Deserialize<Data.ClanWarData>(warReportData);
-					}
-					UI_Clan.instance.WarOpen(warReport, true);
-					break;
-				case RequestId.JOINREQUESTS:
-					string requstsData = packet.ReadString();
-					List<Data.JoinRequest> requests = Data.Deserialize<List<Data.JoinRequest>>(requstsData);
-					UI_Clan.instance.OpenRequestsList(requests);
-					break;
-				case RequestId.JOINRESPONSE:
-					response = packet.ReadInt();
-					if(UI_ClanJoinRequest.active != null)
-					{
-						UI_ClanJoinRequest.active.Response(response);
-						UI_ClanJoinRequest.active = null;
-					}
-					break;
-				case RequestId.SENDCHAT:
-					response = packet.ReadInt();
-					UI_Chat.instance.ChatSendResponse(response);
-					break;
-				case RequestId.GETCHATS:
-					string chatsData = packet.ReadString();
-					List<Data.CharMessage> messages = Data.Deserialize<List<Data.CharMessage>>(chatsData);
-					int chatType = packet.ReadInt();
-					UI_Chat.instance.ChatSynced(messages, (Data.ChatType)chatType);
-					break;
-			}
+						break;
+					case RequestId.INSTANTBUILD:
+						response = packet.ReadInt();
+						if(response == 2)
+						{
+							Debug.Log("not enough gems for instant build");
+						}
+						else if(response == 1)
+						{
+							Debug.Log("Instant build succesfull");
+							RushSyncRequest();
+						}
+						else
+						{
+							Debug.Log("Instabuild not possible");
+							//UI_BuildingUpgrade.instance.Close();
+						}
+						break;
+					case RequestId.TRAIN:
+						response = packet.ReadInt();
+						if(response == 2)
+						{
+							Debug.Log("no resources");
+						}
+						else if(response == 3)
+						{
+							Debug.Log("no capacity to train unit");
+						}
+						else if(response == 4)
+						{
+							Debug.Log("Server unit not found");
+						}
+						else if(response == 1)
+						{
+							Debug.Log("Training started");
+							RushSyncRequest();
+						}
+						else
+						{
+							Debug.Log("Instabuild not possible");
+							//UI_BuildingUpgrade.instance.Close();
+						}
+						break;
+
+					case RequestId.CANCELTRAIN:
+						response = packet.ReadInt();
+						if(response == 2)
+						{
+							Debug.Log("not enough gems for instant build");
+						}
+						else if(response == 1)
+						{
+							Debug.Log("Instant build succesfull");
+							RushSyncRequest();
+						}
+						else
+						{
+							Debug.Log("Instabuild not possible");
+							//UI_BuildingUpgrade.instance.Close();
+						}
+						break;
+
+					case RequestId.BATTLEFIND:
+						long targetID = packet.ReadLong();
+						Data.OpponentData opponent = null;
+						if(targetID > 0)
+						{
+							string d = packet.ReadString();
+							opponent = Data.Deserialize<Data.OpponentData>(d);
+						}
+						UI_Search.instance.FindResponded(targetID, opponent);
+						break;
+
+					case RequestId.BATTLESTART:
+						bool matched = packet.ReadBool();
+						bool attack = packet.ReadBool();
+						bool confirmed = matched && attack;
+						List<Data.BattleStartBuildingData> buildings = null;
+						int winTrophies = 0;
+						int loseTrophies = 0;
+						if(confirmed)
+						{
+							winTrophies = packet.ReadInt();
+							loseTrophies = packet.ReadInt();
+							string BattleStartBuildingData = packet.ReadString();
+							buildings = Data.Deserialize<List<Data.BattleStartBuildingData>>(BattleStartBuildingData);
+						}
+						UI_Battle.instance.StartBattleConfirm(confirmed, buildings, winTrophies, loseTrophies);
+						break;
+
+					case RequestId.BATTLEEND:
+						int stars = packet.ReadInt();;
+						int unitsDeployed = packet.ReadInt();;
+						int lootedGold = packet.ReadInt();;
+						int lootedElixir = packet.ReadInt();;
+						int lootedDark = packet.ReadInt();;
+						int trophies = packet.ReadInt();;
+						int frame = packet.ReadInt();
+						UI_Battle.instance.BattleEnded(stars, unitsDeployed, lootedGold, lootedElixir, lootedDark, trophies, frame);
+						break;
+
+					case RequestId.OPENCLAN:
+						bool haveClan = packet.ReadBool();
+						Data.Clan clan = null;
+						List<Data.ClanMember> warMembers = null;
+						if (haveClan)
+						{
+							string clanData = packet.ReadString();
+							clan = Data.Deserialize<Data.Clan>(clanData);
+							if(clan.war != null && clan.war.id > 0)
+							{
+								string warData = packet.ReadString();
+								warMembers = Data.Deserialize<List<Data.ClanMember>>(warData);
+							}
+						}
+						UI_Clan.instance.ClanOpen(clan, warMembers);
+						break;
+					case RequestId.GETCLANS:
+						string clansData = packet.ReadString();
+						Data.ClansList clans = Data.Deserialize<Data.ClansList>(clansData);
+						UI_Clan.instance.ClansListOpen(clans);
+						break;
+					case RequestId.CREATECLAN:
+						response = packet.ReadInt();
+						UI_Clan.instance.CreateResponse(response);
+						break;
+					case RequestId.JOINCLAN:
+						response = packet.ReadInt();
+						UI_Clan.instance.JoinResponse(response);
+						break;
+					case RequestId.LEAVECLAN:
+						response = packet.ReadInt();
+						UI_Clan.instance.LeaveResponse(response);
+						break;
+					case RequestId.EDITCLAN:
+						response = packet.ReadInt();
+						UI_Clan.instance.EditResponse(response);
+						break;
+					case RequestId.OPENWAR:
+						string clanWarData = packet.ReadString();
+						Data.ClanWarData war = Data.Deserialize<Data.ClanWarData>(clanWarData);
+						UI_Clan.instance.WarOpen(war);
+						break;
+					case RequestId.STARTWAR:
+						response = packet.ReadInt();
+						UI_Clan.instance.WarStartResponse(response);
+						break;
+					case RequestId.CANCELWAR:
+						response = packet.ReadInt();
+						UI_Clan.instance.WarSearchCancelResponse(response);
+						break;
+					case RequestId.WARSTARTED:
+						databaseID = packet.ReadInt();
+						UI_Clan.instance.WarStarted(databaseID);
+						break;
+					case RequestId.WARATTACK:
+						databaseID = packet.ReadLong();
+						Data.OpponentData warOpponent = null;
+						if(databaseID > 0)
+						{
+							string s = packet.ReadString();
+							warOpponent = Data.Deserialize<Data.OpponentData>(s);
+						}
+						UI_Clan.instance.AttackResponse(databaseID, warOpponent);
+						break;
+					case RequestId.WARREPORTLIST:
+						string warReportsData = packet.ReadString();
+						List<Data.ClanWarData> warReports = Data.Deserialize<List<Data.ClanWarData>>(warReportsData);
+						UI_Clan.instance.OpenWarHistoryList(warReports);
+						break;
+					case RequestId.WARREPORT:
+						bool hasReport = packet.ReadBool();
+						Data.ClanWarData warReport = null;
+						if (hasReport)
+						{
+							string warReportData = packet.ReadString();
+							warReport = Data.Deserialize<Data.ClanWarData>(warReportData);
+						}
+						UI_Clan.instance.WarOpen(warReport, true);
+						break;
+					case RequestId.JOINREQUESTS:
+						string requstsData = packet.ReadString();
+						List<Data.JoinRequest> requests = Data.Deserialize<List<Data.JoinRequest>>(requstsData);
+						UI_Clan.instance.OpenRequestsList(requests);
+						break;
+					case RequestId.JOINRESPONSE:
+						response = packet.ReadInt();
+						if(UI_ClanJoinRequest.active != null)
+						{
+							UI_ClanJoinRequest.active.Response(response);
+							UI_ClanJoinRequest.active = null;
+						}
+						break;
+					case RequestId.SENDCHAT:
+						response = packet.ReadInt();
+						UI_Chat.instance.ChatSendResponse(response);
+						break;
+					case RequestId.GETCHATS:
+						string chatsData = packet.ReadString();
+						List<Data.CharMessage> messages = Data.Deserialize<List<Data.CharMessage>>(chatsData);
+						int chatType = packet.ReadInt();
+						UI_Chat.instance.ChatSynced(messages, (Data.ChatType)chatType);
+						break;
+
+					case RequestId.EMAILCODE:
+						response = packet.ReadInt();
+						int expTime = packet.ReadInt();
+						UI_Settings.instance.EmailSendResponse(response, expTime);
+						break;
+					case RequestId.EMAILCONFIRM:
+						response = packet.ReadInt();
+						string confEmail = packet.ReadString();
+						UI_Settings.instance.EmailConfirmResponse(response, confEmail);
+						break;
+					case RequestId.KICKMEMBER:
+						databaseID = packet.ReadLong();
+						response = packet.ReadInt();
+						if(response == -1)
+						{
+							string kicker = packet.ReadString();
+							if (UI_Clan.instance.isActive)
+							{
+								UI_Clan.instance.Close();
+							}
+						}
+						else
+						{
+							UI_Clan.instance.kickResponse(databaseID, response);
+						}
+						break;
+					 case RequestId.BREW:
+						response = packet.ReadInt();
+						if (response == 3)
+						{
+							Debug.Log("Server spell not found.");
+						}
+						else if (response == 4)
+						{
+							Debug.Log("No capacity.");
+						}
+						else if (response == 2)
+						{
+							Debug.Log("No resources.");
+						}
+						else if (response == 1)
+						{
+							Debug.Log("Train started.");
+							RushSyncRequest();
+						}
+						else
+						{
+							Debug.Log("Nothing happend.");
+						}
+						break;
+					case RequestId.CANCELBREW:
+						response = packet.ReadInt();
+						if (response == 1)
+						{
+							RushSyncRequest();
+						}
+						break;
+				}
 			}
 			catch (System.Exception ex)
 			{
@@ -535,6 +623,10 @@ namespace DungeonDefence
 			{
 				UI_Train.instance.Sync();
 			}
+			else if (UI_Spell.instance.isOpen)
+			{
+				UI_Spell.instance.Sync();
+			}
 		}
 
 
@@ -573,9 +665,37 @@ namespace DungeonDefence
 		{
 			if (layoutIndex == 0)
 			{
-				SceneManager.LoadSceneAsync(0);
+				RestartGame();
 			}
 		}
+
+		
+		public void AssignServerSpell(ref Data.Spell spell)
+		{
+			if (spell != null)
+			{
+				for (int i = 0; i < initializationData.serverSpells.Count; i++)
+				{
+					if (initializationData.serverSpells[i].id == spell.id && initializationData.serverSpells[i].level == spell.level)
+					{
+						spell.server = initializationData.serverSpells[i];
+						break;
+					}
+				}
+			}
+		}
+
+		public static void RestartGame()
+		{
+			if (_instance != null)
+			{
+				RealtimeNetworking.OnDisconnectedFromServer -= _instance.DisconnectedFromServer;
+				RealtimeNetworking.OnPacketReceived -= _instance.ReceivePacket;
+			}
+			Destroy(RealtimeNetworking.instance.gameObject);
+			SceneManager.LoadScene(0);
+		}
+
 	}
 }
 
