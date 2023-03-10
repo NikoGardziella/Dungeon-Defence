@@ -16,6 +16,8 @@ namespace DungeonDefence
         private bool readyToStart = false;
         [SerializeField] private GameObject _endPanel = null;
         [SerializeField] public TextMeshProUGUI _timerText = null;
+        [SerializeField] public TextMeshProUGUI _battleTimeText = null;
+
         [SerializeField] public TextMeshProUGUI _percentageText = null;
         [SerializeField] public TextMeshProUGUI _lootGoldText = null;
         [SerializeField] public TextMeshProUGUI _lootElixirText = null;
@@ -230,6 +232,8 @@ namespace DungeonDefence
             }
 
             _timerText.text = TimeSpan.FromSeconds(Data.battlePrepDuration).ToString(@"mm\:ss");
+            _battleTimeText.text = "Time to Prepare";
+
 
             ClearBuildingsOnGrid();
             ClearUnitsOnGrid();
@@ -291,6 +295,7 @@ namespace DungeonDefence
 
         private void StartBattle()
         {
+            _battleTimeText.text = "Time until end of battle";
             _timerText.text = TimeSpan.FromSeconds(Data.battleDuration).ToString(@"mm\:ss");
             _findButton.gameObject.SetActive(false);
             _closeButton.gameObject.SetActive(false);

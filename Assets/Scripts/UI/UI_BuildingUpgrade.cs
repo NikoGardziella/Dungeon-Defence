@@ -58,6 +58,30 @@ namespace DungeonDefence
 				reqTime.text = building.buildTime.ToString();
 			}
 			_elements.SetActive(true);
+			if(building.requiredElixir <= 0)
+			{
+				reqElixir.gameObject.SetActive(false);
+			}
+			else
+			{
+				reqElixir.gameObject.SetActive(true);
+			}
+			if(building.requiredGold <= 0)
+			{
+				reqGold.gameObject.SetActive(false);
+			}
+			else
+			{
+				reqGold.gameObject.SetActive(true);
+			}
+			if(building.requiredDarkElixir <= 0)
+			{
+				reqDarkElixir.gameObject.SetActive(false);
+			}
+			else
+			{
+				reqDarkElixir.gameObject.SetActive(true);
+			}
 		}
 
 		private void UpgradeBuilding()
