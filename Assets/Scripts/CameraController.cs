@@ -10,11 +10,13 @@ namespace DungeonDefence
 	public class CameraController : MonoBehaviour
 	{
 
+		public UI_Player ui_Player;
+
 		private static CameraController _instance = null; public static CameraController instance {get {return _instance; } }
 
 		[SerializeField] private Camera _camera = null;
 		[SerializeField] private float _moveSpeed = 50.0f;
-		[SerializeField] private float _moveSmooth = 5.0f;
+		[SerializeField] private float _moveSmooth = 1.0f;
 		[SerializeField] private float _zoomSmooth = 5.0f;
 		[SerializeField] private float _zoomSpeed = 5f;
 
@@ -51,9 +53,12 @@ namespace DungeonDefence
 		private Vector3 _ReplaceBasePosition = Vector3.zero;
 		private bool _replacingBuilding = false;
 
+		private float normalZoom = 10f;
 
 		public Vector3 planeDownLeft = Vector3.zero;
 		public Vector3 planeTopRight = Vector3.zero;
+		[SerializeField] public GameObject normalLayout = null;
+		[SerializeField] public GameObject dungeonLayout = null;
 		private void Awake()
 		{
 			_instance = this;
@@ -67,7 +72,7 @@ namespace DungeonDefence
 
 		private void Start()
 		{
-			Initialize(Vector3.zero, 40.0f, 40.0f, 40.0f, 40.0f, 45.0f, 10.0f, 5.0f , 20.0f);
+			Initialize(Vector3.zero, 40.0f, 40.0f, 40.0f, 40.0f, 45.0f, normalZoom, 5.0f , 20.0f);
 		}
 
 		public void Initialize(Vector3 center, float right, float left, float up, float down, float angle, float zoom, float minZoom, float maxZoom)
@@ -188,6 +193,13 @@ namespace DungeonDefence
 							else if(results[i].gameObject == UI_BuildingOptions.instance.spellButton.gameObject)
 							{
 								UI_Spell.instance.SetStatus(true);
+							}
+							else if(results[i].gameObject == UI_BuildingOptions.instance.editDungeonButton.gameObject)
+							{
+								dungeonLayout.SetActive(true);
+								normalLayout.SetActive(false);
+								UI_WarLayout.instance.SetStatus(true);
+								 
 							}
 						}
 						
@@ -354,15 +366,32 @@ namespace DungeonDefence
 				Vector3 zoomCenter = CameraScreenPositionToPlanePosition(_zoomPositionOnSCreen);
 				_root.position += (_zoomPositionInWorld - zoomCenter);
 			}
+			else if(dungeonLayout.gameObject.activeInHierarchy == true && UI_Battle.instance.isStarted)
+			{
+				_target.position =  ui_Player.transform.position;
+				_target.localPosition = new Vector3(ui_Player.transform.position.x,ui_Player.transform.position.z * 0.70f, - 100);
+				_zoom = 5f;
+
+				//_pivot.localPosition = Vector3.zero;
+				//_pivot.localEulerAngles = new Vector3(_angle, ui_Player.move.x ,ui_Player.transform.rotation.y);
+			}
 			else if(_moving)
 			{
+				if(_zoom != normalZoom)
+				{
+					_target.localPosition = new Vector3(0,0, - 100);
+					_target.localEulerAngles = Vector3.zero;	
+					_zoom = normalZoom;
+				}
 				Vector2 move = _inputs.Main.MoveDelta.ReadValue<Vector2>();
 				if(move != Vector2.zero)
 				{
+					//_target.localPosition = new Vector3(0,0, - 100);
+
 					move.x /= Screen.width;
 					move.y /= Screen.height;
 					_root.position -= _root.right.normalized * move.x * _moveSpeed * _zoom / _maxZoom;
-					_root.position -= _root.forward.normalized * move.y * _moveSpeed * _zoom / _maxZoom;
+                    _root.position -= _root.forward.normalized * move.y * _moveSpeed * _zoom / _maxZoom;
 
 				}
 			}

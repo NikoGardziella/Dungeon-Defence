@@ -97,6 +97,7 @@ namespace DungeonDefence
         [SerializeField] private TextMeshProUGUI _warTimer = null;
         [SerializeField] private Button _warSelectedAttack = null;
         [SerializeField] private Button _warEditLayout = null;
+      
         [SerializeField] private TextMeshProUGUI _warClan1Name = null;
         [SerializeField] private TextMeshProUGUI _warClan2Name = null;
         [SerializeField] private Image _warClan1Background = null;
@@ -125,6 +126,11 @@ namespace DungeonDefence
         [SerializeField] private Button _viewReportButton = null;
         [SerializeField] private RectTransform[] _warMemberMap1Parents = null;
         [SerializeField] private RectTransform[] _warMemberMap2Parents = null;
+
+		[Header("Dungeon")]
+		[SerializeField] private GameObject normalLayout = null;
+		[SerializeField] private GameObject dungeonLayout = null;
+		[SerializeField] private Button _dungeonEditLayout = null;
 
         [Header("Other")]
         public Sprite[] patterns = null;
@@ -172,6 +178,7 @@ namespace DungeonDefence
             _profileLeave.onClick.AddListener(Leave);
             _profileClans.onClick.AddListener(Clans);
             _profileEdit.onClick.AddListener(Edit);
+             _dungeonEditLayout.onClick.AddListener(EditDungeon);
             _warMapEnemy.onClick.AddListener(WarEnemy);
             _warMapHome.onClick.AddListener(WarHome);
             _warNormalBack.onClick.AddListener(WarNormalBack);
@@ -290,6 +297,7 @@ namespace DungeonDefence
             UI_WarLayout.instance.SetStatus(true);
             Close();
         }
+        
 
         public void ClansListOpen(Data.ClansList clans)
         {
@@ -870,6 +878,13 @@ namespace DungeonDefence
         private void Edit()
         {
             CreateOpen(true);
+        }
+		private void EditDungeon()
+        {
+			Debug.Log("EditDungeon clicked");
+			dungeonLayout.SetActive(true);
+			normalLayout.SetActive(false);
+            EditLayout();
         }
 
         private void CreateOpen()

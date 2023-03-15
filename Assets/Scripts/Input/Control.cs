@@ -278,6 +278,89 @@ namespace DungeonDefence
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Player"",
+            ""id"": ""6ddbe1db-16cb-4364-8cb2-d609c5aceb8b"",
+            ""actions"": [
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""Value"",
+                    ""id"": ""2ebb9546-5964-43ce-b156-74deeb3d9b32"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""1ad1327e-9ef3-4737-b751-b5895531f68e"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""5ab6a3b6-34f5-483b-bf45-c258c812d6c5"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""0dd0b322-b18f-474c-a6b8-c8f34663245d"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""29af15eb-498d-4eea-970d-29165cbacfe2"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""43689049-c30f-4e46-a9b1-cb810df58cdc"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""00f2a80d-c163-48f8-9d30-5ee2d914c165"",
+                    ""path"": ""<Gamepad>/leftStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -293,6 +376,9 @@ namespace DungeonDefence
             m_Main_TouchPosition1 = m_Main.FindAction("TouchPosition1", throwIfNotFound: true);
             m_Main_PointerPosition = m_Main.FindAction("PointerPosition", throwIfNotFound: true);
             m_Main_PointerClick = m_Main.FindAction("PointerClick", throwIfNotFound: true);
+            // Player
+            m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
+            m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -445,6 +531,39 @@ namespace DungeonDefence
             }
         }
         public MainActions @Main => new MainActions(this);
+
+        // Player
+        private readonly InputActionMap m_Player;
+        private IPlayerActions m_PlayerActionsCallbackInterface;
+        private readonly InputAction m_Player_Move;
+        public struct PlayerActions
+        {
+            private @Control m_Wrapper;
+            public PlayerActions(@Control wrapper) { m_Wrapper = wrapper; }
+            public InputAction @Move => m_Wrapper.m_Player_Move;
+            public InputActionMap Get() { return m_Wrapper.m_Player; }
+            public void Enable() { Get().Enable(); }
+            public void Disable() { Get().Disable(); }
+            public bool enabled => Get().enabled;
+            public static implicit operator InputActionMap(PlayerActions set) { return set.Get(); }
+            public void SetCallbacks(IPlayerActions instance)
+            {
+                if (m_Wrapper.m_PlayerActionsCallbackInterface != null)
+                {
+                    @Move.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
+                    @Move.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
+                    @Move.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
+                }
+                m_Wrapper.m_PlayerActionsCallbackInterface = instance;
+                if (instance != null)
+                {
+                    @Move.started += instance.OnMove;
+                    @Move.performed += instance.OnMove;
+                    @Move.canceled += instance.OnMove;
+                }
+            }
+        }
+        public PlayerActions @Player => new PlayerActions(this);
         public interface IMainActions
         {
             void OnMove(InputAction.CallbackContext context);
@@ -456,6 +575,10 @@ namespace DungeonDefence
             void OnTouchPosition1(InputAction.CallbackContext context);
             void OnPointerPosition(InputAction.CallbackContext context);
             void OnPointerClick(InputAction.CallbackContext context);
+        }
+        public interface IPlayerActions
+        {
+            void OnMove(InputAction.CallbackContext context);
         }
     }
 }

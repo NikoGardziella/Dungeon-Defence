@@ -128,7 +128,7 @@ namespace DungeonDefence
                     else
                     {
                         Building prefab = GetBuildingPrefab(Player.instance.data.buildings[i].id);
-                        if (prefab)
+                        if (prefab && (Player.instance.data.buildings[i].x >= 0 && Player.instance.data.buildings[i].y >= 0))
                         {
                             building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
                             building.databaseID = Player.instance.data.buildings[i].databaseID;

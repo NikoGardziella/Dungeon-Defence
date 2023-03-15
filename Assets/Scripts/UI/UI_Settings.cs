@@ -22,6 +22,7 @@ namespace DungeonDefence
         private static UI_Settings _instance = null; public static UI_Settings instance { get { return _instance; } }
         private bool _active = false; public bool isActive { get { return _active; } }
         private string email = "";
+        [SerializeField] private TextMeshProUGUI _saveEmailText = null;
 
         private void Awake()
         {
@@ -79,6 +80,7 @@ namespace DungeonDefence
             email = _emailInput.text.Trim();
             if (!string.IsNullOrEmpty(email) && email != Player.instance.data.email)
             {
+                _saveEmailText.text = "";
                 Loading.Open();
                 _saveButton.interactable = false;
                 _cancelButton.interactable = false;

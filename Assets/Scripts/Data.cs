@@ -45,7 +45,7 @@ namespace DungeonDefence
         public static readonly int[] clanRanksWithWarPermission = { 1, 2 };
         public static readonly int[] clanRanksWithKickMembersPermission = { 1, 2 };
         public static readonly int[] clanRanksWithAcceptJoinRequstsPermission = { 1, 2 };
-        public static readonly int[] clanWarAvailableCounts = { 5, 10, 15, 20, 30, 40, 50 };
+        public static readonly int[] clanWarAvailableCounts = {1, 5, 10, 15, 20, 30, 40, 50 };
 
         public static readonly int globalChatArchiveMaxMessages = 30;
         public static readonly int clanChatArchiveMaxMessages = 30;
@@ -501,7 +501,7 @@ namespace DungeonDefence
 
         public enum BuildingID
         {
-            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, darkbarracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap, clancastle, spellfactory, darkspellfactory
+            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, darkbarracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap, clancastle, spellfactory, darkspellfactory, dungeonwall
         }
 
         public static int GetStorageGoldAndElixirLoot(int townhallLevel, float storage)
@@ -642,6 +642,7 @@ namespace DungeonDefence
         public class OpponentData
         {
             public long id = 0;
+            public string opponentName = "opponent";
             public List<Building> buildings = null;
         }
 
@@ -859,6 +860,7 @@ namespace DungeonDefence
                     new BuildingCount { id = "armycamp", count = 1, maxLevel = 1},
                     new BuildingCount { id = "barracks", count = 1, maxLevel = 3},
                     new BuildingCount { id = "cannon", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -877,6 +879,8 @@ namespace DungeonDefence
                     new BuildingCount { id = "cannon", count = 2, maxLevel = 3},
                     new BuildingCount { id = "archertower", count = 1, maxLevel = 2},
                     new BuildingCount { id = "wall", count = 25, maxLevel = 2},
+                    
+                    new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -899,6 +903,8 @@ namespace DungeonDefence
                     new BuildingCount { id = "mortor", count = 1, maxLevel = 1},
                     new BuildingCount { id = "wall", count = 50, maxLevel = 3},
                     new BuildingCount { id = "boomb", count = 2, maxLevel = 2},
+
+                    new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -923,6 +929,8 @@ namespace DungeonDefence
                     new BuildingCount { id = "wall", count = 75, maxLevel = 4},
                     new BuildingCount { id = "boomb", count = 2, maxLevel = 2},
                     new BuildingCount { id = "springtrap", count = 2, maxLevel = 1},
+
+                    new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -950,6 +958,8 @@ namespace DungeonDefence
                     new BuildingCount { id = "boomb", count = 4, maxLevel = 3},
                     new BuildingCount { id = "springtrap", count = 2, maxLevel = 1},
                     new BuildingCount { id = "airbomb", count = 2, maxLevel = 2},
+
+                    new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -979,6 +989,8 @@ namespace DungeonDefence
                     new BuildingCount { id = "springtrap", count = 4, maxLevel = 1},
                     new BuildingCount { id = "airbomb", count = 2, maxLevel = 2},
                     new BuildingCount { id = "giantbomb", count = 1, maxLevel = 2},
+
+                    new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -1014,6 +1026,8 @@ namespace DungeonDefence
                     new BuildingCount { id = "airbomb", count = 2, maxLevel = 3},
                     new BuildingCount { id = "giantbomb", count = 2, maxLevel = 2},
                     new BuildingCount { id = "seekingairmine", count = 1, maxLevel = 1},
+
+                    new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability

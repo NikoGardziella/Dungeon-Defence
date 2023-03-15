@@ -7,9 +7,23 @@ namespace DungeonDefence
 	public class BuildGrid : MonoBehaviour
 	{
 		// SIZE OF THE GRID
+		private static BuildGrid _instance = null; public static BuildGrid instance { get { return _instance; } }
+
 		private int _rows = 45;
-		private int _columns = 45;
-		private float _cellSize = 1.0f; public float cellSize { get { return _cellSize; } }
+		public int _columns = 45;
+		private float _cellSize = 1.0f;
+		public float cellSize { get { return _cellSize; } }
+
+		public int[] CollisionGrid;
+
+		void Start()
+		{
+			CollisionGrid = new int[_rows * _columns];
+			for (int i = 0; i < CollisionGrid.Length; i++)
+			{
+				CollisionGrid[i] = 0;
+			}
+		}
 
 		public List<Building> buildings = new List<Building>();
 

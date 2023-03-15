@@ -53,8 +53,9 @@ namespace DungeonDefence
 			LOGOUT = 36,
 			KICKMEMBER = 37,
 			BREW = 38,
-			CANCELBREW = 39
-
+			CANCELBREW = 39,
+			DUNGEONATTACK = 40,
+			FINDDUNGEON = 41
 
 		}
 
@@ -524,6 +525,26 @@ namespace DungeonDefence
 						{
 							RushSyncRequest();
 						}
+						break;
+					case RequestId.DUNGEONATTACK:
+						targetID = packet.ReadLong();
+						opponent = null;
+						if(targetID > 0)
+						{
+							string d = packet.ReadString();
+							opponent = Data.Deserialize<Data.OpponentData>(d);
+						}
+						UI_Search.instance.FindRespondedDungeon(targetID, opponent);
+						break;
+					case RequestId.FINDDUNGEON:
+						targetID = packet.ReadLong();
+						opponent = null;
+						if(targetID > 0)
+						{
+							string d = packet.ReadString();
+							opponent = Data.Deserialize<Data.OpponentData>(d);
+						}
+						UI_Search.instance.FindRespondedDungeon(targetID, opponent);
 						break;
 				}
 			}

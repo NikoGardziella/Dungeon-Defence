@@ -79,7 +79,15 @@ namespace DungeonDefence
 				packet.Write(Building.buildInstance.currentX);
 				packet.Write(Building.buildInstance.currentY);
 
-				packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+				if(UI_WarLayout.instance.isActive)
+				{
+					packet.Write(3);
+				}
+				else
+				{
+					packet.Write(1);
+				}
+				//packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
 				packet.Write(UI_WarLayout.instance.placingID);
 				if(UI_WarLayout.instance.isActive && UI_WarLayout.instance.placingItem != null)
 				{
