@@ -8,16 +8,34 @@ namespace  DungeonDefence
 
 	public class UI_Player : MonoBehaviour
 	{
+		private static UI_Player _instance = null; public static UI_Player instance { get { return _instance; } }
+
 		private Control _inputs = null;
 		private bool _moving = false;
 		[SerializeField] private float movementSpeed = 10f;
 		public Vector2 move;
 
+		private int _columns = 45;
+		private int _rows = 45;
+		private float _cellSize = 1;
+
+		private int _X = 0;
+		private int _Y = 0;
+
+		private int _originalX = 0;
+		private int _originalY = 0;
+
+		private float _GridX = 0; public float GridX { get { return _GridX; } }
+		private float _GridY = 0; public float GridY { get { return _GridY; } }
 		void Update()
 		{
 			MovePlayer();
 		}
 
+		public List<Building> buildings = new List<Building>();
+		public List<Building> _buildings { get { return _buildings; } set  {buildings = value;  } }
+
+		
 
 		public void OnMove(InputAction.CallbackContext context)
 		{
@@ -30,10 +48,116 @@ namespace  DungeonDefence
 			Vector3 movement = new Vector3(move.x, 0f, move.y);
 			if(movement != Vector3.zero)
 			{
-				transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(movement), 0.15f);
-				transform.Translate(movement * movementSpeed * Time.deltaTime, Space.World);
+				if(CanMove(GridToWorldPosition(transform.position.x, transform.position.z)))
+				{
+					//Debug.Log(move.x +" "+ move.y);
+					transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(movement), 0.15f);
+					transform.Translate(movement * movementSpeed * Time.deltaTime, Space.World);
+				}
+				else
+				{
+					
+				}
+				
 			}
 		}
-	}
 
+		Vector2 SetGridCoord(Vector2 position)
+		{
+			position.x = (position.x + (_columns / 2));
+			position.y = (position.y + (_rows / 2));
+			return position;
+		}
+
+	
+		public bool CanMove(Vector2 position)
+		{
+			Vector3 tempPos;
+			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(position.x,0, position.y)); 
+			position.x = tempPos.x;
+			position.y = tempPos.z;
+			int x = (int)(position.x);
+			int y = (int)(position.y);
+			if(move.x > 0)
+			{
+				if(position.x + 1 > _columns)
+					return false;
+				else if(UI_Battle.instance.CollisionGrid[x + 1, y] == 1)
+					return false;
+			}
+			else if(move.x - 1 < 0)
+			{
+				if(position.x < 0)
+					return false;
+				else if(UI_Battle.instance.CollisionGrid[x - 1, y] == 1)
+					return false;
+			}
+
+			if(move.y + 1 > 0)
+			{
+				if(position.y > _columns)
+					return false;
+				else if(UI_Battle.instance.CollisionGrid[x, y + 1] == 1)
+					return false;
+			}
+			else if(move.y -1 < 0)
+			{
+				if(position.y < 0)
+					return false;
+				else if(UI_Battle.instance.CollisionGrid[x, y - 1] == 1)
+					return false;
+			}				
+				
+			
+			
+		
+
+		/* //This was by was the worst
+			Vector3 tempPos;
+			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(position.x,0, position.y)); 
+			position.x = tempPos.x + 1;
+			position.y = tempPos.z + 1;
+			for (int i = 0; i < UI_Battle.instance.buildingsOnGrid.Count; i++)
+			{
+				
+					Rect rect1 = new Rect(UI_Battle.instance.buildingsOnGrid[i].building.currentX, UI_Battle.instance.buildingsOnGrid[i].building.currentX, UI_Battle.instance.buildingsOnGrid[i].building.rows, UI_Battle.instance.buildingsOnGrid[i].building.columns);				
+					Rect rect2 = new Rect(position.x, position.y, 1, 1);
+					if(rect2.Overlaps(rect1))
+					{
+						return false;
+					}
+			} */
+
+			return true;
+		}
+ 		private static Vector2 GridToWorldPosition(float x, float y)
+        {
+            return new Vector2(x * Data.gridCellSize + Data.gridCellSize / 2f,y * Data.gridCellSize + Data.gridCellSize / 2f);
+        }
+
+		public void UpdateGridPosition(Vector3 basePosition, Vector3 currentPosition)
+		{
+			Vector3 dir = UI_Main.instance._grid.transform.TransformPoint(currentPosition) - UI_Main.instance._grid.transform.TransformPoint(basePosition);
+			int xDis = Mathf.RoundToInt(dir.z / UI_Main.instance._grid.cellSize);
+			int yDis = Mathf.RoundToInt(-dir.x / UI_Main.instance._grid.cellSize);
+
+			_GridX = transform.position.x + xDis;
+			_GridY = _Y + yDis;
+		
+		}
+
+	public Vector3 GetStartPosition(int x, int y)
+		{
+			Vector3 position = transform.position;
+			position += (transform.right.normalized * x * _cellSize) + (transform.forward.normalized * y * _cellSize);
+			return position;
+		}
+
+		public Vector3 GetCenterPosition(int x, int y, int rows, int columns)
+		{
+			Vector3 position = GetStartPosition(x,y);
+			position += ((transform.right.normalized * columns * _cellSize) / 2.0f)+ (transform.forward.normalized * rows * _cellSize) / 2.0f;
+			return position;
+		}
+	}
 }

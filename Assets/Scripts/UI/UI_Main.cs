@@ -127,16 +127,19 @@ namespace DungeonDefence
                     }
                     else
                     {
-                        Building prefab = GetBuildingPrefab(Player.instance.data.buildings[i].id);
-                        if (prefab && (Player.instance.data.buildings[i].x >= 0 && Player.instance.data.buildings[i].y >= 0))
-                        {
-                            building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-                            building.databaseID = Player.instance.data.buildings[i].databaseID;
-                            building.PlacedOnGrid(Player.instance.data.buildings[i].x, Player.instance.data.buildings[i].y);
-                            building._baseArea.gameObject.SetActive(false);
 
-                            _grid.buildings.Add(building);
-                        }
+							Building prefab = GetBuildingPrefab(Player.instance.data.buildings[i].id);
+							if (prefab)
+							{
+								
+								building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+								building.databaseID = Player.instance.data.buildings[i].databaseID;
+								building.PlacedOnGrid(Player.instance.data.buildings[i].x, Player.instance.data.buildings[i].y);
+								building._baseArea.gameObject.SetActive(false);
+
+								_grid.buildings.Add(building);
+							}
+
                     }
 
                     if (building.buildBar == null)

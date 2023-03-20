@@ -14,16 +14,8 @@ namespace DungeonDefence
 		private float _cellSize = 1.0f;
 		public float cellSize { get { return _cellSize; } }
 
-		public int[] CollisionGrid;
-
-		void Start()
-		{
-			CollisionGrid = new int[_rows * _columns];
-			for (int i = 0; i < CollisionGrid.Length; i++)
-			{
-				CollisionGrid[i] = 0;
-			}
-		}
+	
+		
 
 		public List<Building> buildings = new List<Building>();
 
@@ -77,7 +69,7 @@ namespace DungeonDefence
 
 		public bool CanPlaceBuilding(Building building, int x, int y)
 		{
-			if(building.currentX < 0 || building.currentY < 0 || building.currentX + building.columns > _columns ||building.currentY + building.rows > _rows)
+			if(building.currentX < 0 || building.currentY < 0 || building.currentX + building.columns > _columns || building.currentY + building.rows > _rows)
 			{
 				return false;
 			}

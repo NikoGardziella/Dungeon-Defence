@@ -16,6 +16,9 @@ namespace DungeonDefence
 		private bool readyToStart = false;
 		[SerializeField] private GameObject _endPanel = null;
 		[SerializeField] private GameObject _dungeonPanel = null;
+		[SerializeField] private GameObject _normalPanel = null;
+		public GameObject TestCollision = null;
+
 
 		[SerializeField] public TextMeshProUGUI _timerText = null;
 		[SerializeField] public TextMeshProUGUI _battleTimeText = null;
@@ -69,6 +72,10 @@ namespace DungeonDefence
 			public int y;
 		}
 
+		public int[,] CollisionGrid = null;
+		private int _rows = 45;
+		private int _columns = 45;
+
 		private void Start()
 		{
 			_closeButton.onClick.AddListener(Close);
@@ -79,6 +86,19 @@ namespace DungeonDefence
 			_AttackDungeonButton.onClick.AddListener(StartBattle);
 			dungeonLayout.SetActive(false);
 			_dungeonPanel.SetActive(false);
+			InitCollisionGrid();
+		}
+
+		void InitCollisionGrid()
+		{
+			CollisionGrid = new int[45 + 1,45 + 1];
+			for (int y = 0; y < _rows; y++)
+			{
+				for (int x = 0; x < _columns; x++)
+				{
+					CollisionGrid[y,x] = 0;				
+				}
+			}
 		}
 
 		private void CloseEndPanel()
@@ -132,6 +152,8 @@ namespace DungeonDefence
 
 		public bool Display(List<Data.Building> buildings, long defender, Data.BattleType battleType)
 		{
+			Debug.Log("startof display");
+			
 			ClearSpells();
 			ClearUnits();
 			for (int i = 0; i < Player.instance.data.units.Count; i++)
@@ -158,6 +180,7 @@ namespace DungeonDefence
 				}
 				units[k].Add(Player.instance.data.units[i].databaseID);
 			}
+			
 
 			for (int i = 0; i < Player.instance.data.spells.Count; i++)
 			{
@@ -183,15 +206,16 @@ namespace DungeonDefence
 				}
 				spells[k].Add(Player.instance.data.spells[i].databaseID);
 			}
-
+			
 			if (units.Count <= 0)
 			{
 				MessageBox.Open(1, 0.8f, true, MessageResponded, new string[] { "You do not have any units for battle.." }, new string[] { "OK" });
 				return false;
 			}
-
 			_battleType = battleType;
+			Debug.Log("batttletype:"+ _battleType);
 			int townhallLevel = 1;
+			Debug.Log("building count:" + buildings.Count);
 			for (int i = 0; i < buildings.Count; i++)
 			{
 				if (buildings[i].id == Data.BuildingID.townhall)
@@ -212,9 +236,10 @@ namespace DungeonDefence
 					dungeonLayout.SetActive(true);
 					buildings[i].x = buildings[i].warX;
 					buildings[i].y = buildings[i].warY;
+					
 				}
 			}
-
+			
 			target = defender;
 			startbuildings = buildings;
 			battleBuildings.Clear();
@@ -222,12 +247,11 @@ namespace DungeonDefence
 
 			for (int i = 0; i < buildings.Count; i++)
 			{
-
 				if (buildings[i].x < 0 || buildings[i].y < 0)
 				{
+					
 					continue;
 				}
-
 				Battle.Building building = new Battle.Building();
 				building.building = buildings[i];
 				switch (building.building.id)
@@ -258,14 +282,14 @@ namespace DungeonDefence
 				}
 				battleBuildings.Add(building);
 			}
-
+			
 			_timerText.text = TimeSpan.FromSeconds(Data.battlePrepDuration).ToString(@"mm\:ss");
 			_battleTimeText.text = "Time to Prepare";
 
 
 			ClearBuildingsOnGrid();
 			ClearUnitsOnGrid();
-
+			Vector3 tempPos = Vector3.zero;
 			UI_Main.instance._grid.Clear();
 			for (int i = 0; i < battleBuildings.Count; i++)
 			{
@@ -285,14 +309,37 @@ namespace DungeonDefence
 					building.building.data = battleBuildings[i].building;
 					building.id = battleBuildings[i].building.databaseID;
 					building.index = i;
+
+					tempPos = building.building.gameObject.transform.position;
+				
+					
+
+					//UI_Player.instance._buildings.Add(building.building);
+					//UI_Player.instance.buildings.Insert(i, building.building);
 					buildingsOnGrid.Add(building);
 				}
 
 				battleBuildings[i].building.x += Data.battleGridOffset;
-				battleBuildings[i].building.y += Data.battleGridOffset;
-			}
+				battleBuildings[i].building.y += Data.battleGridOffset;				
 
-			_findButton.gameObject.SetActive(_battleType == Data.BattleType.normal);
+				for (int y = 0; y < battleBuildings[i].building.rows; y++)
+				{
+					for (int x = 0; x < battleBuildings[i].building.rows; x++)
+					{
+						CollisionGrid[battleBuildings[i].building.y + y,battleBuildings[i].building.x + x] = 1;
+
+						
+							
+					}
+				}
+			//	Instantiate(TestCollision, new Vector3(tempPos.x, 1, tempPos.z),Quaternion.Euler(0f,45f,0f));
+				//Debug.Log("collisiongrid X :" + battleBuildings[i].building.y  + "collisiongrid Y " + battleBuildings[i].building.y);				
+			}
+			
+			//_findButton.gameObject.SetActive(_battleType == Data.BattleType.normal);
+			_normalPanel.gameObject.SetActive(_battleType == Data.BattleType.normal);
+			_dungeonPanel.gameObject.SetActive(_battleType == Data.BattleType.war);
+			//_findDungeonButton.gameObject.SetActive(_battleType == Data.BattleType.normal);
 			_closeButton.gameObject.SetActive(true);
 			_surrenderButton.gameObject.SetActive(false);
 			baseTime = DateTime.Now;
@@ -309,9 +356,11 @@ namespace DungeonDefence
 			surrender = false;
 			readyToStart = true;
 			isStarted = false;
-
+			Debug.Log("End of display");
 			return true;
 		}
+
+		
 
 		private void UpdateLoots()
 		{
@@ -321,16 +370,7 @@ namespace DungeonDefence
 			_lootDarkText.text = looted.Item3 + "/" + looted.Item6;
 		}
 
-		void PrintCollisionGrid()
-		{
-			for (int i = 0; i < BuildGrid.instance.CollisionGrid.Length; i++)
-			{
-				Debug.Log(BuildGrid.instance.CollisionGrid[i]);
-				if(45 % i == 0)
-					Debug.Log("\n");
-			}
-			
-		}
+		
 
 		private void StartBattle()
 		{
@@ -566,6 +606,7 @@ namespace DungeonDefence
 
 		public void SetStatus(bool status)
 		{
+			Debug.Log("status:"+status);
 			if (!status)
 			{
 				ClearSpells();
@@ -722,6 +763,7 @@ namespace DungeonDefence
 
 		public void ClearBuildingsOnGrid()
 		{
+			Debug.Log("clearing buidlings on grid");
 			for (int i = 0; i < buildingsOnGrid.Count; i++)
 			{
 				if (buildingsOnGrid[i].building != null)

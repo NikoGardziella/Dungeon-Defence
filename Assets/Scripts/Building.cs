@@ -193,10 +193,13 @@ namespace DungeonDefence
 		}
 		public void UpdateGridPosition(Vector3 basePosition, Vector3 currentPosition)
 		{
+			
+
 			Vector3 dir = UI_Main.instance._grid.transform.TransformPoint(currentPosition) - UI_Main.instance._grid.transform.TransformPoint(basePosition);
 			int xDis = Mathf.RoundToInt(dir.z / UI_Main.instance._grid.cellSize);
 			int yDis = Mathf.RoundToInt(-dir.x / UI_Main.instance._grid.cellSize);
 
+			Debug.Log("_currentX:" + _currentX  + "  _currentY" + _currentY);
 			_currentX = _X + xDis;
 			_currentY = _Y + yDis;
 

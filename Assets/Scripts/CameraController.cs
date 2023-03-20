@@ -160,8 +160,7 @@ namespace DungeonDefence
 				else
 				{
 					if(Building.selectedInstance != null)
-					{
-						
+					{						
 						for (int i = 0; i < results.Count; i++)
 						{
 							if(results[i].gameObject == UI_BuildingOptions.instance.infoButton.gameObject)
@@ -366,7 +365,7 @@ namespace DungeonDefence
 				Vector3 zoomCenter = CameraScreenPositionToPlanePosition(_zoomPositionOnSCreen);
 				_root.position += (_zoomPositionInWorld - zoomCenter);
 			}
-			else if(dungeonLayout.gameObject.activeInHierarchy == true && UI_Battle.instance.isStarted)
+			else if(dungeonLayout.gameObject.activeInHierarchy == true && Player.inBattle)
 			{
 				_target.position =  ui_Player.transform.position;
 				_target.localPosition = new Vector3(ui_Player.transform.position.x,ui_Player.transform.position.z * 0.70f, - 100);
@@ -427,7 +426,7 @@ namespace DungeonDefence
 
 		}
 
-		private Vector3 CameraScreenPositionToWorldPosition(Vector2 position)
+		public Vector3 CameraScreenPositionToWorldPosition(Vector2 position)
 		{
 			float h = _camera.orthographicSize * 2f;
 			float w = _camera.aspect * h;

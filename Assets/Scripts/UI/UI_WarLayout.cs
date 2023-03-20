@@ -64,6 +64,7 @@ namespace DungeonDefence
 
 		private void PlaceBuildings()
 		{
+			Debug.Log("Placebuildings");
 			ClearItems();
 			UI_Main.instance._grid.Clear();
 			for (int i = 0; i < Player.instance.data.buildings.Count; i++)
@@ -78,7 +79,6 @@ namespace DungeonDefence
 						building.PlacedOnGrid(Player.instance.data.buildings[i].warX, Player.instance.data.buildings[i].warY);
 						building._baseArea.gameObject.SetActive(false); 
 						UI_Main.instance._grid.buildings.Add(building);
-						BuildGrid.instance.CollisionGrid[Player.instance.data.buildings[i].warX + Player.instance.data.buildings[i].warY * BuildGrid.instance._columns] = 1;
 					}
 				}
 				else
@@ -88,20 +88,9 @@ namespace DungeonDefence
 					buildingItems.Add(building);
 				}
 			}
-			PrintCollisionGrid();
 		}
 
-		void PrintCollisionGrid()
-		{
-			Debug.Log(BuildGrid.instance.CollisionGrid.Length);
-			for (int i = 0; i < BuildGrid.instance.CollisionGrid.Length; i++)
-			{
-				Debug.Log(BuildGrid.instance.CollisionGrid[i]);
-				if(45 % i == 0)
-					Debug.Log("\n");
-			}
-			
-		}
+		
 
 		public void ClearItems()
 		{
