@@ -13,25 +13,61 @@ namespace DungeonDefence
 
 		public RectTransform buttonConfirm = null;
 		public RectTransform buttonCancel = null;
-		[HideInInspector] public Button clickConfirmButton = null;
+		public RectTransform buttonMoveRight = null;
 
+		public RectTransform buttonMoveUp = null;
+
+		public RectTransform buttonMoveLeft = null;
+
+		public RectTransform buttonMoveDown = null;
+
+		[HideInInspector] public Button clickConfirmButton = null;
+		[HideInInspector] public Button clickCancelButton = null;
+		[HideInInspector] public Button clickMoveRightButton = null;
+
+		[HideInInspector] public Button clickMoveLeftButton = null;
+		[HideInInspector] public Button clickMoveUpButton = null;
+		[HideInInspector] public Button clickMoveDownButton = null;
 		private static UI_Build _instance = null; public static UI_Build instance {get {return _instance; } }
+		int moveX = 0;
+		int moveY = 0;
 		
 		private void Awake()
 		{
 			_instance = this;
 			_elements.SetActive(false);
 			clickConfirmButton = buttonConfirm.gameObject.GetComponent<Button>();
+			clickMoveRightButton = buttonMoveRight.gameObject.GetComponent<Button>();
+			clickCancelButton = buttonCancel.gameObject.GetComponent<Button>();
+			clickMoveLeftButton = buttonMoveLeft.gameObject.GetComponent<Button>();
+			clickMoveUpButton = buttonMoveUp.gameObject.GetComponent<Button>();
+			clickMoveDownButton = buttonMoveDown.gameObject.GetComponent<Button>();
+
+
 		}
 
 		private void Start()
 		{
 			buttonConfirm.gameObject.GetComponent<Button>().onClick.AddListener(Confirm);
 			buttonCancel.gameObject.GetComponent<Button>().onClick.AddListener(Cancel);
+			buttonMoveRight.gameObject.GetComponent<Button>().onClick.AddListener(MoveRight);
+			buttonMoveLeft.gameObject.GetComponent<Button>().onClick.AddListener(MoveLeft);
+			buttonMoveUp.gameObject.GetComponent<Button>().onClick.AddListener(MoveUp);
+			buttonMoveDown.gameObject.GetComponent<Button>().onClick.AddListener(MoveDown);
+
 			buttonConfirm.anchorMin = Vector3.zero;
 			buttonConfirm.anchorMax = Vector3.zero;
 			buttonCancel.anchorMin = Vector3.zero;
 			buttonCancel.anchorMax = Vector3.zero;
+			buttonMoveRight.anchorMin = Vector3.zero;
+			buttonMoveRight.anchorMax = Vector3.zero;
+			buttonMoveLeft.anchorMin = Vector3.zero;
+			buttonMoveLeft.anchorMax = Vector3.zero;
+			buttonMoveUp.anchorMin = Vector3.zero;
+			buttonMoveUp.anchorMin = Vector3.zero;
+			buttonMoveDown.anchorMin = Vector3.zero;
+			buttonMoveDown.anchorMin = Vector3.zero;
+
 		}
 
 		private void Update()
@@ -52,12 +88,34 @@ namespace DungeonDefence
 				Vector2 screenPoint = new Vector2(endW / w * Screen.width, endH / h * Screen.height);
 
 				Vector2 confirmPoint = screenPoint;
-				confirmPoint.x += (buttonConfirm.rect.width + 10f);
+				confirmPoint.x += (buttonConfirm.rect.width + 0f);
+				confirmPoint.y += (buttonConfirm.rect.width + 15f);
 				buttonConfirm.anchoredPosition = confirmPoint;
 
 				Vector2 cancelPoint = screenPoint;
-				confirmPoint.x -= (buttonCancel.rect.width + 10f);
+				cancelPoint.x -= (buttonCancel.rect.width + 0f);
+				cancelPoint.y += (buttonCancel.rect.width + 15f);
 				buttonCancel.anchoredPosition = cancelPoint;
+
+				Vector2 rightPoint = screenPoint;
+				rightPoint.x += (buttonMoveRight.rect.width - 20f);
+				rightPoint.y += (buttonMoveRight.rect.width - 30f);
+				buttonMoveRight.anchoredPosition = rightPoint;
+
+				Vector2 LeftPoint = screenPoint;
+				LeftPoint.x += (buttonMoveLeft.rect.width - 90f);
+				LeftPoint.y += (buttonMoveLeft.rect.width - 90f);
+				buttonMoveLeft.anchoredPosition = LeftPoint;
+
+				Vector2 upPoint = screenPoint;
+				upPoint.x += (buttonMoveUp.rect.width - 80f);
+				upPoint.y += (buttonMoveUp.rect.width - 35f);
+				buttonMoveUp.anchoredPosition = upPoint;
+
+				Vector2 downPoint = screenPoint;
+				downPoint.x += (buttonMoveDown.rect.width - 10f);
+				downPoint.y += (buttonMoveDown.rect.width - 90f);
+				buttonMoveDown.anchoredPosition = downPoint;
 			}
 
 		}
@@ -71,7 +129,6 @@ namespace DungeonDefence
 		{
 			if(Building.buildInstance != null && UI_Main.instance._grid.CanPlaceBuilding(Building.buildInstance, Building.buildInstance.currentX,Building.buildInstance.currentY))
 			{
-				
 				Packet packet = new Packet();
 				packet.Write((int)Player.RequestId.BUILD);
 				packet.Write(SystemInfo.deviceUniqueIdentifier);
@@ -96,9 +153,38 @@ namespace DungeonDefence
 				}
 
 				Sender.TCP_Send(packet);
-				Cancel();
-				
+				if(Building.buildInstance.id == Data.BuildingID.dungeonwall)
+				{
+					Building.buildInstance.MoveToNextOnGrid(moveX,moveY);
+					Building.buildInstance.PlacedOnGrid(Building.buildInstance.currentX,Building.buildInstance.currentY);
+					
+				}
+				else
+				{
+					Cancel();
+				}				
 			}
+		}
+
+		private void MoveRight()
+		{
+			moveX = 1;
+			moveY = 0;
+		}
+		private void MoveUp()
+		{
+			moveX = 0;
+			moveY = 1;
+		}
+		private void MoveLeft()
+		{
+			moveX = -1;
+			moveY = 0;
+		}
+		private void MoveDown()
+		{
+			moveX = 0;
+			moveY = -1;
 		}
 		public void Cancel()
 		{

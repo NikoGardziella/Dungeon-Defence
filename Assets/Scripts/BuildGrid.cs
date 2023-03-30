@@ -9,8 +9,8 @@ namespace DungeonDefence
 		// SIZE OF THE GRID
 		private static BuildGrid _instance = null; public static BuildGrid instance { get { return _instance; } }
 
-		private int _rows = 45;
-		public int _columns = 45;
+		private int _rows = GameConstants._ROWS;
+		public int _columns = GameConstants._COLUMNS;
 		private float _cellSize = 1.0f;
 		public float cellSize { get { return _cellSize; } }
 
@@ -26,6 +26,19 @@ namespace DungeonDefence
 				if(buildings[i].databaseID == databaseID)
 				{
 					return buildings[i];
+				}
+			}
+			return null;
+		}
+		public List<Unit> units = new List<Unit>();
+
+		public Unit GetUnit(long databaseID)
+		{
+			for (int i = 0; i < units.Count; i++)
+			{
+				if(units[i].databaseID == databaseID)
+				{
+					return units[i];
 				}
 			}
 			return null;
@@ -46,7 +59,7 @@ namespace DungeonDefence
 		}
 
 		public bool IsWorldPositionIsOnPlane(Vector3 position, int x, int y, int rows, int columns)
-		{
+		{			
 			position = transform.InverseTransformPoint(position);
 			Rect rect = new Rect(x,y,columns, rows);
 			if(rect.Contains(new Vector2(position.x, position.z)))
@@ -67,6 +80,7 @@ namespace DungeonDefence
 			return GetEndPosition(building.currentX, building.currentY, building.rows, building.columns);
 		}
 
+		// add check with units
 		public bool CanPlaceBuilding(Building building, int x, int y)
 		{
 			if(building.currentX < 0 || building.currentY < 0 || building.currentX + building.columns > _columns || building.currentY + building.rows > _rows)
@@ -89,6 +103,29 @@ namespace DungeonDefence
 			return true;
 		}
 
+		// Checks only against buildings not Units
+		public bool CanPlaceUnit(Unit unit, int x, int y)
+		{
+			if(unit.currentX < 0 || unit.currentY < 0 || unit.currentX > _columns || unit.currentY > _rows)
+			{
+				return false;
+			}
+			for (int i = 0; i < buildings.Count; i++)
+			{
+				if(buildings[i] != unit)
+				{
+					Rect rect1 = new Rect(buildings[i].currentX, buildings[i].currentY,buildings[i].columns, buildings[i].rows);				
+					Rect rect2 = new Rect(unit.currentX, unit.currentY,unit.currentX + 1, unit.currentY + 1);
+					if(rect2.Overlaps(rect1))
+					{
+						return false;
+					}
+
+				}
+			}
+			return true;
+		}
+
 
 		public void Clear()
 		{
@@ -99,6 +136,14 @@ namespace DungeonDefence
 					Destroy(buildings[i].gameObject);
 				}
 			}
+			for (int i = 0; i < units.Count; i++)
+			{
+				if(units[i])
+				{
+					Destroy(units[i].gameObject);
+				}
+			}
+			units.Clear();
 			buildings.Clear();
 		}
 

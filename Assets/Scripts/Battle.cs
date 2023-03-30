@@ -201,7 +201,7 @@ namespace DungeonDefence
             }
             public void AssignTarget(int target, Path path)
             {
-                attackTimer = 0;
+                attackTimer = unit.attackSpeed;
                 this.target = target;
                 this.path = path;
                 if (path != null)
@@ -212,7 +212,7 @@ namespace DungeonDefence
             }
             public void AssignHealerTarget(int target, float distance)
             {
-                attackTimer = 0;
+                attackTimer = unit.attackSpeed;
                 this.target = target;
                 pathTraveledTime = 0;
                 pathTime = distance / (unit.moveSpeed * Data.gridCellSize);
@@ -669,7 +669,7 @@ namespace DungeonDefence
                         if (_spells[i].spell.id == Data.SpellID.freeze)
                         {
                             double p = GetBuildingInSpellRangePercentage(i, index);
-                            if(p > 0)
+                            if (p > 0)
                             {
                                 freeze = true;
                                 break;
@@ -769,7 +769,7 @@ namespace DungeonDefence
 
                 if (IsUnitInRange(i, index) && IsUnitCanBeSeen(i, index))
                 {
-                    _buildings[index].attackTimer = 0;
+                    _buildings[index].attackTimer = _buildings[index].building.speed;
                     _buildings[index].target = i;
                     return true;
                 }
@@ -825,42 +825,51 @@ namespace DungeonDefence
                     float distance = BattleVector2.Distance(_units[index].position, _units[_units[index].target].position);
                     if (distance + Data.gridCellSize <= _units[index].unit.attackRange)
                     {
-                        if (_units[index].unit.attackRange > 0 && _units[index].unit.rangedSpeed > 0)
+                        _units[index].attackTimer += deltaTime;
+                        if (_units[index].attackTimer >= _units[index].unit.attackSpeed)
                         {
-                            Projectile projectile = new Projectile();
-                            projectile.type = TargetType.unit;
-                            projectile.target = _units[index].target;
-                            projectile.timer = distance / (_units[index].unit.rangedSpeed * Data.gridCellSize);
-                            projectile.damage = GetUnitDamage(index);
-                            projectile.follow = true;
-                            projectile.position = _units[index].position;
-                            projectile.heal = true;
-                            projectileCount++;
-                            projectile.id = projectileCount;
-                            projectiles.Add(projectile);
-                            if (projectileCallback != null)
+                            _units[index].attackTimer -= _units[index].unit.attackSpeed;
+                            if (_units[index].unit.attackRange > 0 && _units[index].unit.rangedSpeed > 0)
                             {
-                                projectileCallback.Invoke(projectile.id, _units[index].position, _units[_units[index].target].position);
-                            }
-                        }
-                        else
-                        {
-                            float baseHeal = GetUnitDamage(index);
-                            _units[_units[index].target].Heal(baseHeal);
-                            for (int i = 0; i < _units.Count; i++)
-                            {
-                                if (_units[i].health <= 0 || i == index || i == _units[index].target)
+                                Projectile projectile = new Projectile();
+                                projectile.type = TargetType.unit;
+                                projectile.target = _units[index].target;
+                                projectile.timer = distance / (_units[index].unit.rangedSpeed * Data.gridCellSize);
+                                projectile.damage = GetUnitDamage(index);
+                                projectile.follow = true;
+                                projectile.position = _units[index].position;
+                                projectile.heal = true;
+                                projectileCount++;
+                                projectile.id = projectileCount;
+                                projectiles.Add(projectile);
+                                if (projectileCallback != null)
                                 {
-                                    continue;
-                                }
-                                float d = BattleVector2.Distance(_units[i].position, _units[_units[index].target].position);
-                                if (d < _units[i].unit.splashRange * Data.gridCellSize)
-                                {
-                                    float amount = baseHeal * (1f - (d / _units[i].unit.splashRange * Data.gridCellSize));
-                                    _units[i].Heal(amount);
+                                    projectileCallback.Invoke(projectile.id, _units[index].position, _units[_units[index].target].position);
                                 }
                             }
-                        }
+                            else
+                            {
+                                float baseHeal = GetUnitDamage(index);
+                                _units[_units[index].target].Heal(baseHeal);
+                                for (int i = 0; i < _units.Count; i++)
+                                {
+                                    if (_units[i].health <= 0 || i == index || i == _units[index].target)
+                                    {
+                                        continue;
+                                    }
+                                    float d = BattleVector2.Distance(_units[i].position, _units[_units[index].target].position);
+                                    if (d < _units[i].unit.splashRange * Data.gridCellSize)
+                                    {
+                                        float amount = baseHeal * (1f - (d / _units[i].unit.splashRange * Data.gridCellSize));
+                                        _units[i].Heal(amount);
+                                    }
+                                }
+                            }
+                            if (_units[index].attackCallback != null)
+                            {
+                                _units[index].attackCallback.Invoke(_units[index].unit.databaseID, 0);
+                            }
+                        }  
                     }
                     else
                     {
@@ -967,48 +976,49 @@ namespace DungeonDefence
                             if (_units[index].path == null)
                             {
                                 // Attack the target
-                                float multiplier = 1;
-                                if (_units[index].unit.priority != Data.TargetPriority.all || _units[index].unit.priority != Data.TargetPriority.none)
-                                {
-                                    switch (_buildings[_units[index].target].building.id)
-                                    {
-                                        case Data.BuildingID.townhall:
-                                        case Data.BuildingID.goldmine:
-                                        case Data.BuildingID.goldstorage:
-                                        case Data.BuildingID.elixirmine:
-                                        case Data.BuildingID.elixirstorage:
-                                        case Data.BuildingID.darkelixirmine:
-                                        case Data.BuildingID.darkelixirstorage:
-                                            if (_units[index].unit.priority != Data.TargetPriority.resources)
-                                            {
-                                                multiplier = _units[index].unit.priorityMultiplier;
-                                            }
-                                            break;
-                                        case Data.BuildingID.wall:
-                                            if (_units[index].unit.priority != Data.TargetPriority.walls)
-                                            {
-                                                multiplier = _units[index].unit.priorityMultiplier;
-                                            }
-                                            break;
-                                        case Data.BuildingID.cannon:
-                                        case Data.BuildingID.archertower:
-                                        case Data.BuildingID.mortor:
-                                        case Data.BuildingID.airdefense:
-                                        case Data.BuildingID.wizardtower:
-                                        case Data.BuildingID.hiddentesla:
-                                        case Data.BuildingID.bombtower:
-                                        case Data.BuildingID.xbow:
-                                        case Data.BuildingID.infernotower:
-                                            if (_units[index].unit.priority != Data.TargetPriority.defenses)
-                                            {
-                                                multiplier = _units[index].unit.priorityMultiplier;
-                                            }
-                                            break;
-                                    }
-                                }
                                 _units[index].attackTimer += deltaTime;
                                 if (_units[index].attackTimer >= _units[index].unit.attackSpeed)
                                 {
+                                    float multiplier = 1;
+                                    if (_units[index].unit.priority != Data.TargetPriority.all || _units[index].unit.priority != Data.TargetPriority.none)
+                                    {
+                                        switch (_buildings[_units[index].target].building.id)
+                                        {
+                                            case Data.BuildingID.townhall:
+                                            case Data.BuildingID.goldmine:
+                                            case Data.BuildingID.goldstorage:
+                                            case Data.BuildingID.elixirmine:
+                                            case Data.BuildingID.elixirstorage:
+                                            case Data.BuildingID.darkelixirmine:
+                                            case Data.BuildingID.darkelixirstorage:
+                                                if (_units[index].unit.priority == Data.TargetPriority.resources)
+                                                {
+                                                    multiplier = _units[index].unit.priorityMultiplier;
+                                                }
+                                                break;
+                                            case Data.BuildingID.wall:
+                                                if (_units[index].unit.priority == Data.TargetPriority.walls)
+                                                {
+                                                    multiplier = _units[index].unit.priorityMultiplier;
+                                                }
+                                                break;
+                                            case Data.BuildingID.cannon:
+                                            case Data.BuildingID.archertower:
+                                            case Data.BuildingID.mortor:
+                                            case Data.BuildingID.airdefense:
+                                            case Data.BuildingID.wizardtower:
+                                            case Data.BuildingID.hiddentesla:
+                                            case Data.BuildingID.bombtower:
+                                            case Data.BuildingID.xbow:
+                                            case Data.BuildingID.infernotower:
+                                                if (_units[index].unit.priority == Data.TargetPriority.defenses)
+                                                {
+                                                    multiplier = _units[index].unit.priorityMultiplier;
+                                                }
+                                                break;
+                                        }
+                                    }
+
                                     float distance = BattleVector2.Distance(_units[index].position, _buildings[_units[index].target].worldCenterPosition);
                                     if (_units[index].unit.attackRange > 0 && _units[index].unit.rangedSpeed > 0)
                                     {
@@ -1525,7 +1535,7 @@ namespace DungeonDefence
             }
             if (_spells[index].palsesDone >= _spells[index].spell.server.pulsesCount)
             {
-                _spells[index].done = true; 
+                _spells[index].done = true;
                 if (_spells[index].doneCallback != null)
                 {
                     _spells[index].doneCallback.Invoke(_spells[index].spell.databaseID);
@@ -1541,14 +1551,14 @@ namespace DungeonDefence
             float distance = BattleVector2.Distance(_buildings[buildingIndex].worldCenterPosition, _spells[spellIndex].position);
             float radius = Math.Max(_buildings[buildingIndex].building.columns, _buildings[buildingIndex].building.rows) * Data.gridCellSize / 2f;
             float delta = (_spells[spellIndex].spell.server.radius * Data.gridCellSize) - (distance + radius);
-            if(delta >= 0)
+            if (delta >= 0)
             {
                 percentage = 1;
             }
             else
             {
                 delta = Math.Abs(delta);
-                if(delta < radius * 2f)
+                if (delta < radius * 2f)
                 {
                     percentage = delta / (radius * 2f);
                 }
@@ -1562,7 +1572,7 @@ namespace DungeonDefence
             for (int i = 0; i < _spells.Count; i++)
             {
                 if (_spells[i].done) { continue; }
-                if(_spells[i].spell.id == Data.SpellID.rage)
+                if (_spells[i].spell.id == Data.SpellID.rage)
                 {
                     damage += (_units[index].unit.damage * _spells[i].spell.server.pulsesValue);
                 }

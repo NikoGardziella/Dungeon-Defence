@@ -19,6 +19,8 @@ namespace DungeonDefence
 		public RectTransform spellPanel = null;
 
 		public RectTransform dungeonPanel = null;
+		public RectTransform deletePanel = null;
+
 
 
 		public Button infoButton = null;
@@ -28,6 +30,8 @@ namespace DungeonDefence
 		public Button clanButton = null;
 		public Button spellButton = null;
 		public Button editDungeonButton = null;
+		public Button deleteBuildingButton = null;
+
 
 
 
@@ -43,14 +47,15 @@ namespace DungeonDefence
 		{
 			if(status && Building.selectedInstance != null)
 			{
-				infoPanel.gameObject.SetActive(UI_Main.instance.isActive);
+				infoPanel.gameObject.SetActive(true);
 				upgradePanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == false && UI_Main.instance.isActive);
 				instantPanel.gameObject.SetActive(Building.selectedInstance.data.isConstructing == true && UI_Main.instance.isActive);
 				trainPanel.gameObject.SetActive((Building.selectedInstance.data.id == Data.BuildingID.armycamp || Building.selectedInstance.data.id == Data.BuildingID.barracks) && UI_Main.instance.isActive && Building.selectedInstance.data.level > 0);
 				clanPanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.clancastle && UI_Main.instance.isActive && Building.selectedInstance.data.level > 0);
 				spellPanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.spellfactory && UI_Main.instance.isActive && Building.selectedInstance.data.level > 0);
 				dungeonPanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.clancastle && UI_Main.instance.isActive && Building.selectedInstance.data.level > 0);
-
+				deletePanel.gameObject.SetActive(Building.selectedInstance.data.id == Data.BuildingID.dungeonwall);
+				Debug.Log("selected:" + Building.selectedInstance.data.id);
 			}
 			_elements.SetActive(status);
 		}

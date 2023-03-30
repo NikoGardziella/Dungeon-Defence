@@ -12,15 +12,17 @@ namespace DungeonDefence
 	{
 		[SerializeField] private Data.BuildingID _id = Data.BuildingID.townhall;
 		[SerializeField] private Button _button = null;
+		public  GameObject buildingCard;
 
 		private void Start()
 		{
 			_button.onClick.AddListener(Clicked);
 		}
 
+		
 		private void Clicked()
 		{
-
+			//buildingCard.gameObject.transform.localScale += new Vector3(1,1,0);
 			Building prefab = UI_Main.instance.GetBuildingPrefab(_id);
 			if(prefab)
 			{

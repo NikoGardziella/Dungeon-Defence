@@ -50,6 +50,7 @@ namespace DungeonDefence
 		private long target = 0;
 		private bool surrender = false;
 		private Data.BattleType _battleType = Data.BattleType.normal;
+		public GameObject m_Player;
 
 		public class BuildingOnGrid
 		{
@@ -87,6 +88,19 @@ namespace DungeonDefence
 			dungeonLayout.SetActive(false);
 			_dungeonPanel.SetActive(false);
 			InitCollisionGrid();
+
+			//CreateCollisionTest();
+		}
+
+
+
+		void CreateCollisionTest()
+		{
+			for (int i = 0; i < 10; i++)
+			{
+				Instantiate(TestCollision, new Vector3(25, 1, 25 + i),Quaternion.Euler(0f,45f,0f));
+				CollisionGrid[25,25 + i] = 0;
+			}
 		}
 
 		void InitCollisionGrid()
@@ -226,6 +240,7 @@ namespace DungeonDefence
 						normalLayout.SetActive(true);
 						dungeonLayout.SetActive(false);
 						_dungeonPanel.SetActive(false);
+						m_Player.gameObject.SetActive(false);
 						break;
 					}
 				}
@@ -236,7 +251,8 @@ namespace DungeonDefence
 					dungeonLayout.SetActive(true);
 					buildings[i].x = buildings[i].warX;
 					buildings[i].y = buildings[i].warY;
-					
+					m_Player.gameObject.SetActive(true);
+
 				}
 			}
 			
@@ -322,14 +338,18 @@ namespace DungeonDefence
 				battleBuildings[i].building.x += Data.battleGridOffset;
 				battleBuildings[i].building.y += Data.battleGridOffset;				
 
-				for (int y = 0; y < battleBuildings[i].building.rows; y++)
+				if(battleBuildings[i].building.id == Data.BuildingID.dungeontrap)
 				{
-					for (int x = 0; x < battleBuildings[i].building.rows; x++)
+					CollisionGrid[battleBuildings[i].building.x,battleBuildings[i].building.y] = 2;
+				}
+				else
+				{
+					for (int y = 0; y < battleBuildings[i].building.rows + 1; y++)
 					{
-						CollisionGrid[battleBuildings[i].building.y + y,battleBuildings[i].building.x + x] = 1;
-
-						
-							
+						for (int x = 0; x < battleBuildings[i].building.rows + 1; x++)
+						{
+							CollisionGrid[battleBuildings[i].building.x + x,battleBuildings[i].building.y + y] = 1;
+						}
 					}
 				}
 			//	Instantiate(TestCollision, new Vector3(tempPos.x, 1, tempPos.z),Quaternion.Euler(0f,45f,0f));
@@ -352,15 +372,37 @@ namespace DungeonDefence
 
 			_percentageText.text = (battle.percentage * 100f).ToString("F2") + "%";
 			UpdateLoots();
-
+			
 			surrender = false;
 			readyToStart = true;
 			isStarted = false;
-			Debug.Log("End of display");
+			PrintCollisionGrid();
 			return true;
 		}
 
+		void PrintCollisionGrid()
+		{
+			Debug.Log("Print collision grid");
+			char[] GridStr = new char[(45 + 1) * (45 + 1)];;
+			
+
+			for (int y = 0; y < _columns; y++)
+			{
+				for (int x = 0; x < _columns; x++)
+				{
+					GridStr[y + x * _columns] = (char)CollisionGrid[x,y];
+				}
+				GridStr[y + _columns] = '\n';
+			}
+			new string (GridStr);
+			print(GridStr);
+			Debug.Log("END of collision grid");
+
+		}
+
 		
+	
+
 
 		private void UpdateLoots()
 		{
@@ -410,6 +452,8 @@ namespace DungeonDefence
 			Debug.Log("Trophies -> Client:" + battle.GetTrophies() + " Server:" + trophies);
 			_dungeonPanel.SetActive(false);
 			_endPanel.SetActive(true);
+			m_Player.gameObject.SetActive(false);
+
 		}
 
 		public void StartBattleConfirm(bool confirmed, List<Data.BattleStartBuildingData> buildings, int winTrophies, int loseTrophies)

@@ -55,7 +55,9 @@ namespace DungeonDefence
 			BREW = 38,
 			CANCELBREW = 39,
 			DUNGEONATTACK = 40,
-			FINDDUNGEON = 41
+			FINDDUNGEON = 41,
+			DELETEBUILDING = 42,
+			PLACEUNIT = 43,
 
 		}
 
@@ -136,7 +138,10 @@ namespace DungeonDefence
 						connected = true;
 						updating = true;
 						timer = 0;
-						string authData = packet.ReadString();
+
+						int bytesLenght = packet.ReadInt();
+						byte[] bytes = packet.ReadBytes(bytesLenght);
+						string authData = Data.Decompress(bytes);
 						initializationData = Data.Deserialize<Data.InitializationData>(authData);
 						PlayerPrefs.SetString(password_key, initializationData.password);
 						SendSyncRequest();
@@ -545,6 +550,18 @@ namespace DungeonDefence
 							opponent = Data.Deserialize<Data.OpponentData>(d);
 						}
 						UI_Search.instance.FindRespondedDungeon(targetID, opponent);
+						break;
+					case RequestId.DELETEBUILDING:
+						response = packet.ReadInt();
+						if(response == 1)
+						{
+							Debug.Log("Deleted building from database");
+							RushSyncRequest();
+						}
+						else
+						{
+							Debug.Log("ERROR: couldnt delete building from database");
+						}
 						break;
 				}
 			}

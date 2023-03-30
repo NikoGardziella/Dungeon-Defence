@@ -135,8 +135,8 @@ MonoBehaviour:
   collecting: 0
   buildBar: {fileID: 0}
   _databaseID: 0
-  _columns: 4
-  _rows: 4
+  _columns: 3
+  _rows: 3
   _baseArea: {fileID: 5069913028391279901}
   _levels:
   - level: 1

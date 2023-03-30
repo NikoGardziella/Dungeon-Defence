@@ -22,6 +22,8 @@ namespace DungeonDefence
 
 		[SerializeField] public BuildGrid _grid = null;
 		[SerializeField] public Building[] _buildingPrefabs = null;
+		[SerializeField] public Unit[] _unitPrefabs = null;
+
 
 		[Header("Buttons")]
 		public Transform buttoonsParent = null;
@@ -107,6 +109,19 @@ namespace DungeonDefence
 			return null;
 		}
 
+		public Unit GetUnitPrefab(Data.UnitID id)
+		{
+			for (int i = 0; i < _unitPrefabs.Length; i++)
+			{
+				if(_unitPrefabs[i].id == id)
+				{
+					return _unitPrefabs[i];
+				}
+				
+			}
+			return null;
+		}
+
 		public void Clear()
 		{
 
@@ -127,19 +142,17 @@ namespace DungeonDefence
                     }
                     else
                     {
+						Building prefab = GetBuildingPrefab(Player.instance.data.buildings[i].id);
+						if (prefab)
+						{
+							
+							building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+							building.databaseID = Player.instance.data.buildings[i].databaseID;
+							building.PlacedOnGrid(Player.instance.data.buildings[i].x, Player.instance.data.buildings[i].y);
+							building._baseArea.gameObject.SetActive(false);
 
-							Building prefab = GetBuildingPrefab(Player.instance.data.buildings[i].id);
-							if (prefab)
-							{
-								
-								building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-								building.databaseID = Player.instance.data.buildings[i].databaseID;
-								building.PlacedOnGrid(Player.instance.data.buildings[i].x, Player.instance.data.buildings[i].y);
-								building._baseArea.gameObject.SetActive(false);
-
-								_grid.buildings.Add(building);
-							}
-
+							_grid.buildings.Add(building);
+						}
                     }
 
                     if (building.buildBar == null)

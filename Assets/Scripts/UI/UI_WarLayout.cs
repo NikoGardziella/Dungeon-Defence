@@ -45,8 +45,9 @@ namespace DungeonDefence
 			_placingID = 0;
 			if (status)
 			{
-				UI_Main.instance.SetStatus(false);
+				//UI_Main.instance.SetStatus(false); // make new UI for dungeon
 				PlaceBuildings();
+				UI_BuildingOptions.instance.SetStatus(status);
 			}
 			_active = status;
 			_elements.SetActive(status);
@@ -76,6 +77,7 @@ namespace DungeonDefence
 					{
 						Building building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 						building.databaseID = Player.instance.data.buildings[i].databaseID;
+						building.data.id = Player.instance.data.buildings[i].id;
 						building.PlacedOnGrid(Player.instance.data.buildings[i].warX, Player.instance.data.buildings[i].warY);
 						building._baseArea.gameObject.SetActive(false); 
 						UI_Main.instance._grid.buildings.Add(building);
@@ -83,9 +85,9 @@ namespace DungeonDefence
 				}
 				else
 				{
-					UI_WarLayoutBuilding building = Instantiate(_listPrefab, _listGrid);
-					building.Initialized(Player.instance.data.buildings[i]);
-					buildingItems.Add(building);
+					//UI_WarLayoutBuilding building = Instantiate(_listPrefab, _listGrid);
+					//building.Initialized(Player.instance.data.buildings[i]);
+					//buildingItems.Add(building) ;// NOT necessary for dungeon!
 				}
 			}
 		}

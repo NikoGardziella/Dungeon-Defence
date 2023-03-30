@@ -32,8 +32,11 @@ namespace  DungeonDefence
 			MovePlayer();
 		}
 
+	
+
 		public List<Building> buildings = new List<Building>();
 		public List<Building> _buildings { get { return _buildings; } set  {buildings = value;  } }
+		private char[] GridStr;
 
 		
 
@@ -50,15 +53,15 @@ namespace  DungeonDefence
 			{
 				if(CanMove(GridToWorldPosition(transform.position.x, transform.position.z)))
 				{
-					//Debug.Log(move.x +" "+ move.y);
-					transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(movement), 0.15f);
+					if(CheckTile(GridToWorldPosition(transform.position.x, transform.position.z)) == 2)
+						Debug.Log("player hit trap");
 					transform.Translate(movement * movementSpeed * Time.deltaTime, Space.World);
 				}
 				else
 				{
-					
+					//movementSpeed = -0.5f;
 				}
-				
+				transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(movement), 0.15f);
 			}
 		}
 
@@ -69,44 +72,167 @@ namespace  DungeonDefence
 			return position;
 		}
 
-	
-		public bool CanMove(Vector2 position)
+		public int CheckTile(Vector2 position)
 		{
 			Vector3 tempPos;
+			int result;
+			result = 0;
 			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(position.x,0, position.y)); 
 			position.x = tempPos.x;
 			position.y = tempPos.z;
+			Debug.Log("playerx: " + position.x  + " playerY: " + position.y);
+			for (int x = 0; x < 45 + 1; x++)
+			{
+				for (int y = 0; y < 45 + 1; y++)
+				{
+					if(UI_Battle.instance.CollisionGrid[x,y] == 2)
+						Debug.Log("trapX" + x + "trapY: " + y);
+				}
+			}
+			if(UI_Battle.instance.CollisionGrid[(int)position.x, (int)position.y] == 2)
+				result = 2;
+			return result;
+		}
+
+	
+		public bool CanMove(Vector2 position)
+		{
+			int vecX = (int)move.x;
+			int vecY = (int)move.y;
+
+			Vector3 tempPos;
+			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(position.x,0, position.y)); 
+			position.x = tempPos.x + 1;
+			position.y = tempPos.z + 1;
 			int x = (int)(position.x);
 			int y = (int)(position.y);
-			if(move.x > 0)
+			//Debug.Log("x:" +x + "  y:" + y);
+
+			if(move.x > 0 && move.y < 0) // v>
 			{
-				if(position.x + 1 > _columns)
+				if(y - 1 < 0)
 					return false;
-				else if(UI_Battle.instance.CollisionGrid[x + 1, y] == 1)
+				
+				else if(UI_Battle.instance.CollisionGrid[x, y - 1] == 1)
 					return false;
 			}
-			else if(move.x - 1 < 0)
+			if (move.x == 0 && move.y < 0) // v
 			{
-				if(position.x < 0)
+				if(y - 1 < 0)
 					return false;
-				else if(UI_Battle.instance.CollisionGrid[x - 1, y] == 1)
-					return false;
+				if(UI_Battle.instance.CollisionGrid[x - 1, y - 1] == 1)
+					return false;			
+			}
+			if(move.x < 0 && move.y < 0) // <v
+			{
+				if(UI_Battle.instance.CollisionGrid[x - 1, y] == 1)
+					return false;	
+			}
+			if(move.x < 0 && move.y == 0) // <
+			{
+				if(UI_Battle.instance.CollisionGrid[x - 1, y + 1] == 1)
+					return false;	
 			}
 
-			if(move.y + 1 > 0)
+			if(move.x < 0 && move.y > 0) // <^
+			{
+				if(UI_Battle.instance.CollisionGrid[x, y + 1] == 1)
+					return false;	
+			}
+			if(move.x == 0 && move.y > 0) // ^
+			{
+				if(UI_Battle.instance.CollisionGrid[x + 1, y + 1] == 1)
+					return false;	
+			}
+			if(move.x > 0 && move.y > 0) // ^>
+			{
+				if(UI_Battle.instance.CollisionGrid[x + 1, y] == 1)
+					return false;	
+			}
+			if(move.x > 0 && move.y == 0) // >
+			{
+				if(y - 1 < 0)
+					return false;
+				if(UI_Battle.instance.CollisionGrid[x + 1, y - 1] == 1)
+					return false;		
+			}
+			
+			
+		
+		
+
+
+		/*	if(x - move.x > 0 && y + move.y > 0)
+				return true;
+			else if(move.x < 0 && y + move.y < 0)
+				return true;
+			else if(y + move.y < 0)
+					return false;
+			else if(y - move.x < 0)
+					return false; */
+
+		//	if(UI_Battle.instance.CollisionGrid[x + vecX, y + vecY] == 1)
+		//				return false;
+
+
+		/*	if(move.x > 0 && move.y < 0)
+			{
+				if(y - 1 < 0)
+					return false;
+			}
+			else if(move.x > 0)
+			{
+				if(y - 1 < 0)
+					return false;
+			}
+			else if(move.y < 0)
+			{
+				if(y - 1 < 0)
+					return false;
+			} */
+
+
+	/*		if(move.x > 0 || move.y > 0)
+			{			
+				if(position.x + 1 > _rows || position.y + 1 > _columns)
+					return false;
+				if(move.y > 0)
+				{
+					if(UI_Battle.instance.CollisionGrid[x + 1, y + 1] == 1)
+						return false;
+				}				
+				//else if(UI_Battle.instance.CollisionGrid[x + 1, y + 1] == 1)
+				//	return false;
+			}
+
+			if(move.x < 0 || move.y < 0)
+			{
+				if(position.x - 1 < 0 || position.y - 1 < 0)
+					return false;
+
+				if(move.y < 0)
+				{
+					if(UI_Battle.instance.CollisionGrid[x + 1, y + 1] == 1)
+						return false;					
+				}				
+			//	else if(UI_Battle.instance.CollisionGrid[x - 1, y] == 1)
+			//		return false;
+			}
+
+			if(move.y > 0)
 			{
 				if(position.y > _columns)
 					return false;
 				else if(UI_Battle.instance.CollisionGrid[x, y + 1] == 1)
 					return false;
 			}
-			else if(move.y -1 < 0)
+			else if(move.y < 0)
 			{
 				if(position.y < 0)
 					return false;
 				else if(UI_Battle.instance.CollisionGrid[x, y - 1] == 1)
 					return false;
-			}				
+			}				*/
 				
 			
 			

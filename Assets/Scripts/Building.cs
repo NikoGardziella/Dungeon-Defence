@@ -34,8 +34,8 @@ namespace DungeonDefence
 		[SerializeField] private int _rows = 1; public int rows { get { return _rows; } }
 		[SerializeField] public MeshRenderer _baseArea = null;
 		[SerializeField] private Level[] _levels = null;
-		private int _currentX = 0; public int currentX { get { return _currentX; } }
-		private int _currentY = 0; public int currentY { get { return _currentY; } }
+		private int _currentX = 0; public int currentX { get { return _currentX; } set { currentX = value; } }
+		private int _currentY = 0; public int currentY { get { return _currentY; } set { currentY = value; } }
 		private int _X = 0;
 		private int _Y = 0;
 
@@ -191,15 +191,37 @@ namespace DungeonDefence
 			CameraController.instance.isPlacingBuilding = false;
 			Destroy(gameObject);
 		}
-		public void UpdateGridPosition(Vector3 basePosition, Vector3 currentPosition)
+
+		public void DeleteBuilding()
 		{
-			
+			if(!waitinReplaceRepsonce)
+			{
+				waitinReplaceRepsonce = true;
+				Packet packet = new Packet();
+				packet.Write((int)Player.RequestId.DELETEBUILDING);
+				packet.Write(selectedInstance.databaseID);
+				packet.Write(selectedInstance.currentX);
+				packet.Write(selectedInstance.currentY);
+				packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+				Sender.TCP_Send(packet);
+				Destroy(gameObject);
+			}
+		}
+
+		public void MoveToNextOnGrid(int x, int y)
+		{
+			_currentX += x;
+			_currentY += y;
+		}
+
+		public void UpdateGridPosition(Vector3 basePosition, Vector3 currentPosition)
+		{			
 
 			Vector3 dir = UI_Main.instance._grid.transform.TransformPoint(currentPosition) - UI_Main.instance._grid.transform.TransformPoint(basePosition);
 			int xDis = Mathf.RoundToInt(dir.z / UI_Main.instance._grid.cellSize);
 			int yDis = Mathf.RoundToInt(-dir.x / UI_Main.instance._grid.cellSize);
 
-			Debug.Log("_currentX:" + _currentX  + "  _currentY" + _currentY);
+//			Debug.Log("_currentX:" + _currentX  + "  _currentY" + _currentY);
 			_currentX = _X + xDis;
 			_currentY = _Y + yDis;
 
@@ -228,6 +250,8 @@ namespace DungeonDefence
 		}
 
 		[HideInInspector]public bool waitinReplaceRepsonce = false;
+		[HideInInspector]public bool waitinDeleteRepsonce = false;
+
 
 		public void Selected()
 		{
@@ -243,20 +267,22 @@ namespace DungeonDefence
 					selectedInstance.Deselected();
 				}
 			}
+			selectedInstance = this;
 			if(waitinReplaceRepsonce)
 			{
 				return ;
 			}
+			_baseArea.gameObject.SetActive(true);
+			SetbaseColor();
 			_originalX = currentX;
 			_originalY = currentY;
-			selectedInstance = this;
-			UI_BuildingOptions.instance.SetStatus(true);
+			UI_BuildingOptions.instance.SetStatus(true);			
 		}
 
 		public void Deselected()
 		{
 			UI_BuildingOptions.instance.SetStatus(false);
-			
+			_baseArea.gameObject.SetActive(false);
 			CameraController.instance.isReplacingBuilding = false;
 			if(_originalX != currentX || _originalY != currentY)
 			{

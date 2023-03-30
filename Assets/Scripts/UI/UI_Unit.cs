@@ -76,7 +76,7 @@ namespace DungeonDefence
 		}
 
 
-		 public void Sync()
+		public void Sync()
 		{
 			count = 0;
 			for (int i = 0; i < Player.instance.data.units.Count; i++)

@@ -7,8 +7,9 @@ namespace DungeonDefence
 	using System.Threading.Tasks;
     using System.Text;
     using System.Security.Cryptography;
-	
-	public static class Data
+    using System.IO.Compression;
+
+    public static class Data
 	{
 
         public const int minGoldCollect = 10;
@@ -56,6 +57,65 @@ namespace DungeonDefence
         public static readonly int recoveryCodeExpiration = 300;
         public static readonly int confirmationCodeExpiration = 300;
         public static readonly int recoveryCodeLength = 6;
+
+        public static void CopyTo(Stream source, Stream target)
+                {
+                    byte[] bytes = new byte[4096]; int count;
+                    while ((count = source.Read(bytes, 0, bytes.Length)) != 0)
+                    {
+                        target.Write(bytes, 0, count);
+                    }
+                }
+
+                public async static Task<byte[]> CompressAsync(string target)
+                {
+                    Task<byte[]> task = Task.Run(() =>
+                    {
+                        return Compress(target);
+                    });
+                    return await task;
+                }
+
+                public static byte[] Compress(string target)
+                {
+                    var bytes = Encoding.UTF8.GetBytes(target);
+                    using (var msi = new MemoryStream(bytes))
+                    {
+                        using (var mso = new MemoryStream())
+                        {
+                            using (var gs = new GZipStream(mso, CompressionMode.Compress))
+                            {
+                                CopyTo(msi, gs);
+                            }
+                            return mso.ToArray();
+                        }
+                    }
+                }
+
+                public async static Task<string> DecompressAsync(byte[] bytes)
+                {
+                    Task<string> task = Task.Run(() =>
+                    {
+                        return Decompress(bytes);
+                    });
+                    return await task;
+                }
+
+                public static string Decompress(byte[] bytes)
+                {
+                    using (var msi = new MemoryStream(bytes))
+                    {
+                        using (var mso = new MemoryStream())
+                        {
+                            using (var gs = new GZipStream(msi, CompressionMode.Decompress))
+                            {
+                                CopyTo(gs, mso);
+                            }
+                            return Encoding.UTF8.GetString(mso.ToArray());
+                        }
+                    }
+                }
+
 
         public static bool IsEmailValid(string email)
         {
@@ -501,7 +561,7 @@ namespace DungeonDefence
 
         public enum BuildingID
         {
-            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, darkbarracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap, clancastle, spellfactory, darkspellfactory, dungeonwall
+            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, darkbarracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap, clancastle, spellfactory, darkspellfactory, dungeonwall, dungeontrap
         }
 
         public static int GetStorageGoldAndElixirLoot(int townhallLevel, float storage)
@@ -860,7 +920,9 @@ namespace DungeonDefence
                     new BuildingCount { id = "armycamp", count = 1, maxLevel = 1},
                     new BuildingCount { id = "barracks", count = 1, maxLevel = 3},
                     new BuildingCount { id = "cannon", count = 2, maxLevel = 2},
+
                     new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeontrap", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -881,6 +943,7 @@ namespace DungeonDefence
                     new BuildingCount { id = "wall", count = 25, maxLevel = 2},
                     
                     new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeontrap", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -905,6 +968,7 @@ namespace DungeonDefence
                     new BuildingCount { id = "boomb", count = 2, maxLevel = 2},
 
                     new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeontrap", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -931,6 +995,7 @@ namespace DungeonDefence
                     new BuildingCount { id = "springtrap", count = 2, maxLevel = 1},
 
                     new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeontrap", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -960,6 +1025,7 @@ namespace DungeonDefence
                     new BuildingCount { id = "airbomb", count = 2, maxLevel = 2},
 
                     new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeontrap", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -991,6 +1057,7 @@ namespace DungeonDefence
                     new BuildingCount { id = "giantbomb", count = 1, maxLevel = 2},
 
                     new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeontrap", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
@@ -1028,6 +1095,7 @@ namespace DungeonDefence
                     new BuildingCount { id = "seekingairmine", count = 1, maxLevel = 1},
 
                     new BuildingCount { id = "dungeonwall", count = 2, maxLevel = 2},
+                    new BuildingCount { id = "dungeontrap", count = 2, maxLevel = 2},
                 }
             },
             new BuildingAvailability
