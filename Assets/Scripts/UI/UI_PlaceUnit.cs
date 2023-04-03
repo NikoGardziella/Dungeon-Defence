@@ -86,7 +86,7 @@ namespace DungeonDefence
 			if(Unit.unitInstance != null && UI_Main.instance._grid.CanPlaceUnit(Unit.unitInstance, Unit.unitInstance.currentX, Unit.unitInstance.currentY))
 			{
 				Packet packet = new Packet();
-				packet.Write((int)Player.RequestId.PLACEUNIT);
+				packet.Write((int)Player.RequestId.PLACEDUNGEONUNIT);
 				packet.Write(SystemInfo.deviceUniqueIdentifier);
 				packet.Write(Unit.unitInstance.id.ToString());
 				packet.Write(Unit.unitInstance.currentX);

@@ -57,7 +57,8 @@ namespace DungeonDefence
 			DUNGEONATTACK = 40,
 			FINDDUNGEON = 41,
 			DELETEBUILDING = 42,
-			PLACEUNIT = 43,
+			PLACEDUNGEONUNIT = 43,
+			REPLACEUNIT = 44,
 
 		}
 
@@ -211,6 +212,10 @@ namespace DungeonDefence
 								UI_Main.instance._grid.buildings[i].waitinReplaceRepsonce = false;
 								break;
 							}
+						}
+						for (int i = 0; i < UI_Main.instance._grid.units.Count; i++)
+						{
+							UI_Main.instance._grid.units[i].waitinReplaceRepsonce = false;
 						}
 						break;
 					case RequestId.COLLECT:
@@ -563,6 +568,71 @@ namespace DungeonDefence
 							Debug.Log("ERROR: couldnt delete building from database");
 						}
 						break;
+					case RequestId.PLACEDUNGEONUNIT:
+						response = packet.ReadInt();
+						switch (response)
+						{
+							case 0:
+								Debug.Log("unknown error");
+								break;
+							case 1:
+								Debug.Log("Placed Succesfully");
+								RushSyncRequest();
+								break;
+							case 2:
+								Debug.Log("no resources");
+								break;
+							case 3:
+								Debug.Log("Max level");
+								break;
+							case 4:
+								Debug.Log("Place taken");
+								break;
+							case 5:
+								Debug.Log("no builders");
+								break;
+							case 6:
+								Debug.Log("Maximum level reached");
+								break;			
+						}
+						break;
+
+					case RequestId.REPLACEUNIT:
+						replaceResponse = packet.ReadInt();
+						replaceX = packet.ReadInt();
+						replaceY = packet.ReadInt();
+						replaceID = packet.ReadLong();
+						for (int i = 0; i < UI_Main.instance._grid.units.Count; i++)
+						{
+							if(UI_Main.instance._grid.units[i].databaseID == replaceID)
+							{
+								switch (replaceResponse)
+								{
+									case 0:
+										Debug.Log("no building");
+										break;
+									case 1:
+										Debug.Log("Replaced Succesfully");
+										UI_Main.instance._grid.units[i].PlacedOnGrid(replaceX, replaceY);			
+										if(UI_Main.instance._grid.units[i] != Unit.selectedInstance)
+										{
+											
+										}
+										RushSyncRequest();
+										break;
+									case 2:
+										Debug.Log("Place taken");
+										break;
+								}
+								UI_Main.instance._grid.units[i].waitinReplaceRepsonce = false;
+								break;
+							}
+						}
+						for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+						{
+							UI_Main.instance._grid.buildings[i].waitinReplaceRepsonce = false;
+						}
+						break;
 				}
 			}
 			catch (System.Exception ex)
@@ -644,7 +714,7 @@ namespace DungeonDefence
 			{
 
 			}
-
+			Debug.Log("buildings.Count: "+ player.buildings.Count +" player.buildings.dungeonUnits: " + player.dungeonUnits.Count + "player.units.Count: " + player.units.Count);
 			UI_Main.instance._goldText.text = gold + "/" + maxGold;
 			UI_Main.instance._elixirText.text = elixir + "/" + maxElixir;
 			UI_Main.instance._gemsText.text = gems.ToString();

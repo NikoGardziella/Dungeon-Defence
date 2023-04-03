@@ -134,6 +134,34 @@ namespace DungeonDefence
 					}
 				}
 			}
+			if (Player.instance.data.dungeonUnits != null && Player.instance.data.dungeonUnits.Count > 0)
+			{
+				for (int i = 0; i < Player.instance.data.dungeonUnits.Count; i++)
+				{
+					if (Player.instance.data.dungeonUnits[i].position_x >= 0 && Player.instance.data.dungeonUnits[i].position_y >= 0)
+					{
+						Unit unit = UI_Main.instance._grid.GetUnit(Player.instance.data.dungeonUnits[i].databaseID);
+						if (unit != null)
+						{
+							
+						}
+						else
+						{
+							Unit prefab = UI_Main.instance.GetUnitPrefab(Player.instance.data.dungeonUnits[i].id);
+							if (prefab)
+							{
+								unit = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+								unit.databaseID = Player.instance.data.dungeonUnits[i].databaseID;
+								unit.PlacedOnGrid(Player.instance.data.dungeonUnits[i].position_x, Player.instance.data.dungeonUnits[i].position_y);
+								unit._baseArea.gameObject.SetActive(false);
+								UI_Main.instance._grid.units.Add(unit);
+							}
+						}
+					}
+				}
+			}
+
+
 		}
 
 	}

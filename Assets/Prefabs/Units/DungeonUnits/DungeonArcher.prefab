@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe4fd5bd57371654bbd2de4501b7db1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  id: 1
+  id: 28
   _databaseID: 1
   _baseArea: {fileID: 2541569164757563837}
 --- !u!1 &4486839091227846185

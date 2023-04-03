@@ -339,18 +339,48 @@ namespace DungeonDefence
             public string email = "";
             public List<Building> buildings = new List<Building>();
             public List<Unit> units = new List<Unit>();
+            public List<DungeonUnit> dungeonUnits = new List<DungeonUnit>();
+
             public List<Spell> spells = new List<Spell>();
         }
 
         public enum UnitID
         {
-            barbarian, archer, goblin, healer, wallbreaker, giant, miner, balloon, wizard, dragon, pekka, babydragon, electrodragon, yeti, dragonrider, electrotitan, minion, hogrider, valkyrie, golem, witch, lavahound, bowler, icegolem, headhunter, skeleton, bat
+            barbarian, archer, goblin, healer, wallbreaker, giant, miner, balloon, wizard, dragon, pekka, babydragon, electrodragon, yeti, dragonrider, electrotitan, minion, hogrider, valkyrie, golem, witch, lavahound, bowler, icegolem, headhunter, skeleton, bat, dungeonbarbarian, dungeonarcher
         }
 
         // Spells that their effects have been applied to the project: lightning, healing, rage, freeze, invisibility, haste
         public enum SpellID
         {
             lightning, healing, rage, jump, freeze, invisibility, recall, earthquake, haste, skeleton, bat
+        }
+
+        public class ServerDungeonUnit
+        {
+            public string id = "";
+            public long databaseID = 0;
+            public int level = 0;
+            public int health = 0;
+            public int requiredGold = 0;
+        }
+        public class DungeonUnit
+        {
+            public UnitID id = UnitID.dungeonbarbarian;
+            public int level = 0;
+            public long databaseID = 0;
+            public int health = 0;
+            public int trainTime = 0;
+            public float moveSpeed = 1;
+            public float attackSpeed = 1;
+            public float attackRange = 1;
+            public float damage = 1;
+            public float splashRange = 0;
+            public float rangedSpeed = 5;
+            public TargetPriority priority = TargetPriority.none;
+            public UnitMoveType movement = UnitMoveType.ground;
+            public float priorityMultiplier = 1;
+            public int position_x = -1;
+            public int position_y = -1;
         }
 
         public class ServerSpell
@@ -740,6 +770,8 @@ namespace DungeonDefence
         {
             public UnitID id = UnitID.barbarian;
             public int level = 0;
+            public int positionX = -1;
+            public int positionY = -1;
             public long databaseID = 0;
             public int housing = 1;
             public bool trained = false;
@@ -898,6 +930,81 @@ namespace DungeonDefence
             public int count = 0;
             public int maxLevel = 1;
         }
+        public class DungeonUnitgCount
+        {
+            public string id = "global_id";
+            public int count = 0;
+            public int maxLevel = 1;
+        }
+
+        public class DungeonUnitAvalability
+        {
+            public int level = 1;
+            public DungeonUnitgCount[] dungeonUnits = null;
+        }
+
+        public static DungeonUnitAvalability[] dungeonUnitAvalability =
+        {
+            new DungeonUnitAvalability
+            {
+                level = 0,
+                dungeonUnits = {}
+            },
+            new DungeonUnitAvalability
+            {
+                level = 1,
+                dungeonUnits = new DungeonUnitgCount[]
+                {
+                     new DungeonUnitgCount { id = "dungeonarcher", count = 1, maxLevel = 15},
+                     new DungeonUnitgCount { id = "dungeonbarbarian", count = 1, maxLevel = 15},
+                }
+            },
+            new DungeonUnitAvalability
+            {
+                level = 2,
+                dungeonUnits = new DungeonUnitgCount[]
+                {
+                     new DungeonUnitgCount { id = "dungeonarcher", count = 1, maxLevel = 15},
+                     new DungeonUnitgCount { id = "dungeonbarbarian", count = 1, maxLevel = 15},
+                }
+            },
+            new DungeonUnitAvalability
+            {
+                level = 3,
+                dungeonUnits = new DungeonUnitgCount[]
+                {
+                     new DungeonUnitgCount { id = "dungeonarcher", count = 1, maxLevel = 15},
+                     new DungeonUnitgCount { id = "dungeonbarbarian", count = 1, maxLevel = 15},
+                }
+            },
+             new DungeonUnitAvalability
+            {
+                level = 4,
+                dungeonUnits = new DungeonUnitgCount[]
+                {
+                     new DungeonUnitgCount { id = "dungeonarcher", count = 1, maxLevel = 15},
+                     new DungeonUnitgCount { id = "dungeonbarbarian", count = 1, maxLevel = 15},
+                }
+            },
+             new DungeonUnitAvalability
+            {
+                level = 5,
+                dungeonUnits = new DungeonUnitgCount[]
+                {
+                     new DungeonUnitgCount { id = "dungeonarcher", count = 1, maxLevel = 15},
+                     new DungeonUnitgCount { id = "dungeonbarbarian", count = 1, maxLevel = 15},
+                }
+            },
+             new DungeonUnitAvalability
+            {
+                level = 6,
+                dungeonUnits = new DungeonUnitgCount[]
+                {
+                     new DungeonUnitgCount { id = "dungeonarcher", count = 1, maxLevel = 15},
+                     new DungeonUnitgCount { id = "dungeonbarbarian", count = 1, maxLevel = 15},
+                }
+            },
+        };
 
         public static BuildingAvailability[] buildingAvailability =
         {

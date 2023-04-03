@@ -62,6 +62,7 @@ namespace DungeonDefence
 		private bool _replacing = false; public bool isReplacingBuilding{ get { return _replacing; } set { _replacing = value; } }
 		private Vector3 _ReplaceBasePosition = Vector3.zero;
 		private bool _replacingBuilding = false;
+		private bool _replacingUnit = false;
 
 		private float normalZoom = 10f;
 
@@ -332,7 +333,7 @@ namespace DungeonDefence
 						_movingBuilding = true;
 					}
 				}
-				else if(_placingUnit)
+				if(_placingUnit)
 				{
 					_unitBasePosition = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
 					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(_unitBasePosition, Unit.unitInstance.currentX,Unit.unitInstance.currentY, 1, 1))
@@ -355,7 +356,22 @@ namespace DungeonDefence
 						_replacingBuilding = true;
 					}
 				}
-				if(_movingBuilding == false && _replacingBuilding == false && _placingUnit == false) 
+
+				if(Unit.selectedInstance != null)
+				{
+					_ReplaceBasePosition = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
+					if(UI_Main.instance._grid.IsWorldPositionIsOnPlane(_ReplaceBasePosition, Unit.selectedInstance.currentX, Unit.selectedInstance.currentY, 1, 1))
+					{
+						if(!_replacing)
+						{
+							_replacing = true;
+						}
+						Unit.selectedInstance.StartMovingOnGrid();
+						_replacingUnit = true;
+					}
+				}
+
+				if(_movingBuilding == false && _replacingBuilding == false && isPlacingUnit == false && _replacingUnit) 
 				{
 					Debug.Log("everything false");
 					_moveRootPosition = _root.position;
@@ -484,6 +500,11 @@ namespace DungeonDefence
 			{
 				Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
 				Building.selectedInstance.UpdateGridPosition(_ReplaceBasePosition, pos);
+			}
+			if(_replacing && _replacingUnit)
+			{
+				Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
+				Unit.selectedInstance.UpdateGridPosition(_ReplaceBasePosition, pos);
 			}
 			//Debug.Log(_placingUnit + " " + _movingUnit);
 			if(_placingUnit && _movingUnit)

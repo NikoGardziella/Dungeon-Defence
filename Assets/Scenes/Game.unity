@@ -13106,7 +13106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdad4a69350b2944fb555014ae19e8bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _id: 0
+  _id: 27
   _button: {fileID: 1380788094}
   unitCard: {fileID: 411964797}
 --- !u!1 &417513258
@@ -19645,7 +19645,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdad4a69350b2944fb555014ae19e8bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _id: 1
+  _id: 28
   _button: {fileID: 1684317644}
   unitCard: {fileID: 682655138}
 --- !u!1 &683226107

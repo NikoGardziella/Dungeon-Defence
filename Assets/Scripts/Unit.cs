@@ -3,6 +3,7 @@ namespace DungeonDefence
 	using System.Collections;
 	using System.Collections.Generic;
 	using UnityEngine;
+	using DevelopersHub.RealtimeNetworking.Client;
 
 	public class Unit : MonoBehaviour
 	{
@@ -21,6 +22,9 @@ namespace DungeonDefence
 
 		private int _originalX = 0;
 		private int _originalY = 0;
+
+		[HideInInspector]public bool waitinReplaceRepsonce = false;
+		[HideInInspector]public bool waitinDeleteRepsonce = false;
 		public void PlacedOnGrid(int x, int y)
 		{
 			_currentX = x;
@@ -75,7 +79,6 @@ namespace DungeonDefence
 
 		public void Selected()
 		{	
-			Debug.Log("Selected" + unitInstance.id);
 			if(selectedInstance != null)
 			{
 				if(selectedInstance == this)
@@ -88,6 +91,7 @@ namespace DungeonDefence
 				}
 			}
 			selectedInstance = this;			
+			Debug.Log("Selected" + selectedInstance.id);
 			_baseArea.gameObject.SetActive(true);
 			SetbaseColor();
 			_originalX = currentX;
@@ -98,7 +102,7 @@ namespace DungeonDefence
 		public void Deselected()
 		{			
 			_baseArea.gameObject.SetActive(false);
-			Debug.Log("DEselected" + unitInstance.id);
+			Debug.Log("DEselected" + selectedInstance.id);
 			CameraController.instance.isPlacingUnit = false;
 			if(_originalX != currentX || _originalY != currentY)
 			{
@@ -121,16 +125,35 @@ namespace DungeonDefence
 
 		public void SaveLocation(bool resetIfNot = true)
 		{
-			if(resetIfNot)
-			{					
-				//PlacedOnGrid(_originalX, _originalY);
+			if(UI_Main.instance._grid.CanPlaceUnit(this, currentX, currentY) && (_X != currentX || _Y != currentY) &&  !waitinReplaceRepsonce)
+			{
+				waitinReplaceRepsonce = true;
+				Packet packet = new Packet();
+				packet.Write((int)Player.RequestId.REPLACEUNIT);
+				packet.Write(selectedInstance.databaseID);
+				packet.Write(selectedInstance.currentX);
+				packet.Write(selectedInstance.currentY);
+				packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+
+				Sender.TCP_Send(packet);
 				_baseArea.gameObject.SetActive(false);
 			}
 			else
 			{
-				if(_originalX == currentX && _originalY == currentY)
+				if(resetIfNot)
 				{
+					if(waitinReplaceRepsonce == false)
+					{
+						PlacedOnGrid(_originalX, _originalY);
+					}
 					_baseArea.gameObject.SetActive(false);
+				}
+				else
+				{
+					if(_originalX == currentX && _originalY == currentY)
+					{
+						_baseArea.gameObject.SetActive(false);
+					}
 				}
 			}
 		}
