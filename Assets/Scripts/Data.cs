@@ -379,8 +379,8 @@ namespace DungeonDefence
             public TargetPriority priority = TargetPriority.none;
             public UnitMoveType movement = UnitMoveType.ground;
             public float priorityMultiplier = 1;
-            public int position_x = -1;
-            public int position_y = -1;
+            public int x = -1;
+            public int y = -1;
         }
 
         public class ServerSpell
@@ -718,7 +718,7 @@ namespace DungeonDefence
 
         public enum BattleType
         {
-            normal = 1, war = 2
+            normal = 1, dungeon = 2
         }
 
         public class BattleData
@@ -734,6 +734,7 @@ namespace DungeonDefence
             public long id = 0;
             public string opponentName = "opponent";
             public List<Building> buildings = null;
+            public List<DungeonUnit> dungeonUnits = null;
         }
 
         public class BattleStartBuildingData

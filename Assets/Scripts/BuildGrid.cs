@@ -116,7 +116,7 @@ namespace DungeonDefence
 				if(buildings[i] != unit)
 				{
 					Rect rect1 = new Rect(buildings[i].currentX, buildings[i].currentY,buildings[i].columns, buildings[i].rows);				
-					Rect rect2 = new Rect(unit.currentX, unit.currentY,unit.currentX + 1, unit.currentY + 1);
+					Rect rect2 = new Rect(unit.currentX, unit.currentY, 1, 1);
 					if(rect2.Overlaps(rect1))
 					{
 						return false;
@@ -137,6 +137,10 @@ namespace DungeonDefence
 					Destroy(buildings[i].gameObject);
 				}
 			}
+			buildings.Clear();
+		}
+		public void ClearUnits()
+		{
 			for (int i = 0; i < units.Count; i++)
 			{
 				if(units[i])
@@ -145,7 +149,6 @@ namespace DungeonDefence
 				}
 			}
 			units.Clear();
-			buildings.Clear();
 		}
 
 		#if UNITY_EDITOR

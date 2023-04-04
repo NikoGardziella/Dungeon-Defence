@@ -275,7 +275,7 @@ namespace DungeonDefence
         {
             if (target > 0 && opponent != null)
             {
-                bool attack = UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.war);
+                bool attack = UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.dungeon, opponent.dungeonUnits);
                 if (attack)
                 {
                     UI_Main.instance.SetStatus(false);

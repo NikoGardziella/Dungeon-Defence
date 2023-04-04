@@ -158,6 +158,10 @@ namespace DungeonDefence
 							Debug.Log("found");
 							found = true;
 							UI_Main.instance._grid.units[i].Selected();
+							if(Building.selectedInstance != null)
+							{
+								Building.selectedInstance.Deselected();
+							}
 							break;
 						}
 					}
@@ -167,6 +171,10 @@ namespace DungeonDefence
 						{
 							found = true;
 							UI_Main.instance._grid.buildings[i].Selected();
+							if(Unit.selectedInstance != null)
+							{
+								Unit.selectedInstance.Deselected();
+							}
 							break;
 						}
 					}
@@ -287,25 +295,25 @@ namespace DungeonDefence
 
 					if(!found)
 					{
+							Building.selectedInstance.Deselected();
+							Unit.selectedInstance.Deselected();
 						if(Building.selectedInstance != null)
 						{
-							Building.selectedInstance.Deselected();
 						}
 						if(Unit.selectedInstance != null)
 						{
-							Unit.selectedInstance.Deselected();
 						}
 					}
 				}
 				else
 				{
+						Building.selectedInstance.Deselected();
+						Unit.selectedInstance.Deselected();
 					if(Building.selectedInstance != null)
 					{
-						Building.selectedInstance.Deselected();
 					}
 					if(Unit.selectedInstance != null)
 					{
-						Unit.selectedInstance.Deselected();
 					}
 				}
 			}
@@ -371,7 +379,7 @@ namespace DungeonDefence
 					}
 				}
 
-				if(_movingBuilding == false && _replacingBuilding == false && isPlacingUnit == false && _replacingUnit) 
+				if(_movingBuilding == false && _replacingBuilding == false && isPlacingUnit == false && _replacingUnit == false) 
 				{
 					Debug.Log("everything false");
 					_moveRootPosition = _root.position;
@@ -396,6 +404,15 @@ namespace DungeonDefence
 					Building.selectedInstance.SaveLocation(false);
 				}
 			}
+			if(_replacingUnit)
+			{
+				_replacingUnit = false;
+				if(Unit.selectedInstance)
+				{
+					Unit.selectedInstance.SaveLocation(false);
+				}
+			}
+			
 		}
 
 		private void ZoomStarted()

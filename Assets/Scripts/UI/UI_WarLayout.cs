@@ -47,6 +47,7 @@ namespace DungeonDefence
 			{
 				//UI_Main.instance.SetStatus(false); // make new UI for dungeon
 				PlaceBuildings();
+				Placeunits();
 				UI_BuildingOptions.instance.SetStatus(status);
 			}
 			_active = status;
@@ -91,6 +92,32 @@ namespace DungeonDefence
 				}
 			}
 		}
+		private void Placeunits()
+		{
+			UI_Main.instance._grid.ClearUnits();
+			for (int i = 0; i < Player.instance.data.units.Count; i++)
+			{				
+				if(Player.instance.data.units[i].positionX >= 0 && Player.instance.data.units[i].positionY >= 0)
+				{
+					Unit prefab = UI_Main.instance.GetUnitPrefab(Player.instance.data.units[i].id);
+					if (prefab)
+					{
+						Unit unit = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+						unit.databaseID = Player.instance.data.units[i].databaseID;
+						unit.id = Player.instance.data.units[i].id;
+						unit.PlacedOnGrid(Player.instance.data.units[i].positionX, Player.instance.data.units[i].positionY);
+						unit._baseArea.gameObject.SetActive(false); 
+						UI_Main.instance._grid.units.Add(unit);
+					}
+				}
+				else
+				{
+					//UI_WarLayoutBuilding building = Instantiate(_listPrefab, _listGrid);
+					//building.Initialized(Player.instance.data.buildings[i]);
+					//buildingItems.Add(building) ;// NOT necessary for dungeon!
+				}
+			}
+		}
 
 		
 
@@ -105,6 +132,7 @@ namespace DungeonDefence
 			}
 			buildingItems.Clear();
 		}
+	
 
 		public void DataSynced()
 		{
@@ -138,7 +166,7 @@ namespace DungeonDefence
 			{
 				for (int i = 0; i < Player.instance.data.dungeonUnits.Count; i++)
 				{
-					if (Player.instance.data.dungeonUnits[i].position_x >= 0 && Player.instance.data.dungeonUnits[i].position_y >= 0)
+					if (Player.instance.data.dungeonUnits[i].x >= 0 && Player.instance.data.dungeonUnits[i].y >= 0)
 					{
 						Unit unit = UI_Main.instance._grid.GetUnit(Player.instance.data.dungeonUnits[i].databaseID);
 						if (unit != null)
@@ -152,7 +180,7 @@ namespace DungeonDefence
 							{
 								unit = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 								unit.databaseID = Player.instance.data.dungeonUnits[i].databaseID;
-								unit.PlacedOnGrid(Player.instance.data.dungeonUnits[i].position_x, Player.instance.data.dungeonUnits[i].position_y);
+								unit.PlacedOnGrid(Player.instance.data.dungeonUnits[i].x, Player.instance.data.dungeonUnits[i].y);
 								unit._baseArea.gameObject.SetActive(false);
 								UI_Main.instance._grid.units.Add(unit);
 							}

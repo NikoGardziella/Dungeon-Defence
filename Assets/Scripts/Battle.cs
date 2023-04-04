@@ -166,6 +166,7 @@ namespace DungeonDefence
         public class Unit
         {
             public Data.Unit unit = null;
+            public Data.DungeonUnit dungeonUnit = null;
             public float health = 0;
             public int target = -1;
             public int mainTarget = -1;

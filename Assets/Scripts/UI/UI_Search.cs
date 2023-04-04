@@ -68,7 +68,7 @@ namespace DungeonDefence
 			{
 				SetStatus(false);
 				Debug.Log("opponent:"+ opponent.opponentName);
-				bool attack =  UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.normal);
+				bool attack =  UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.normal, opponent.dungeonUnits);
 				if(attack)
 				{
 					lastTarget = target;
@@ -90,7 +90,7 @@ namespace DungeonDefence
 			{
 				Debug.Log("dungeon opponent:"+ opponent.opponentName );
 				SetStatus(false);
-			   bool attack =  UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.war);
+			   bool attack =  UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.dungeon, opponent.dungeonUnits);
 				if(attack)
 				{
 					lastTarget = target;

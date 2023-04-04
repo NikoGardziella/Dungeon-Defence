@@ -44,6 +44,8 @@ namespace DungeonDefence
 		[SerializeField] private GameObject dungeonLayout = null;
 		private List<BattleUnit> unitsOnGrid = new List<BattleUnit>();
 		public List<BuildingOnGrid> buildingsOnGrid = new List<BuildingOnGrid>();
+		private List<BattleUnit> dungeonUnitsOnGrid = new List<BattleUnit>();
+
 		private DateTime baseTime;
 		private List<ItemToAdd> toAddUnits = new List<ItemToAdd>();
 		private List<ItemToAdd> toAddSpells = new List<ItemToAdd>();
@@ -157,6 +159,7 @@ namespace DungeonDefence
 
 		List<Data.Building> startbuildings = new List<Data.Building>();
 		List<Battle.Building> battleBuildings = new List<Battle.Building>();
+		List<Battle.Unit> battleDungeonUnits = new List<Battle.Unit>();
 
 		public void NoTarget()
 		{
@@ -164,7 +167,7 @@ namespace DungeonDefence
 			MessageBox.Open(1, 0.8f, true, MessageResponded, new string[] { "There is no target to attack at this moment. Please try again later." }, new string[] { "OK" });
 		}
 
-		public bool Display(List<Data.Building> buildings, long defender, Data.BattleType battleType)
+		public bool Display(List<Data.Building> buildings, long defender, Data.BattleType battleType, List<Data.DungeonUnit> dungeonUnits)
 		{
 			Debug.Log("startof display");
 			
@@ -244,7 +247,7 @@ namespace DungeonDefence
 						break;
 					}
 				}
-				if (_battleType == Data.BattleType.war)
+				if (_battleType == Data.BattleType.dungeon)
 				{
 					_dungeonPanel.SetActive(true);
 					normalLayout.SetActive(false);
@@ -298,7 +301,19 @@ namespace DungeonDefence
 				}
 				battleBuildings.Add(building);
 			}
+
+			for (int i = 0; i < dungeonUnits.Count; i++)
+			{
+				if (dungeonUnits[i].x < 0 || dungeonUnits[i].y < 0)
+				{
+					continue;
+				}
+				Battle.Unit unit = new Battle.Unit();
+				unit.dungeonUnit = dungeonUnits[i];
+				battleDungeonUnits.Add(unit);
+			}
 			
+
 			_timerText.text = TimeSpan.FromSeconds(Data.battlePrepDuration).ToString(@"mm\:ss");
 			_battleTimeText.text = "Time to Prepare";
 
@@ -358,7 +373,7 @@ namespace DungeonDefence
 			
 			//_findButton.gameObject.SetActive(_battleType == Data.BattleType.normal);
 			_normalPanel.gameObject.SetActive(_battleType == Data.BattleType.normal);
-			_dungeonPanel.gameObject.SetActive(_battleType == Data.BattleType.war);
+			_dungeonPanel.gameObject.SetActive(_battleType == Data.BattleType.dungeon);
 			//_findDungeonButton.gameObject.SetActive(_battleType == Data.BattleType.normal);
 			_closeButton.gameObject.SetActive(true);
 			_surrenderButton.gameObject.SetActive(false);
@@ -376,7 +391,7 @@ namespace DungeonDefence
 			surrender = false;
 			readyToStart = true;
 			isStarted = false;
-			PrintCollisionGrid();
+			//PrintCollisionGrid();
 			return true;
 		}
 
