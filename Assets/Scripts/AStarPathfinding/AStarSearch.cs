@@ -97,7 +97,7 @@ namespace AStarPathfinding
                 path.Push(node);
                 node = node.Parent;
             }
-
+            
             return path.ToArray();
         }
     }

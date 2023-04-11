@@ -44,7 +44,7 @@ namespace DungeonDefence
 		[SerializeField] private GameObject dungeonLayout = null;
 		private List<BattleUnit> unitsOnGrid = new List<BattleUnit>();
 		public List<BuildingOnGrid> buildingsOnGrid = new List<BuildingOnGrid>();
-		private List<BattleUnit> dungeonUnitsOnGrid = new List<BattleUnit>();
+		private List<DungeonUnitOnGrid> dungeonUnitsOnGrid = new List<DungeonUnitOnGrid>();
 
 		private DateTime baseTime;
 		private List<ItemToAdd> toAddUnits = new List<ItemToAdd>();
@@ -52,13 +52,20 @@ namespace DungeonDefence
 		private long target = 0;
 		private bool surrender = false;
 		private Data.BattleType _battleType = Data.BattleType.normal;
-		public GameObject m_Player;
+		public UI_Player m_Player;
 
 		public class BuildingOnGrid
 		{
 			public long id = 0;
 			public int index = -1;
 			public Building building = null;
+			public UI_Bar healthBar = null;
+		}
+		public class DungeonUnitOnGrid
+		{
+			public long id = 0;
+			public int index = -1;
+			public Unit dungeonUnit = null;
 			public UI_Bar healthBar = null;
 		}
 
@@ -158,8 +165,11 @@ namespace DungeonDefence
 		}
 
 		List<Data.Building> startbuildings = new List<Data.Building>();
+		List<Data.Unit> StartDungeonUnits = new List<Data.Unit>();
+
 		List<Battle.Building> battleBuildings = new List<Battle.Building>();
 		List<Battle.Unit> battleDungeonUnits = new List<Battle.Unit>();
+		List<Battle.Unit> _dungeonunits = new List<Battle.Unit>();
 
 		public void NoTarget()
 		{
@@ -167,9 +177,9 @@ namespace DungeonDefence
 			MessageBox.Open(1, 0.8f, true, MessageResponded, new string[] { "There is no target to attack at this moment. Please try again later." }, new string[] { "OK" });
 		}
 
-		public bool Display(List<Data.Building> buildings, long defender, Data.BattleType battleType, List<Data.DungeonUnit> dungeonUnits)
+		public bool Display(List<Data.Building> buildings, long defender, Data.BattleType battleType, List<Data.Unit> dungeonUnits)
 		{
-			Debug.Log("startof display");
+		//	Debug.Log("dungeonUnits count:" + dungeonUnits.Count);
 			
 			ClearSpells();
 			ClearUnits();
@@ -261,6 +271,7 @@ namespace DungeonDefence
 			
 			target = defender;
 			startbuildings = buildings;
+			StartDungeonUnits = dungeonUnits;
 			battleBuildings.Clear();
 			spellEffects.Clear();
 
@@ -309,7 +320,7 @@ namespace DungeonDefence
 					continue;
 				}
 				Battle.Unit unit = new Battle.Unit();
-				unit.dungeonUnit = dungeonUnits[i];
+				unit.unit = dungeonUnits[i];
 				battleDungeonUnits.Add(unit);
 			}
 			
@@ -322,6 +333,7 @@ namespace DungeonDefence
 			ClearUnitsOnGrid();
 			Vector3 tempPos = Vector3.zero;
 			UI_Main.instance._grid.Clear();
+
 			for (int i = 0; i < battleBuildings.Count; i++)
 			{
 				Building prefab = UI_Main.instance.GetBuildingPrefab(battleBuildings[i].building.id);
@@ -332,6 +344,7 @@ namespace DungeonDefence
 					building.building.databaseID = battleBuildings[i].building.databaseID;
 					building.building.PlacedOnGrid(battleBuildings[i].building.x, battleBuildings[i].building.y);
 					building.building._baseArea.gameObject.SetActive(false);
+				
 
 					building.healthBar = Instantiate(healthBarPrefab, healthBarGrid);
 					building.healthBar.bar.fillAmount = 1;
@@ -370,7 +383,37 @@ namespace DungeonDefence
 			//	Instantiate(TestCollision, new Vector3(tempPos.x, 1, tempPos.z),Quaternion.Euler(0f,45f,0f));
 				//Debug.Log("collisiongrid X :" + battleBuildings[i].building.y  + "collisiongrid Y " + battleBuildings[i].building.y);				
 			}
-			
+			Debug.Log("buildingsOnGrid count" + buildingsOnGrid.Count + "battleBuildings.Count; " + battleBuildings.Count);
+
+			for (int i = 0; i < battleDungeonUnits.Count; i++)
+			{
+				Unit prefab = UI_Main.instance.GetUnitPrefab(battleDungeonUnits[i].unit.id);
+				if (prefab)
+				{
+					DungeonUnitOnGrid unit = new DungeonUnitOnGrid();
+					unit.dungeonUnit = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+					unit.dungeonUnit.databaseID = battleDungeonUnits[i].unit.databaseID;
+					unit.dungeonUnit.PlacedOnGrid(battleDungeonUnits[i].unit.x, battleDungeonUnits[i].unit.y);
+					unit.dungeonUnit._baseArea.gameObject.SetActive(false);
+				//	Debug.Log("battleDungeonUnits[i].unit.health " + battleDungeonUnits[i].unit.health);
+					unit.dungeonUnit.data.health = 100;
+					unit.healthBar = Instantiate(healthBarPrefab, healthBarGrid);
+					unit.healthBar.bar.fillAmount = 1;
+					unit.healthBar.gameObject.SetActive(false);
+
+					//unit.dungeonUnit = battleDungeonUnits[i].;
+					unit.id = battleDungeonUnits[i].unit.databaseID;
+					unit.index = i;
+
+					//tempPos = unit.dungeonUnit.gameObject.transform.position;
+					//UI_Player.instance._buildings.Add(building.building);
+					//UI_Player.instance.buildings.Insert(i, building.building);
+					dungeonUnitsOnGrid.Add(unit);
+				}
+
+			//	Instantiate(TestCollision, new Vector3(tempPos.x, 1, tempPos.z),Quaternion.Euler(0f,45f,0f));
+				//Debug.Log("collisiongrid X :" + battleBuildings[i].building.y  + "collisiongrid Y " + battleBuildings[i].building.y);				
+			}
 			//_findButton.gameObject.SetActive(_battleType == Data.BattleType.normal);
 			_normalPanel.gameObject.SetActive(_battleType == Data.BattleType.normal);
 			_dungeonPanel.gameObject.SetActive(_battleType == Data.BattleType.dungeon);
@@ -379,12 +422,21 @@ namespace DungeonDefence
 			_surrenderButton.gameObject.SetActive(false);
 			baseTime = DateTime.Now;
 			SetStatus(true);
+			Debug.Log("dungeonUnitsOnGrid" + dungeonUnitsOnGrid.Count + " dungeonUnits: " + dungeonUnits.Count);
 
 			toAddSpells.Clear();
 			toAddUnits.Clear();
 			battle = new Battle();
-			battle.Initialize(battleBuildings, DateTime.Now, BuildingAttackCallBack, BuildingDestroyedCallBack, BuildingDamageCallBack, StarGained);
+			Battle.BattlePlayer MainPlayer = new Battle.BattlePlayer();
+			MainPlayer.MainPlayer = Instantiate(m_Player, Vector3.zero, Quaternion.identity);
+			Debug.Log("_dungeonunits count before battle.Initialize" + battleDungeonUnits.Count);
+			battle.Initialize(battleBuildings, battleDungeonUnits,MainPlayer, DateTime.Now, BuildingAttackCallBack, BuildingDestroyedCallBack, BuildingDamageCallBack, StarGained);
+			Debug.Log("battle initialized");
+			for (int i = 0; i < battle._dungeonunits.Count; i++)
+			{
+				Debug.Log("health:" + battle._dungeonunits[i].dungeonUnit.health);
 
+			}
 			_percentageText.text = (battle.percentage * 100f).ToString("F2") + "%";
 			UpdateLoots();
 			
@@ -394,6 +446,8 @@ namespace DungeonDefence
 			//PrintCollisionGrid();
 			return true;
 		}
+
+		
 
 		void PrintCollisionGrid()
 		{
@@ -412,7 +466,6 @@ namespace DungeonDefence
 			new string (GridStr);
 			print(GridStr);
 			Debug.Log("END of collision grid");
-
 		}
 
 		
@@ -444,6 +497,7 @@ namespace DungeonDefence
 			Data.OpponentData opponent = new Data.OpponentData();
 			opponent.id = target;
 			opponent.buildings = startbuildings;
+			opponent.dungeonUnits = StartDungeonUnits;
 			string data = Data.Serialize<Data.OpponentData>(opponent);
 			packet.Write(data);
 			packet.Write((int)_battleType);
@@ -753,7 +807,14 @@ namespace DungeonDefence
 							packet.Write(frameData);
 							Sender.TCP_Send(packet);
 						}
+						Debug.Log("player x:" +  battle.MainPlayer.position.x + "player Y:" +  battle.MainPlayer.position.y);
+						for (int i = 0; i < battle._dungeonunits.Count; i++)
+						{
+							Debug.Log("unit posX: " + battle._dungeonunits[i].position.x + "unit posY: " + battle._dungeonunits[i].position.y);
+						}
+
 						battle.ExecuteFrame();
+						Debug.Log("path1 len" + battle.pubPath1.length +"path len" + battle.pubPath2.length + "pubPath1.points.Count" + battle.pubPath1.points.Count + "pubPath1.points.Count" + battle.pubPath1.points.Count);
 						if ((float)battle.frameCount * Data.battleFrameRate >= battle.duration || Math.Abs(battle.percentage - 1d) <= 0.0001d)
 						{
 							EndBattle(false, battle.frameCount);
@@ -777,7 +838,8 @@ namespace DungeonDefence
 					}
 				}
 				UpdateUnits();
-				UpdateBuildings();
+			//	UpdateDungeonUnits();
+			//	UpdateBuildings();
 			}
 		}
 
@@ -859,15 +921,34 @@ namespace DungeonDefence
 
 		private void UpdateBuildings()
 		{
+		//	Debug.Log("buildingsOnGrid.Count" + buildingsOnGrid.Count +" battle._buildings.Count" + battle._buildings.Count);
 			for (int i = 0; i < buildingsOnGrid.Count; i++)
 			{
-				if (battle._buildings[buildingsOnGrid[i].index].health > 0)
+				if(buildingsOnGrid[i].healthBar != null)
 				{
-					if (battle._buildings[buildingsOnGrid[i].index].health < battle._buildings[buildingsOnGrid[i].index].building.health)
+					if (battle._buildings[i].health > 0)
 					{
-						buildingsOnGrid[i].healthBar.gameObject.SetActive(true);
-						buildingsOnGrid[i].healthBar.bar.fillAmount = battle._buildings[buildingsOnGrid[i].index].health / battle._buildings[buildingsOnGrid[i].index].building.health;
-						buildingsOnGrid[i].healthBar.rect.anchoredPosition = GetUnitBarPosition(UI_Main.instance._grid.GetEndPosition(buildingsOnGrid[i].building));
+						if (battle._buildings[buildingsOnGrid[i].index].health < battle._buildings[buildingsOnGrid[i].index].building.health)
+						{
+							buildingsOnGrid[i].healthBar.gameObject.SetActive(true);
+							buildingsOnGrid[i].healthBar.bar.fillAmount = battle._buildings[buildingsOnGrid[i].index].health / battle._buildings[buildingsOnGrid[i].index].building.health;
+							buildingsOnGrid[i].healthBar.rect.anchoredPosition = GetUnitBarPosition(UI_Main.instance._grid.GetEndPosition(buildingsOnGrid[i].building));
+						}
+					}
+				}
+			}
+		}
+		private void UpdateDungeonUnits()
+		{
+			for (int i = 0; i < dungeonUnitsOnGrid.Count; i++)
+			{
+				if (battle._dungeonunits[dungeonUnitsOnGrid[i].index].health > 0)
+				{
+					if (battle._dungeonunits[dungeonUnitsOnGrid[i].index].health < battle._dungeonunits[dungeonUnitsOnGrid[i].index].unit.health)
+					{
+						dungeonUnitsOnGrid[i].healthBar.gameObject.SetActive(true);
+						dungeonUnitsOnGrid[i].healthBar.bar.fillAmount = battle._dungeonunits[dungeonUnitsOnGrid[i].index].health / battle._dungeonunits[dungeonUnitsOnGrid[i].index].unit.health;
+						dungeonUnitsOnGrid[i].healthBar.rect.anchoredPosition = GetUnitBarPosition(UI_Main.instance._grid.GetEndPosition(dungeonUnitsOnGrid[i].dungeonUnit.currentX,dungeonUnitsOnGrid[i].dungeonUnit.currentY,1,1));
 					}
 				}
 			}

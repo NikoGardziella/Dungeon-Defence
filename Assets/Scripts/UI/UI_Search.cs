@@ -91,6 +91,7 @@ namespace DungeonDefence
 				Debug.Log("dungeon opponent:"+ opponent.opponentName );
 				SetStatus(false);
 			   bool attack =  UI_Battle.instance.Display(opponent.buildings, target, Data.BattleType.dungeon, opponent.dungeonUnits);
+			   Debug.Log("attack:" + attack);
 				if(attack)
 				{
 					lastTarget = target;

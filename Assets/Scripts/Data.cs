@@ -734,7 +734,7 @@ namespace DungeonDefence
             public long id = 0;
             public string opponentName = "opponent";
             public List<Building> buildings = null;
-            public List<DungeonUnit> dungeonUnits = null;
+            public List<Unit> dungeonUnits = null;
         }
 
         public class BattleStartBuildingData
@@ -789,6 +789,8 @@ namespace DungeonDefence
             public TargetPriority priority = TargetPriority.none;
             public UnitMoveType movement = UnitMoveType.ground;
             public float priorityMultiplier = 1;
+            public int x = 0;
+            public int y = 0;
         }
 
         public class Building

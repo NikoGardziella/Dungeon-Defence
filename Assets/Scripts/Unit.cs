@@ -7,7 +7,8 @@ namespace DungeonDefence
 
 	public class Unit : MonoBehaviour
 	{
-		
+		[HideInInspector]public Data.DungeonUnit data = new Data.DungeonUnit();
+
 		public Data.UnitID id = Data.UnitID.barbarian;
 		private static Unit _unitInstance = null; public static Unit unitInstance {get {return _unitInstance; } set { _unitInstance = value;} }
 		private static Unit _selectedInstance = null; public static Unit selectedInstance {get {return _selectedInstance; } set { _selectedInstance = value;} }
@@ -25,6 +26,7 @@ namespace DungeonDefence
 
 		[HideInInspector]public bool waitinReplaceRepsonce = false;
 		[HideInInspector]public bool waitinDeleteRepsonce = false;
+
 		public void PlacedOnGrid(int x, int y)
 		{
 			_currentX = x;

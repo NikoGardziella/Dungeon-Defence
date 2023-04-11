@@ -474,8 +474,8 @@ namespace DungeonDefence
 			}
 			else if(dungeonLayout.gameObject.activeInHierarchy == true && Player.inBattle)
 			{
-				_target.position =  ui_Player.transform.position;
-				_target.localPosition = new Vector3(ui_Player.transform.position.x,ui_Player.transform.position.z * 0.70f, - 100);
+				_target.position =  UI_Battle.instance.m_Player.gameObject.transform.position;
+				_target.localPosition = new Vector3(UI_Battle.instance.m_Player.gameObject.transform.position.x, UI_Battle.instance.m_Player.gameObject.transform.position.z * 0.70f, - 100);
 				_zoom = 5f;
 
 				//_pivot.localPosition = Vector3.zero;

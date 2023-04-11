@@ -80,13 +80,15 @@ namespace  DungeonDefence
 			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(position.x,0, position.y)); 
 			position.x = tempPos.x;
 			position.y = tempPos.z;
-			Debug.Log("playerx: " + position.x  + " playerY: " + position.y);
+			_GridX = position.x;
+			_GridY = position.y;
+		//	Debug.Log("playerx: " + position.x  + " playerY: " + position.y);
 			for (int x = 0; x < 45 + 1; x++)
 			{
 				for (int y = 0; y < 45 + 1; y++)
 				{
-					if(UI_Battle.instance.CollisionGrid[x,y] == 2)
-						Debug.Log("trapX" + x + "trapY: " + y);
+					//if(UI_Battle.instance.CollisionGrid[x,y] == 2)
+						//Debug.Log("trapX" + x + "trapY: " + y);
 				}
 			}
 			if(UI_Battle.instance.CollisionGrid[(int)position.x, (int)position.y] == 2)

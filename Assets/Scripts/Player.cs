@@ -364,7 +364,6 @@ namespace DungeonDefence
 						}
 						UI_Battle.instance.StartBattleConfirm(confirmed, buildings, winTrophies, loseTrophies);
 						break;
-
 					case RequestId.BATTLEEND:
 						int stars = packet.ReadInt();;
 						int unitsDeployed = packet.ReadInt();;
