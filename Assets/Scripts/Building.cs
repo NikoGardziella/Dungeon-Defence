@@ -41,6 +41,10 @@ namespace DungeonDefence
 
 		private int _originalX = 0;
 		private int _originalY = 0;
+		[SerializeField] private float _BuildintTopLeft = 0.5f; public  float BuildintTopLeft { get { return _BuildintTopLeft; } }
+		[SerializeField] private float _BuildintTopRight = 0.5f; public float BuildintTopRight { get { return _BuildintTopRight; } }
+		[SerializeField] private float _BuildintDownLeft = 0.5f; public float BuildintDownLeft { get { return _BuildintDownLeft; } }
+		[SerializeField] private float _BuildintDownRight = 0.5f; public float  BuildintDownRight { get { return _BuildintDownRight; } }
 
 		private void Update()
 		{

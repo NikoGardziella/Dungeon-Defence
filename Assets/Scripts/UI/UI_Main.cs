@@ -23,6 +23,7 @@ namespace DungeonDefence
 		[SerializeField] public BuildGrid _grid = null;
 		[SerializeField] public Building[] _buildingPrefabs = null;
 		[SerializeField] public Unit[] _unitPrefabs = null;
+		[SerializeField] public BattleUnit[] _battleUnitPrefabs = null;
 
 
 		[Header("Buttons")]
@@ -118,6 +119,17 @@ namespace DungeonDefence
 					return _unitPrefabs[i];
 				}
 				
+			}
+			return null;
+		}
+		public BattleUnit GetBattleUnitPrefab(Data.UnitID id)
+		{
+			for (int i = 0; i < _battleUnitPrefabs.Length; i++)
+			{
+				if(_battleUnitPrefabs[i].id == id)
+				{
+					return _battleUnitPrefabs[i];
+				}
 			}
 			return null;
 		}

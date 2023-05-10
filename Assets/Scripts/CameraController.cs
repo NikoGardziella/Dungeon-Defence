@@ -64,7 +64,7 @@ namespace DungeonDefence
 		private bool _replacingBuilding = false;
 		private bool _replacingUnit = false;
 
-		private float normalZoom = 10f;
+		private float normalZoom = 30f;
 
 		public Vector3 planeDownLeft = Vector3.zero;
 		public Vector3 planeTopRight = Vector3.zero;
@@ -381,7 +381,7 @@ namespace DungeonDefence
 
 				if(_movingBuilding == false && _replacingBuilding == false && isPlacingUnit == false && _replacingUnit == false) 
 				{
-					Debug.Log("everything false");
+					//Debug.Log("everything false");
 					_moveRootPosition = _root.position;
 					_moveBasePosition = _inputs.Main.PointerPosition.ReadValue<Vector2>();
 					Vector3 dl = CameraScreenPositionToWorldPosition(Vector2.zero);
@@ -474,9 +474,9 @@ namespace DungeonDefence
 			}
 			else if(dungeonLayout.gameObject.activeInHierarchy == true && Player.inBattle)
 			{
-				_target.position =  UI_Battle.instance.m_Player.gameObject.transform.position;
-				_target.localPosition = new Vector3(UI_Battle.instance.m_Player.gameObject.transform.position.x, UI_Battle.instance.m_Player.gameObject.transform.position.z * 0.70f, - 100);
-				_zoom = 5f;
+				_target.position =  UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position;
+				_target.localPosition = new Vector3(UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position.x,  UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position.z * 0.70f, - 50); // Check the values "0.70f, - 100"
+				_zoom = 10f;
 
 				//_pivot.localPosition = Vector3.zero;
 				//_pivot.localEulerAngles = new Vector3(_angle, ui_Player.move.x ,ui_Player.transform.rotation.y);

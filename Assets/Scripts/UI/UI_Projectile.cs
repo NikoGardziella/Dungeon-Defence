@@ -37,7 +37,7 @@ namespace DungeonDefence
                 if(timer > time) { timer = time; }
                 if(_target && _target != null)
                 {
-                    _lastKnowPosition = _target.position;
+                  _lastKnowPosition = _target.position;
                 }
                 transform.position = Vector3.Lerp(_start, _lastKnowPosition, timer / time);
                 if(transform.position == _lastKnowPosition)

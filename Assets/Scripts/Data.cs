@@ -17,10 +17,10 @@ namespace DungeonDefence
         public const int minDarkElixirCollect = 10;
         public static readonly int battleDuration = 120;
         public static readonly int battlePrepDuration = 30;
-        public static readonly int gridSize = 45;
+        public static readonly int gridSize = GameConstants._COLUMNS;
         public static readonly float gridCellSize = 1;
 
-        public static readonly float battleFrameRate = 0.05f;
+        public static readonly float battleFrameRate = 0.02f;
         public static readonly int battleTilesWorthOfOneWall = 15;
         public static readonly int battleGroupWallAttackRadius = 5;
         public static readonly int battleGridOffset = 1;
@@ -373,9 +373,9 @@ namespace DungeonDefence
             public float moveSpeed = 1;
             public float attackSpeed = 1;
             public float attackRange = 1;
-            public float damage = 1;
+            public float damage = 0;
             public float splashRange = 0;
-            public float rangedSpeed = 5;
+            public float rangedSpeed = 0;
             public TargetPriority priority = TargetPriority.none;
             public UnitMoveType movement = UnitMoveType.ground;
             public float priorityMultiplier = 1;
@@ -785,7 +785,7 @@ namespace DungeonDefence
             public float attackRange = 1;
             public float damage = 1;
             public float splashRange = 0;
-            public float rangedSpeed = 5;
+            public float rangedSpeed = GameConstants.PROJECTILE_SPEED;
             public TargetPriority priority = TargetPriority.none;
             public UnitMoveType movement = UnitMoveType.ground;
             public float priorityMultiplier = 1;

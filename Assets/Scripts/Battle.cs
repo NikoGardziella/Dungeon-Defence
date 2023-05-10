@@ -1,4 +1,4 @@
-﻿using AStarPathfinding;
+﻿using Pathfinding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +8,21 @@ namespace DungeonDefence
 {
 	public class Battle
 	{
+		//DELETE THESE
 		public Path pubPath1;
 		public Path pubPath2;
+		public float pubDistance;
+		public float pubDistanceToPathEnd;
+		public int pubBlocked;
+		public int pubPlayterHealth;
+		public float pubUnitHealth;
+		public float pubSwordUnitDis;
+		public float pathTraveledTime;
+		public float pathTime;
+		// DEBUG
 
+		private	float timer = 0f;
+		private	float newPathTime = 0.5f;
 		public long id = 0;
 		public DateTime baseTime = DateTime.Now;
 		public int frameCount = 0;
@@ -191,6 +203,7 @@ namespace DungeonDefence
 			{
 				if (health <= 0) { return; }
 				health -= damage;
+				
 				if (damageCallback != null)
 				{
 					//damageCallback.Invoke(unit.databaseID, damage);
@@ -216,11 +229,12 @@ namespace DungeonDefence
 			public void Initialize(int x, int y)
 			{
 				if (MainPlayer == null) { return; }
-				position = GridToWorldPosition(new BattleVector2Int(x, y));
-				health = 100;
-
+				//position = GridToWorldPosition(new BattleVector2Int(x, y));
+				position.x = x;
+				position.y = y;
+				health = 2000;
+				
 			}
-			
 		}
 
 		public class Unit
@@ -235,7 +249,7 @@ namespace DungeonDefence
 			public Path path = null;
 			public double pathTime = 0;
 			public double pathTraveledTime = 0;
-			public double attackTimer = 0;
+			public double attackTimer = 400;
 			public Dictionary<int, float> resourceTargets = new Dictionary<int, float>();
 			public Dictionary<int, float> defenceTargets = new Dictionary<int, float>();
 			public Dictionary<int, float> otherTargets = new Dictionary<int, float>();
@@ -264,7 +278,7 @@ namespace DungeonDefence
 			}
 			public void AssignTarget(int target, Path path)
 			{
-				attackTimer = unit.attackSpeed;
+				//attackTimer = unit.attackSpeed;
 				this.target = target;
 				this.path = path;
 				if (path != null)
@@ -283,6 +297,7 @@ namespace DungeonDefence
 			}
 			public void TakeDamage(float damage)
 			{
+				
 				if (health <= 0) { return; }
 				health -= damage;
 				if (damageCallback != null)
@@ -294,7 +309,7 @@ namespace DungeonDefence
 				{
 					if (dieCallback != null)
 					{
-						dieCallback.Invoke(unit.databaseID);
+						dieCallback.Invoke(unit. databaseID);
 					}
 				}
 			}
@@ -311,8 +326,14 @@ namespace DungeonDefence
 			public void Initialize(int x, int y)
 			{
 				if (unit == null) { return; }
-				position = GridToWorldPosition(new BattleVector2Int(x, y));
-				health = 100;
+				position = GridToWorldPosition(new BattleVector2Int(x, y));				
+				//position.x = x;
+				//position.y = y;
+				health = unit.health;
+			/*	unit.moveSpeed = 3f;
+				unit.attackRange = 1f;
+				unit.attackSpeed = 2f;
+				unit.rangedSpeed = 0f; */
 			}
 		}
 
@@ -434,7 +455,7 @@ namespace DungeonDefence
 			public SpellSpawned callback = null;
 		}
 
-		public void Initialize(List<Building> buildings,List<Unit> dungeonUnits, BattlePlayer player, DateTime time, AttackCallback attackCallback = null, DoubleCallback destroyCallback = null, FloatCallback damageCallback = null, BlankCallback starGained = null, ProjectileCallback projectileCallback = null)
+		public void Initialize(List<Building> buildings,List<Unit> dungeonUnits, BattlePlayer player, DateTime time, AttackCallback attackCallback = null, DoubleCallback destroyCallback = null, FloatCallback damageCallback = null, BlankCallback starGained = null, ProjectileCallback projectileCallback = null, IndexCallback unitDieCallback = null, AttackCallback dungeonUnitAttackCallBack = null, FloatCallback dungeonUnitDamageCallback = null)
 		{
 			baseTime = time;
 			duration = Data.battleDuration;
@@ -450,8 +471,8 @@ namespace DungeonDefence
 			this.projectileCallback = projectileCallback;
 			_buildings = buildings;
 			MainPlayer = player;
-			MainPlayer.Initialize(40, 40);
-			_dungeonunits = dungeonUnits;		
+			MainPlayer.Initialize((int)MainPlayer.MainPlayer.GridX, (int)MainPlayer.MainPlayer.GridY);
+			_dungeonunits = dungeonUnits;
 	
 			grid = new Grid(Data.gridSize + (Data.battleGridOffset * 2), Data.gridSize + (Data.battleGridOffset * 2));
 			unlimitedGrid = new Grid(Data.gridSize + (Data.battleGridOffset * 2), Data.gridSize + (Data.battleGridOffset * 2));
@@ -497,10 +518,12 @@ namespace DungeonDefence
 
 			for (int i = 0; i < _dungeonunits.Count; i++)
 			{
-				//_dungeonunits[i].attackCallback = attackCallback;
+				_dungeonunits[i].attackCallback = dungeonUnitAttackCallBack;
 				//_dungeonunits[i].destroyCallback = destroyCallback;
-				//_dungeonunits[i].damageCallback = damageCallback;
-				_dungeonunits[i].Initialize((int)_dungeonunits[i].position.x, (int)_dungeonunits[i].position.y);
+				_dungeonunits[i].damageCallback = damageCallback;
+				_dungeonunits[i].dieCallback = unitDieCallback;
+
+				_dungeonunits[i].Initialize((int)_dungeonunits[i].unit.positionX, (int)_dungeonunits[i].unit.positionY);
 			}
 			
 		}
@@ -617,8 +640,8 @@ namespace DungeonDefence
 			int addIndex = _units.Count;
 			//BattleVector2 tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(MainPlayer.MainPlayer.gameObject.transform.position.x,0, MainPlayer.MainPlayer.gameObject.transform.position.z); 
 			
-			MainPlayer.position.y = MainPlayer.MainPlayer.GridY;
 			MainPlayer.position.x = MainPlayer.MainPlayer.GridX;
+			MainPlayer.position.y = MainPlayer.MainPlayer.GridY;
 
 			for (int i = _unitsToAdd.Count - 1; i >= 0; i--)
 			{
@@ -663,6 +686,7 @@ namespace DungeonDefence
 			
 			for (int i = 0; i < _dungeonunits.Count; i++)
 			{
+				pubUnitHealth = _dungeonunits[i].health;
 				if (_dungeonunits[i].health > 0)
 				{
 					HandleDungeonUnits(i, Data.battleFrameRate);
@@ -712,7 +736,10 @@ namespace DungeonDefence
 							}
 							else
 							{
-								_units[projectiles[i].target].TakeDamage(projectiles[i].damage);
+								float distance1 = BattleVector2.Distance(projectiles[i].position, _units[projectiles[i].target].position);
+								
+								MainPlayer.TakeDamage(projectiles[i].damage);
+								//_units[projectiles[i].target].TakeDamage(projectiles[i].damage);
 								if (projectiles[i].splash > 0)
 								{
 									for (int j = 0; j < _units.Count; j++)
@@ -740,72 +767,167 @@ namespace DungeonDefence
 
 			frameCount++;
 		}
+
+		public void PlayerAttack()
+		{
+			float swordAttackRange = 1.0f;
+			float playerAttackDamage = 5f;
+			BattleVector2 SwordPos;
+			
+		//	tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(MainPlayer.MainPlayer.SwordCollider.gameObject.transform.position); 
+			//Sword has to be on child object so it(sword parent) can be rotated around the player correctly.
+			SwordPos.x = MainPlayer.MainPlayer.MeleeWeapon.gameObject.transform.GetChild(0).position.x;
+			SwordPos.y = MainPlayer.MainPlayer.MeleeWeapon.gameObject.transform.GetChild(0).position.z;
+			for (int i = 0; i < _dungeonunits.Count; i++)
+			{
+				float distance = BattleVector2.Distance( new BattleVector2(MainPlayer.MainPlayer.WeaponGridX,MainPlayer.MainPlayer.WeaponGridY),_dungeonunits[i].position);
+				pubSwordUnitDis = distance;
+				if(distance < swordAttackRange)
+				{
+					_dungeonunits[i].TakeDamage(playerAttackDamage);
+					_dungeonunits[i].position.x += (_dungeonunits[i].position.x - MainPlayer.position.x) * GameConstants.PLAYER_ATTACK_PUSHBACK;
+					_dungeonunits[i].position.y += (_dungeonunits[i].position.y - MainPlayer.position.y) * GameConstants.PLAYER_ATTACK_PUSHBACK;
+
+					break; // Change that number of targets hit depends on SwordType // Push enemy back ?
+				}
+
+			}
+		}
 		private void HandleDungeonUnits(int index, double deltaTime)
 		{
 			if (_dungeonunits[index].target >= 0)
 			{
-				if (MainPlayer.health <= 0 || !IsPlayerInRange(index))
+				float distance = BattleVector2.Distance(MainPlayer.position, _dungeonunits[index].position);
+				pubDistance = distance;
+				if (distance <= (_dungeonunits[index].unit.attackRange))
 				{
-					// If the building's target is dead or not in range then remove it as target
-					_dungeonunits[index].target = -1;
-				}
-				else
-				{
+					_dungeonunits[index].path = null;
+					//_dungeonunits[index].path = null;
+					if (MainPlayer.health <= 0)
+					{
+						// Player is dead
+						
+						_dungeonunits[index].target = -1;
+					}
+					else
+					{
 						if (CanPlayerBeSeen(index))
 						{
-							_dungeonunits[index].attackTimer += deltaTime;
-							int attacksCount = (int)Math.Floor(_dungeonunits[index].attackTimer / _dungeonunits[index].unit.attackSpeed);
-							if (attacksCount > 0)
+							float canFire = 400f;
+							_dungeonunits[index].attackTimer += deltaTime + _dungeonunits[index].unit.attackSpeed;
+
+							//int attacksCount = (int)Math.Floor(_dungeonunits[index].attackTimer / _dungeonunits[index].unit.attackSpeed);
+							if (_dungeonunits[index].attackTimer >= canFire)
 							{
-								_dungeonunits[index].attackTimer -= (attacksCount * _dungeonunits[index].attackTimer);
-								for (int i = 1; i <= attacksCount; i++)
+								if (_dungeonunits[index].unit.id == Data.UnitID.archer)
 								{
-									if (_dungeonunits[index].dungeonUnit.rangedSpeed > 0)
+									// FIX this
+									distance = BattleVector2.Distance(MainPlayer.position, _dungeonunits[index].position);
+									Projectile projectile = new Projectile();
+									projectile.type = TargetType.unit;
+									projectile.target = _dungeonunits[index].target;
+									projectile.timer = distance / (_dungeonunits[index].unit.rangedSpeed * Data.gridCellSize);
+									projectile.damage = _dungeonunits[index].unit.damage;
+									projectile.splash = _dungeonunits[index].unit.splashRange;
+									projectile.follow = true;
+									projectile.position = _dungeonunits[index].positionOnGrid;
+									projectileCount++;
+									projectile.id = projectileCount;
+									projectiles.Add(projectile);
+									if (projectileCallback != null)
 									{
-										// FIX this
-										float distance = BattleVector2.Distance(_units[_buildings[index].target].position, _buildings[index].worldCenterPosition);
-										Projectile projectile = new Projectile();
-										projectile.type = TargetType.unit;
-										projectile.target = _dungeonunits[index].target;
-										projectile.timer = distance / (_buildings[index].building.rangedSpeed * Data.gridCellSize);
-										projectile.damage = _dungeonunits[index].unit.damage;
-										projectile.splash = _dungeonunits[index].unit.splashRange;
-										projectile.follow = true;
-										projectile.position = _dungeonunits[index].positionOnGrid;
-										projectileCount++;
-										projectile.id = projectileCount;
-										projectiles.Add(projectile);
-										if (projectileCallback != null)
-										{
-											projectileCallback.Invoke(projectile.id, _dungeonunits[index].positionOnGrid, MainPlayer.position);
-										}
-									}
-									else
-									{
-										MainPlayer.TakeDamage(_buildings[index].building.damage);
-										if (_dungeonunits[index].unit.splashRange > 0)
-										{
-											//SPLAAASH
-										}
-									}
-									if (_dungeonunits[index].attackCallback != null)
-									{
-										_dungeonunits[index].attackCallback.Invoke(_dungeonunits[index].dungeonUnit.databaseID, 1);
+										projectileCallback.Invoke(projectile.id, _dungeonunits[index].positionOnGrid, MainPlayer.position);
 									}
 								}
-							}
+								else
+								{
+									MainPlayer.TakeDamage(_dungeonunits[index].unit.damage);
+									pubPlayterHealth = (int)MainPlayer.health;
+									if (_dungeonunits[index].unit.splashRange > 1)
+									{
+										//SPLAAASH
+									}
+								}
+								
 
+								if (_dungeonunits[index].attackCallback != null)
+								{
+									_dungeonunits[index].attackCallback.Invoke(_dungeonunits[index].unit.databaseID , 1);
+								}
+								_dungeonunits[index].attackTimer = 0;
+							}
+						}
+					} 
+				}
+				else if (_dungeonunits[index].path != null)
+				{
+					double remainedTime = _dungeonunits[index].pathTime - _dungeonunits[index].pathTraveledTime;
+					if (remainedTime >= deltaTime)
+					{
+						double moveExtra = 1;
+						double s = GetDungeonUnitMoveSpeed(index);
+						if (s != _dungeonunits[index].unit.moveSpeed)
+						{
+							moveExtra = s / _dungeonunits[index].unit.moveSpeed;
+						}
+						_dungeonunits[index].pathTraveledTime += (deltaTime * moveExtra);
+						if (_dungeonunits[index].pathTraveledTime > _dungeonunits[index].pathTime)
+						{
+							_dungeonunits[index].pathTraveledTime = _dungeonunits[index].pathTime;
+						}
+						if (_dungeonunits[index].pathTraveledTime < 0)
+						{
+							_dungeonunits[index].pathTraveledTime = 0;
+						}
+						
+						deltaTime = 0;
+						
+					}
+					else
+					{
+					//	_dungeonunits[index].pathTraveledTime = _dungeonunits[index].pathTime;
+						_dungeonunits[index].path = null;
+						deltaTime -= remainedTime;
+						return;
+					}
+
+					if(_dungeonunits[index].path != null)
+						_dungeonunits[index].position = GetPathPosition(_dungeonunits[index].path.points, (float)(_dungeonunits[index].pathTraveledTime / _dungeonunits[index].pathTime));
+						// Update unit's position based on path
+						
+						
+					// Check if target is in range
+					if (_dungeonunits[index].unit.attackRange > 0 && IsPlayerInRange(index))
+					{
+						//_dungeonunits[index].path = null;
+					}						
+					else
+					{
+						// check if unit reached the end of the path
+						BattleVector2 targetPosition = GridToWorldPosition(new BattleVector2Int(_dungeonunits[index].path.points.Last().Location.X, _dungeonunits[index].path.points.Last().Location.Y));
+						distance = BattleVector2.Distance(_dungeonunits[index].position, targetPosition);
+						pubDistanceToPathEnd = distance;
+						if (distance <= Data.gridCellSize * 0.1)
+						{
+							//_dungeonunits[index].position = targetPosition;
+							_dungeonunits[index].path = null;
+						}
 					}
 				}
-			}
-			if (_buildings[index].target < 0)
-			{
-				AssignTargetPlayer(index);
 
-				// Find a new target for this building
+				if(_dungeonunits[index].path == null)
+				{
+					AssignTargetPlayer(index);
+				}
+				
+			}
+			else if (_dungeonunits[index].target < 0)
+			{
+				// Find a new target
 				if (FindTargetForDungeonUnit(index))
 				{
-					HandleDungeonUnits(index, deltaTime);
+					AssignTargetPlayer(index);
+					//HandleDungeonUnits(index, deltaTime);
 				}
 			}
 		}
@@ -938,31 +1060,69 @@ namespace DungeonDefence
 		}
 		private bool FindTargetForDungeonUnit(int index)
 		{
-			for (int i = 0; i < _dungeonunits.Count; i++)
+			if(CanPlayerBeSeen(index))
 			{
-				if (MainPlayer.health > 0)
+				/*	if (MainPlayer.health > 0)
 				{
 					continue;
-				}
+				} */
 
-				if (IsPlayerInRange(index) && CanPlayerBeSeen(index))
-				{
-					_dungeonunits[index].attackTimer = _dungeonunits[index].dungeonUnit.attackSpeed;
+				
+					//_dungeonunits[index].attackTimer = _dungeonunits[index].unit.attackSpeed;
 					_dungeonunits[index].target = 1;
-					return true;
-				}
+				
+
+				
+
+			
+			return true;
+
 			}
 			return false;
 		}
+
 		private bool CanPlayerBeSeen(int unitIndex)
 		{
+			float distance = BattleVector2.Distance(_dungeonunits[unitIndex].position, MainPlayer.position);
+			if (distance >= GameConstants.UNIT_VISION_RANGE)
+			{
+				return false;
+			}
+			if(IsPlayerInUnitsVision(unitIndex))
+				return true;
+			return false;
+		}
+
+		private bool IsPlayerInUnitsVision(int unitIndex)
+		{			
+			BattleVector2Int unitGridPosition =  new BattleVector2Int((int)_dungeonunits[unitIndex].position.x, (int)_dungeonunits[unitIndex].position.y); //WorldToGridPosition(_dungeonunits[unitIndex].position); // new BattleVector2Int((int)_dungeonunits[unitIndex].position.x, (int)_dungeonunits[unitIndex].position.y) ; 
+			Path path = new Path();
+			if (path.Create(ref unlimitedSearch, unitGridPosition, new BattleVector2Int((int)MainPlayer.MainPlayer.GridX, (int)MainPlayer.MainPlayer.GridY)))
+			{
+				path.length = GetPathLength(path.points);
+				//pubpathLen = path.points.Count;
+				for (int i = 0; i < path.points.Count; i++)
+				{
+					//pubBlocked = blockedTiles.Count;
+					for (int j = 0; j < blockedTiles.Count; j++)
+					{
+						if (blockedTiles[j].position.x == path.points[i].Location.X && blockedTiles[j].position.y == path.points[i].Location.Y)
+						{
+							return false;
+						}
+					}
+				}
+			}
 			return true;
 		}
 
+
+
 		private bool IsPlayerInRange(int unitindex)
 		{
-			float distance = BattleVector2.Distance(MainPlayer.worldCenterPosition, _dungeonunits[unitindex].position);
-			if (distance <= (_dungeonunits[unitindex].dungeonUnit.attackRange))
+
+			float distance = BattleVector2.Distance(MainPlayer.position, _dungeonunits[unitindex].position);
+			if (distance <= (_dungeonunits[unitindex].unit.attackRange))
 			{
 				return true;
 			}
@@ -1645,10 +1805,40 @@ namespace DungeonDefence
 			}
 			return (-1, null);
 		}
-
+		public int pubpathLen;
 		private (int, Path) GetPathToPlayer(int unitIndex)
 		{			
-			BattleVector2Int unitGridPosition = WorldToGridPosition(_dungeonunits[unitIndex].position);
+			BattleVector2Int unitGridPosition =  new BattleVector2Int((int)_dungeonunits[unitIndex].position.x, (int)_dungeonunits[unitIndex].position.y);  // WorldToGridPosition(_dungeonunits[unitIndex].position); // new BattleVector2Int((int)_dungeonunits[unitIndex].position.x, (int)_dungeonunits[unitIndex].position.y) ; 
+			Path path = new Path();
+			if (path.Create(ref search, unitGridPosition, new BattleVector2Int((int)MainPlayer.MainPlayer.GridX, (int)MainPlayer.MainPlayer.GridY)))
+			{
+				path.length = GetPathLength(path.points);
+				pubpathLen = path.points.Count;
+				for (int i = 0; i < path.points.Count; i++)
+				{
+					pubBlocked = blockedTiles.Count;
+					for (int j = 0; j < blockedTiles.Count; j++)
+					{
+						
+						if (blockedTiles[j].position.x == path.points[i].Location.X && blockedTiles[j].position.y == path.points[i].Location.Y)
+						{
+							int t = blockedTiles[j].index;
+							for (int k = path.points.Count - 1; k >= j; k--)
+							{
+								//path.points.RemoveAt(k);
+							} 
+							//path.length = GetPathLength(path.points);
+							pubPath1 = path;
+							return (1, path);
+						}
+					}
+				}
+				pubPath1 = path;
+				return (1, path);
+			}
+			return (-1, null);
+
+		/*	BattleVector2Int unitGridPosition = WorldToGridPosition(_dungeonunits[unitIndex].position);
 			//BattleVector2Int unitGridPosition = WorldToGridPosition(new BattleVector2(_dungeonunits[unitIndex].dungeonUnit.x, _dungeonunits[unitIndex].dungeonUnit.y));
 		//	BattleVector2Int playerGridPosition = WorldToGridPosition(MainPlayer.position);
 
@@ -1667,9 +1857,8 @@ namespace DungeonDefence
 
 			// Get the list of building's available surrounding tiles
 			List<Path> tiles = new List<Path>();
-			if (_dungeonunits[unitIndex].unit.movement == Data.UnitMoveType.ground)
-			{
-				#region With Walls Effect
+		//	if (_dungeonunits[unitIndex].unit.movement == Data.UnitMoveType.ground)
+		//	{
 				int closest = -1;
 				float distance = 99999;
 				int blocks = 999;
@@ -1707,7 +1896,7 @@ namespace DungeonDefence
 									{
 										if (blockedTiles[j].position.x == path2.points[i].Location.X && blockedTiles[j].position.y == path2.points[i].Location.Y)
 										{
-											if (blockedTiles[j].id == Data.BuildingID.wall && _buildings[blockedTiles[j].index].health > 0)
+											if ((blockedTiles[j].id == Data.BuildingID.wall && _buildings[blockedTiles[j].index].health > 0) || blockedTiles[j].id == Data.BuildingID.dungeonwall)
 											{
 												path2.blocks.Add(blockedTiles[j]);
 												// path2.blocksHealth += _buildings[blockedTiles[j].index].health;
@@ -1727,10 +1916,40 @@ namespace DungeonDefence
 						}
 					}
 				}
-				#endregion
-			}
+				tiles[closest].points.Reverse();
+				if (tiles[closest].blocks.Count > 0)
+				{
+					for (int i = 0; i < _dungeonunits.Count; i++)
+					{
+						if (_dungeonunits[i].unit.health > 0)
+						{
+							continue;
+						}
+						BattleVector2Int pos = WorldToGridPosition(_dungeonunits[i].position);
+						List<Cell> points = search.Find(new Vector2Int(pos.x, pos.y), new Vector2Int(unitGridPosition.x, unitGridPosition.y)).ToList();
+						if (!Path.IsValid(ref points, new Vector2Int(pos.x, pos.y), new Vector2Int(unitGridPosition.x, unitGridPosition.y)))
+						{
+							continue;
+						}
+						// float dis = GetPathLength(points, false);
+					//	if (id <= Data.battleGroupWallAttackRadius)
+						//{
+							Vector2Int end = _dungeonunits[i].path.points.Last().Location;
+							Path path = new Path();
+							if (path.Create(ref search, pos, new BattleVector2Int(end.X, end.Y)))
+							{
+								pubPath1 = path;
+								_dungeonunits[unitIndex].mainTarget = 1;
+								path.blocks = _units[i].path.blocks;
+								path.length = GetPathLength(path.points);
+								return (1, path);
+							}
+					//	}
+					}
+				}
+		//	}
+			*/
 			
-			return (-1, null);
 		}
 
 		private bool IsBuildingInRange(int unitIndex, int buildingIndex)
@@ -1889,6 +2108,12 @@ namespace DungeonDefence
 			return speed;
 		}
 
+		private float GetDungeonUnitMoveSpeed(int index)
+		{
+			float speed = _dungeonunits[index].unit.moveSpeed;
+			return speed;
+		}
+
 		public class Path
 		{
 			public Path()
@@ -1951,7 +2176,8 @@ namespace DungeonDefence
 					}
 					length += l;
 				}
-			}
+			}		
+			
 			return GridToWorldPosition(new BattleVector2Int(path[0].Location.X, path[0].Location.Y));
 		}
 

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace AStarPathfinding 
+namespace Pathfinding 
 {
 
     public class AStarSearch 

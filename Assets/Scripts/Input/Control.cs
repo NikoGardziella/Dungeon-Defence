@@ -291,6 +291,15 @@ namespace DungeonDefence
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""AttackDirection"",
+                    ""type"": ""Value"",
+                    ""id"": ""2ada2d03-b012-4c1f-9784-cfbeaa37cadd"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -359,6 +368,17 @@ namespace DungeonDefence
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f4e2982b-8feb-4b13-a5e6-a1692f745761"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AttackDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -379,6 +399,7 @@ namespace DungeonDefence
             // Player
             m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
             m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
+            m_Player_AttackDirection = m_Player.FindAction("AttackDirection", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -536,11 +557,13 @@ namespace DungeonDefence
         private readonly InputActionMap m_Player;
         private IPlayerActions m_PlayerActionsCallbackInterface;
         private readonly InputAction m_Player_Move;
+        private readonly InputAction m_Player_AttackDirection;
         public struct PlayerActions
         {
             private @Control m_Wrapper;
             public PlayerActions(@Control wrapper) { m_Wrapper = wrapper; }
             public InputAction @Move => m_Wrapper.m_Player_Move;
+            public InputAction @AttackDirection => m_Wrapper.m_Player_AttackDirection;
             public InputActionMap Get() { return m_Wrapper.m_Player; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -553,6 +576,9 @@ namespace DungeonDefence
                     @Move.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
                     @Move.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
                     @Move.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
+                    @AttackDirection.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAttackDirection;
+                    @AttackDirection.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAttackDirection;
+                    @AttackDirection.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAttackDirection;
                 }
                 m_Wrapper.m_PlayerActionsCallbackInterface = instance;
                 if (instance != null)
@@ -560,6 +586,9 @@ namespace DungeonDefence
                     @Move.started += instance.OnMove;
                     @Move.performed += instance.OnMove;
                     @Move.canceled += instance.OnMove;
+                    @AttackDirection.started += instance.OnAttackDirection;
+                    @AttackDirection.performed += instance.OnAttackDirection;
+                    @AttackDirection.canceled += instance.OnAttackDirection;
                 }
             }
         }
@@ -579,6 +608,7 @@ namespace DungeonDefence
         public interface IPlayerActions
         {
             void OnMove(InputAction.CallbackContext context);
+            void OnAttackDirection(InputAction.CallbackContext context);
         }
     }
 }

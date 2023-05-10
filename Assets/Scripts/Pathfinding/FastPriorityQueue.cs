@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace AStarPathfinding 
+namespace Pathfinding 
 {
     public sealed class FastPriorityQueue 
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace AStarPathfinding {
+namespace Pathfinding {
 
     public static class DictionaryExtensions {
         public static void AddUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value) {

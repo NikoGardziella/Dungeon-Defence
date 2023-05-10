@@ -1,4 +1,4 @@
-namespace AStarPathfinding 
+namespace Pathfinding 
 {
     public struct Vector2Int 
     {

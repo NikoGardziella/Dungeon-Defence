@@ -9,8 +9,9 @@ namespace DungeonDefence
 
         public Data.UnitID id = Data.UnitID.barbarian;
         private Vector3 lastPosition = Vector3.zero;
-        private int i = -1; public int index { get { return i; } }
+        private int i = -1; public int index { get { return i; }   set { i = value; } }
         private long _id = 0; public long databaseID { get { return _id; } }
+         public MeshRenderer baseArea = null;
         [HideInInspector] public UI_Bar healthBar = null;
         [HideInInspector] public Data.Unit data = null;
 
@@ -32,5 +33,11 @@ namespace DungeonDefence
             }
         }
 
+        public void PlacedOnGrid(int x, int y)
+		{
+	
+		//	Vector3 position = UI_Main.instance._grid.GetCenterPosition(x,y, 1, 1);
+		//	transform.position = position;
+		}
     }
 }

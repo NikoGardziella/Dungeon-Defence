@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6003032564511447811}
   - component: {fileID: -7203529674168689804}
+  - component: {fileID: -2671924332657146741}
   m_Layer: 0
   m_Name: DungeonArcher
   m_TagString: Untagged
@@ -49,6 +50,23 @@ MonoBehaviour:
   id: 28
   _databaseID: 1
   _baseArea: {fileID: 2541569164757563837}
+  waitinReplaceRepsonce: 0
+  waitinDeleteRepsonce: 0
+--- !u!114 &-2671924332657146741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 713814173859855859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63e3271a7a7d8d04d82a8d774223f4dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  id: 28
+  baseArea: {fileID: 2541569164757563837}
+  healthBar: {fileID: 0}
 --- !u!1 &4486839091227846185
 GameObject:
   m_ObjectHideFlags: 0
@@ -76,7 +94,7 @@ Transform:
   m_GameObject: {fileID: 4486839091227846185}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.3, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6003032564511447811}

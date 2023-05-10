@@ -9,13 +9,17 @@ namespace DungeonDefence
 		// SIZE OF THE GRID
 		private static BuildGrid _instance = null; public static BuildGrid instance { get { return _instance; } }
 
-		private int _rows = GameConstants._ROWS;
+		public int _rows = GameConstants._ROWS;
 		public int _columns = GameConstants._COLUMNS;
 		private float _cellSize = 1.0f;
 		public float cellSize { get { return _cellSize; } }
 
 	
-		
+		void Start()
+		{
+			_rows = GameConstants._ROWS;
+			_columns = GameConstants._COLUMNS;
+		}
 
 		public List<Building> buildings = new List<Building>();
 
@@ -30,8 +34,7 @@ namespace DungeonDefence
 			}
 			return null;
 		}
-		public List<Unit> units = new List<Unit>();
-		
+		public List<Unit> units = new List<Unit>();		
 
 		public Unit GetUnit(long databaseID)
 		{

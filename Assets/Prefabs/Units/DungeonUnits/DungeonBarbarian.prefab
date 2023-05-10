@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 2069661606496628860}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.3, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6321046720836704007}
@@ -93,6 +93,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6321046720836704007}
   - component: {fileID: -5432744162018480112}
+  - component: {fileID: -1940304612284457672}
   m_Layer: 0
   m_Name: DungeonBarbarian
   m_TagString: Untagged
@@ -132,6 +133,23 @@ MonoBehaviour:
   id: 27
   _databaseID: 1
   _baseArea: {fileID: 6651246336713769130}
+  waitinReplaceRepsonce: 0
+  waitinDeleteRepsonce: 0
+--- !u!114 &-1940304612284457672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3614691426640838074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63e3271a7a7d8d04d82a8d774223f4dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  id: 27
+  baseArea: {fileID: 6651246336713769130}
+  healthBar: {fileID: 0}
 --- !u!1 &8046027983192730443
 GameObject:
   m_ObjectHideFlags: 0
