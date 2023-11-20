@@ -21,6 +21,8 @@ namespace DungeonDefence
 		[HideInInspector] public GameObject placingItem = null;
 		private Data.Building _dungeonwall = null;
 		
+		[HideInInspector] public int lastX = 25;
+		[HideInInspector] public int lastY = 25;
 
 		private void Awake()
 		{
@@ -48,6 +50,7 @@ namespace DungeonDefence
 				//UI_Main.instance.SetStatus(false); // make new UI for dungeon
 				PlaceBuildings();
 				Placeunits();
+				PlaceDungeonUnits();
 				UI_BuildingOptions.instance.SetStatus(status);
 			}
 			_active = status;
@@ -62,6 +65,41 @@ namespace DungeonDefence
 			CameraController.instance.dungeonLayout.SetActive(false);
 			CameraController.instance.normalLayout.SetActive(true);
 			SetStatus(false);
+		}
+
+		
+
+		private void PlaceDungeonUnits()
+		{
+			Debug.Log("Placing Dungeon Units: "+ Player.instance.data.dungeonUnits.Count);
+			ClearItems();
+			UI_Main.instance._grid.ClearUnits();
+			for (int i = 0; i < Player.instance.data.dungeonUnits.Count; i++)
+			{				
+				if(Player.instance.data.dungeonUnits[i].x >= 0 && Player.instance.data.dungeonUnits[i].y >= 0)
+				{
+					Unit prefab = UI_Main.instance.GetUnitPrefab(Player.instance.data.dungeonUnits[i].id);
+					if (prefab)
+					{
+						Debug.Log("placing "+Player.instance.data.dungeonUnits[i].id);
+						Unit unit = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+						unit.databaseID = Player.instance.data.dungeonUnits[i].databaseID;
+						unit.data.id = Player.instance.data.dungeonUnits[i].id;
+						unit.PlacedOnGrid(Player.instance.data.dungeonUnits[i].x, Player.instance.data.buildings[i].y);
+						unit._baseArea.gameObject.SetActive(false); 
+						UI_Main.instance._grid.units.Add(unit);
+					}
+					else
+						Debug.Log("no prefab for: " + Player.instance.data.dungeonUnits[i].id);
+				}
+				else
+				{
+					Debug.Log("bad coordinates for: "+ Player.instance.data.dungeonUnits[i].databaseID + " x : " + Player.instance.data.dungeonUnits[i].x + " y: " + Player.instance.data.dungeonUnits[i].y);
+					//UI_WarLayoutBuilding building = Instantiate(_listPrefab, _listGrid);
+					//building.Initialized(Player.instance.data.buildings[i]);
+					//buildingItems.Add(building) ;// NOT necessary for dungeon!
+				}
+			}
 		}
 
 		private void PlaceBuildings()
@@ -79,7 +117,11 @@ namespace DungeonDefence
 						Building building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 						building.databaseID = Player.instance.data.buildings[i].databaseID;
 						building.data.id = Player.instance.data.buildings[i].id;
+						building.data.warX = Player.instance.data.buildings[i].warX;
+						building.data.warY = Player.instance.data.buildings[i].warY;
 						building.PlacedOnGrid(Player.instance.data.buildings[i].warX, Player.instance.data.buildings[i].warY);
+						building.BuildingInitRotation(Player.instance.data.buildings[i].yRotation);
+
 						building._baseArea.gameObject.SetActive(false); 
 						UI_Main.instance._grid.buildings.Add(building);
 					}
@@ -153,9 +195,15 @@ namespace DungeonDefence
 							if (prefab)
 							{
 								building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+
 								building.databaseID = Player.instance.data.buildings[i].databaseID;
 								building.PlacedOnGrid(Player.instance.data.buildings[i].warX, Player.instance.data.buildings[i].warY);
 								building._baseArea.gameObject.SetActive(false);
+								//Debug.Log(building.yRotation);
+								building.BuildingInitRotation(Player.instance.data.buildings[i].yRotation);
+								building.SetBuildingSize(Player.instance.data.buildings[i].size);
+								building.data = Player.instance.data.buildings[i];
+								//Debug.Log("building id: " + building.data.id);
 								UI_Main.instance._grid.buildings.Add(building);
 							}
 						}
@@ -171,7 +219,8 @@ namespace DungeonDefence
 						Unit unit = UI_Main.instance._grid.GetUnit(Player.instance.data.dungeonUnits[i].databaseID);
 						if (unit != null)
 						{
-							
+
+						
 						}
 						else
 						{

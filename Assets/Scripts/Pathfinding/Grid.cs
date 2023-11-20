@@ -42,10 +42,14 @@ namespace Pathfinding
                         cell.F = 0;
                         cell.Closed = false;
                         cell.Parent = null;
+
+                       // cell.Blocked = false;
                     }
                 }
             }
         }
+
+        
 
         public int GetNodeId(Vector2Int location) => location.X * Width + location.Y;
     }

@@ -5,7 +5,7 @@ namespace  DungeonDefence
 	using UnityEngine;
 	using UnityEngine.EventSystems;
 	using UnityEngine.InputSystem;
-	
+    using TMPro;
 
     public class UI_Player : MonoBehaviour
 	{
@@ -13,7 +13,15 @@ namespace  DungeonDefence
 		private static UI_Player _instance = null; public static UI_Player instance { get { return _instance; } }
 		public List<Data.Building> buildings = new List<Data.Building>();
 		public List<UI_Battle.BuildingOnGrid> buildingOnGrid = new List<UI_Battle.BuildingOnGrid>();
-		public GameObject MeleeWeapon;
+		public GameObject weaponHolder;
+		public GameObject[] weapons;
+		public WeaponID CurrentWeapon;
+		public bool BattleStarted = false;
+		public enum WeaponID
+        {
+			notattacking = 0, melee = 1, ranged = 2
+		}
+		
 
 		//private Control _inputsLeft = null;
 		//private Control _inputsRight = null;
@@ -45,8 +53,10 @@ namespace  DungeonDefence
 
 		void Update()
 		{
-			
-			UpdatePlayerActions();
+			if(BattleStarted)
+			{
+				UpdatePlayerActions();
+			}
 		}
 
 		void Start()
@@ -59,6 +69,38 @@ namespace  DungeonDefence
 			_GridY = tempPos.z;
 			_columns = GameConstants._COLUMNS;
 			_rows = GameConstants._COLUMNS;
+			InitWeapons();
+		}
+
+		public void InitWeapons()
+		{
+			for (int i = 0; i < weapons.Length; i++)
+			{
+				weapons[i].SetActive(false);
+			}
+			weapons[0].SetActive(true);
+			CurrentWeapon = WeaponID.melee;
+		}
+
+        public void ChangeWeapon()
+		{
+			if(weapons[0].activeInHierarchy == true)
+			{
+				weapons[0].SetActive(false);
+				weapons[1].SetActive(true);
+				Debug.Log("chagned to ranged");
+				CurrentWeapon = WeaponID.ranged;
+			}
+			else
+			{
+
+				Debug.Log("changed to melee");
+				weapons[0].SetActive(true);
+				weapons[1].SetActive(false);
+				CurrentWeapon = WeaponID.melee;
+
+			}
+
 		}
 
 	
@@ -92,13 +134,13 @@ namespace  DungeonDefence
 		{
 			if(Input.GetKeyDown(KeyCode.Space))
 			{
-				anim.SetTrigger("Attack");
 				PlayerIsAttacking = true;
+				anim.SetTrigger("Attack");
 			}
 			else
 			{
-				anim.SetTrigger("Idle");
 				PlayerIsAttacking = false;
+				anim.SetTrigger("Idle");
 			}
 		}
 
@@ -112,7 +154,7 @@ namespace  DungeonDefence
 				//attackVector.z = attackDir.y;
 				PlayerIsAttacking = true;
 				anim.SetTrigger("Attack");
-				MeleeWeapon.transform.rotation = Quaternion.LookRotation(new Vector3(attackDir.x, 0, attackDir.y),Vector3.up);
+				weaponHolder.transform.rotation = Quaternion.LookRotation(new Vector3(attackDir.x, 0, attackDir.y),Vector3.up);
 			}
 			else
 			{
@@ -162,7 +204,7 @@ namespace  DungeonDefence
 			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(gameObject.transform.position.x,0, gameObject.transform.position.z)); 
 			_GridX = tempPos.x;
 			_GridY = tempPos.z;
-			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(MeleeWeapon.transform.position.x,0, MeleeWeapon.transform.position.z)); 
+			tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(weaponHolder.transform.position.x,0, weaponHolder.transform.position.z)); 
 			_WeaponGridX = tempPos.x;
 			_WeaponGridY = tempPos.z;
 		}

@@ -159,10 +159,45 @@ namespace DungeonDefence
             return hashString.PadLeft(32, '0');
         }
 
+       
+        public enum HeadGearId
+        {
+            None,
+            Testhat,
+
+            Count
+        }
+
+        public enum MeleeWepaonId
+        {
+            None,
+            WoodenSword,
+
+            Count
+        }
+
+        
+        public enum CharacterItemCategory
+        {
+            None = 0, HeadGear = 1, MeleeWeapon = 2, RangedWeapon = 3,
+
+            ItemsCount
+        }
+
+        public enum GetChallenge
+        {
+            All = 0, ActiveNotCompleted = 1
+        }
+
         public enum ChatType
         {
             global = 1, clan = 2
         }
+        public enum ChallengeType
+        {
+            daily = 1, weekly = 2, any = 3
+        }
+
 
         public enum ClanRank
         {
@@ -183,6 +218,21 @@ namespace DungeonDefence
             }
 
             return true;
+        }
+        public class DailyChallenge
+        {
+            public int id = 0;
+            public int database_id = 0;
+            public int challenge_index = 0;
+            public int kills = 0;
+            public int games = 0;
+            public int req_kills = 0;
+            public int req_games = 0;
+            public bool completed = false;
+            public bool active = false;
+            public string challenge_id = "";
+            public Data.ChallengeType challengeType = Data.ChallengeType.daily;
+
         }
 
         public class CharMessage
@@ -338,6 +388,8 @@ namespace DungeonDefence
             public long warID = 0;
             public string email = "";
             public List<Building> buildings = new List<Building>();
+
+            public List<UI_ItemCard> characterItems = new List<UI_ItemCard>();
             public List<Unit> units = new List<Unit>();
             public List<DungeonUnit> dungeonUnits = new List<DungeonUnit>();
 
@@ -347,6 +399,11 @@ namespace DungeonDefence
         public enum UnitID
         {
             barbarian, archer, goblin, healer, wallbreaker, giant, miner, balloon, wizard, dragon, pekka, babydragon, electrodragon, yeti, dragonrider, electrotitan, minion, hogrider, valkyrie, golem, witch, lavahound, bowler, icegolem, headhunter, skeleton, bat, dungeonbarbarian, dungeonarcher
+        }
+
+        public enum ProjectileID
+        {
+            archerarrow, boulder
         }
 
         // Spells that their effects have been applied to the project: lightning, healing, rage, freeze, invisibility, haste
@@ -591,7 +648,7 @@ namespace DungeonDefence
 
         public enum BuildingID
         {
-            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, darkbarracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap, clancastle, spellfactory, darkspellfactory, dungeonwall, dungeontrap
+            townhall, goldmine, goldstorage, elixirmine, elixirstorage, darkelixirmine, darkelixirstorage, buildershut, armycamp, barracks, darkbarracks, wall, cannon, archertower, mortor, airdefense, wizardtower, hiddentesla, bombtower, xbow, infernotower, decoration, obstacle, boomb, springtrap, airbomb, giantbomb, seekingairmine, skeletontrap, clancastle, spellfactory, darkspellfactory, dungeonwall, dungeontrap, dungeonbouldertrap
         }
 
         public static int GetStorageGoldAndElixirLoot(int townhallLevel, float storage)
@@ -754,6 +811,12 @@ namespace DungeonDefence
             public List<ServerSpell> serverSpells = new List<ServerSpell>();
         }
 
+        public class BrushBuildingData
+        {
+            public long accountID = 0;
+            public List<Building> brushBuildings = new List<Building>();
+        }
+
         public class ServerUnit
         {
             public UnitID id = UnitID.barbarian;
@@ -804,6 +867,8 @@ namespace DungeonDefence
             public int warY = -1;
             public int columns = 0;
             public int rows = 0;
+            public int yRotation = 0;
+            public int size = 0;
             public int goldStorage = 0;
             public int elixirStorage = 0;
             public int darkStorage = 0;

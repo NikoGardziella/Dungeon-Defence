@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DungeonDefence;
 
 namespace Pathfinding 
 {
@@ -30,12 +31,14 @@ namespace Pathfinding
             _grid.Reset();
             _open.Clear();
         }
+  
 
         public Cell[] Find(Vector2Int start, Vector2Int goal) 
         {
             Reset();
             Cell startCell = _grid[start];
             Cell goalCell = _grid[goal];
+            
             _open.Enqueue(startCell, 0);
             var bounds = _grid.Size;
             Cell node = null;
@@ -100,6 +103,10 @@ namespace Pathfinding
             
             return path.ToArray();
         }
+
+       
+
+
     }
 
 }

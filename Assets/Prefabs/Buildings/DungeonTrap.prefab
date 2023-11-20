@@ -94,7 +94,6 @@ GameObject:
   - component: {fileID: 5016027530168846541}
   - component: {fileID: 1395476037514784047}
   - component: {fileID: 2706048747182614947}
-  - component: {fileID: 7982151637241405053}
   m_Layer: 0
   m_Name: Spike
   m_TagString: Untagged
@@ -167,20 +166,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &7982151637241405053
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4649858456240159848}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!1 &5406531729207231124
 GameObject:
   m_ObjectHideFlags: 0
@@ -275,7 +260,6 @@ GameObject:
   - component: {fileID: 2844972596879820480}
   - component: {fileID: 1943629291018214432}
   - component: {fileID: 2834347162782209430}
-  - component: {fileID: 7794560648536737893}
   m_Layer: 0
   m_Name: Spike (4)
   m_TagString: Untagged
@@ -348,20 +332,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &7794560648536737893
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5532635152726806788}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!1 &6766421048314806576
 GameObject:
   m_ObjectHideFlags: 0
@@ -373,7 +343,6 @@ GameObject:
   - component: {fileID: 6803133645727311447}
   - component: {fileID: 9031550081484931625}
   - component: {fileID: 4090413016965136038}
-  - component: {fileID: 4998851398248521812}
   m_Layer: 0
   m_Name: Spike (1)
   m_TagString: Untagged
@@ -446,20 +415,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &4998851398248521812
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6766421048314806576}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!1 &7131021277065329292
 GameObject:
   m_ObjectHideFlags: 0
@@ -471,7 +426,6 @@ GameObject:
   - component: {fileID: 8721746761399344929}
   - component: {fileID: 8063919441484145706}
   - component: {fileID: 6362070788331956115}
-  - component: {fileID: 3984340537530985580}
   m_Layer: 0
   m_Name: Spike (2)
   m_TagString: Untagged
@@ -544,20 +498,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &3984340537530985580
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7131021277065329292}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!1 &8054194712862686053
 GameObject:
   m_ObjectHideFlags: 0
@@ -569,7 +509,6 @@ GameObject:
   - component: {fileID: 6539241972637848667}
   - component: {fileID: 2415057205772591037}
   - component: {fileID: 8405758696443287484}
-  - component: {fileID: 3472083972089614133}
   m_Layer: 0
   m_Name: Spike (3)
   m_TagString: Untagged
@@ -642,20 +581,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &3472083972089614133
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8054194712862686053}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!1 &8921169472995123783
 GameObject:
   m_ObjectHideFlags: 0
@@ -719,5 +644,9 @@ MonoBehaviour:
   - level: 1
     icon: {fileID: 0}
     mesh: {fileID: 5406531729207231124}
+  _BuildintTopLeft: 0.5
+  _BuildintTopRight: 0.5
+  _BuildintDownLeft: 0.5
+  _BuildintDownRight: 0.5
   waitinReplaceRepsonce: 0
   waitinDeleteRepsonce: 0

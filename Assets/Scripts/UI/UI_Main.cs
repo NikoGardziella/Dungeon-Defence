@@ -18,6 +18,10 @@ namespace DungeonDefence
 		[SerializeField] public Button _battleButton = null;
 		[SerializeField] public Button _chatButton = null;
 		[SerializeField] public Button _settingsButton = null;
+		[SerializeField] public Button _wallBrushButton = null;
+
+		[SerializeField] public Button _wallBrushRemoveButton = null;
+		[SerializeField] public Button _challengesButton = null;
 
 
 		[SerializeField] public BuildGrid _grid = null;
@@ -51,7 +55,54 @@ namespace DungeonDefence
 			_battleButton.onClick.AddListener(BattleButtonClicked);
 			_chatButton.onClick.AddListener(ChatButtonClicked);
 			_settingsButton.onClick.AddListener(SettingsButtonClicked);
+			_wallBrushButton.onClick.AddListener(WallBrushButtonClicked);
+			_wallBrushRemoveButton.onClick.AddListener(WallBrushRemoveButtonClicked);
+			_challengesButton.onClick.AddListener(ChallengesButtonClicked);
 
+
+		}
+
+		private void ChallengesButtonClicked()
+		{
+			//UI_Challenges.instance.UpdateChallenges();
+			UI_Challenges.instance.SetStatus(true);
+		}
+		private void WallBrushButtonClicked()
+		{
+			if(UI_Build.instance.wallBrush)
+			{
+				UI_Build.instance.wallBrush = false;
+				_wallBrushButton.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+				CameraController.instance.SendBrushBuildingsToServer();
+			}
+			else
+			{
+				UI_Build.instance.wallBrush = true;
+				_wallBrushButton.transform.localScale = new Vector3(1.3f, 1.3f, 1.3f);
+				_wallBrushRemoveButton.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f); 
+				UI_Build.instance.wallBrushRemove = false;
+
+			}
+		}
+		private void WallBrushRemoveButtonClicked()
+		{
+			if(UI_Build.instance.wallBrushRemove)
+			{
+				UI_Build.instance.wallBrushRemove = false;
+				_wallBrushRemoveButton.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f); 
+
+			}
+			else
+			{
+
+				CameraController.instance.SendBrushBuildingsToServer();
+				UI_Build.instance.wallBrushRemove = true;
+				_wallBrushRemoveButton.transform.localScale = new Vector3(1.3f, 1.3f, 1.3f);
+				_wallBrushButton.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+
+				UI_Build.instance.wallBrush = false;
+
+			}
 		}
 
 		private void SettingsButtonClicked()
@@ -160,8 +211,10 @@ namespace DungeonDefence
 							
 							building = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 							building.databaseID = Player.instance.data.buildings[i].databaseID;
+
 							building.PlacedOnGrid(Player.instance.data.buildings[i].x, Player.instance.data.buildings[i].y);
 							building._baseArea.gameObject.SetActive(false);
+							building.BuildingInitRotation(Player.instance.data.buildings[i].yRotation);
 
 							_grid.buildings.Add(building);
 						}

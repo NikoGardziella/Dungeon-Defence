@@ -5,9 +5,10 @@ namespace DungeonDefence
 	using UnityEngine;
 	using UnityEngine.EventSystems;
 	using DevelopersHub.RealtimeNetworking.Client;
+    using TMPro;
+    using UnityEngine.InputSystem;
 
-
-	public class CameraController : MonoBehaviour
+    public class CameraController : MonoBehaviour
 	{
 
 		public UI_Player ui_Player;
@@ -19,7 +20,7 @@ namespace DungeonDefence
 		[SerializeField] private float _moveSmooth = 1.0f;
 		[SerializeField] private float _zoomSmooth = 5.0f;
 		[SerializeField] private float _zoomSpeed = 5f;
-
+			
 
 		[SerializeField] private float _scrollZoomSpeed = 20f;
 		
@@ -56,7 +57,7 @@ namespace DungeonDefence
 
 
 		public Vector3 _buildBasePosition = Vector3.zero;
-		private bool _movingBuilding = false;
+		public bool _movingBuilding = false;
 		private bool _movingUnit= false;
 
 		private bool _replacing = false; public bool isReplacingBuilding{ get { return _replacing; } set { _replacing = value; } }
@@ -114,6 +115,8 @@ namespace DungeonDefence
 			_target.localEulerAngles = Vector3.zero;
 		}
 
+		private bool screenIsPressed = false;
+
 
 		private void OnEnable()
 		{
@@ -123,6 +126,9 @@ namespace DungeonDefence
 			_inputs.Main.TouchZoom.started += _ => ZoomStarted();
 			_inputs.Main.TouchZoom.canceled += _ => ZoomCanceled();
 			_inputs.Main.PointerClick.performed += _ => ScreenClicked();
+			//_inputs.Main.PointerPressed.canceled += _ => ScreenPressEnded();
+			_inputs.Main.PointerDoubleClick.performed += _ => ScreenDoubleClicked();
+
 
 		}
 		private void OnDisable()
@@ -132,7 +138,144 @@ namespace DungeonDefence
 			_inputs.Main.TouchZoom.started -= _ => ZoomStarted();
 			_inputs.Main.TouchZoom.canceled -= _ => ZoomCanceled();
 			_inputs.Main.PointerClick.performed -= _ => ScreenClicked();
+			_inputs.Main.PointerPressed.canceled -= _ => screenIsPressed = false;
+			_inputs.Main.PointerDoubleClick.performed -= _ => ScreenDoubleClicked();
 			_inputs.Disable();
+		}
+
+		private void ScreenDoubleClicked()
+		{
+			if(UI_Character.instance.isActive)
+			{
+				Vector2 position = _inputs.Main.PointerPosition.ReadValue<Vector2>();
+				PointerEventData data = new PointerEventData(EventSystem.current);
+				data.position = position;
+				List<RaycastResult> results = new List<RaycastResult>();
+				EventSystem.current.RaycastAll(data, results);
+		
+				for (int i = 0; i < results.Count; i++)
+				{
+					if(results[i].gameObject == UI_ItemCard.instance)
+					{
+						Debug.Log("ScreenDoubleClicked" + UI_ItemCard.selectedInstance.databaseID);
+						UI_ItemCard.instance.DoubleClicked();
+					}
+					
+				}
+			}
+		}
+
+		private void ScreenPressEnded()
+		{
+			//UI_Building.instance.SendBrushBuildingsToServer();
+		}
+
+		public Data.BrushBuildingData brushBuildings = new Data.BrushBuildingData();
+		public Data.BrushBuildingData initializationData = new Data.BrushBuildingData();
+
+		public bool waitingForBrushResponse = false;
+		public async void SendBrushBuildingsToServer()
+		{
+			if(brushBuildings.brushBuildings.Count > 0)
+			{
+				Debug.Log("buildings;" + brushBuildings.brushBuildings.Count);
+				waitingForBrushResponse = true;
+				Packet packet = new Packet();
+				packet.Write((int)Player.RequestId.ADDBRUSHBUILDINGS);
+				string brushData = await Data.SerializeAsync<List<Data.Building>>(brushBuildings.brushBuildings);;
+				byte[] bytes = await Data.CompressAsync(brushData);
+				packet.Write(bytes.Length);
+				packet.Write(bytes);
+				//packet.Write(SystemInfo.deviceUniqueIdentifier);
+				//packet.Write(brushData);
+				Sender.TCP_Send(packet);
+				//brushBuildings.brushBuildings.Clear();
+				//CameraController.instance.brushBuildings.brushBuildings.Clear();
+			}
+			else
+				Debug.Log("no brusbuildings to add");
+		}
+
+
+		public void WallBrushPressed(int x, int y)
+		{
+			if(UI_Main.instance._grid.CanPlaceCoordinates(x,y))
+			{
+				if( UI_Main.instance._grid.IsPathToPlayerStart(0,0,x, y))
+				{
+					Building prefab = UI_Main.instance.GetBuildingPrefab(Data.BuildingID.dungeonwall);
+					if(prefab)
+					{
+						UI_Shop.instance.SetStatus(false);
+						Vector3 position = Vector3.zero;
+						Building building = Instantiate(prefab, position, Quaternion.identity);
+						building.PlacedOnGrid(x, y);
+						building._baseArea.gameObject.SetActive(false);
+						DungeonDefence.Data.Building brushBuilding = new DungeonDefence.Data.Building();
+						brushBuilding.x = building.currentX;
+						brushBuilding.y = building.currentY;
+						brushBuilding.id = building.id;
+					
+						brushBuildings.brushBuildings.Add(brushBuilding);
+						Building.buildInstance = building;
+						//UI_Build.instance.SetStatus(true);	
+				
+					}
+
+				}
+				//buildingCard.gameObject.transform.localScale += new Vector3(1,1,0);
+			}
+		}
+		public void WallBrushRemovePressed(int x, int y)
+		{
+			//Debug.Log("clickign at: x: " + x + " y: " +y);
+			for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+			{
+				if(UI_Main.instance._grid.buildings[i].currentX == x && UI_Main.instance._grid.buildings[i].currentY == y)
+				{
+					if(UI_Main.instance._grid.buildings[i].data.id == Data.BuildingID.dungeonwall)
+					{
+						Building.selectedInstance = UI_Main.instance._grid.buildings[i];
+						UI_Main.instance._grid.buildings[i].DeleteBuilding();
+					}
+				}				
+			}
+		}
+
+	
+
+		private void ScreenPressed()
+		{
+			if(UI_Build.instance.wallBrush)
+			{
+				if (UI_Main.instance.isActive || UI_WarLayout.instance.isActive)
+				{
+					Vector2 position = _inputs.Main.PointerPosition.ReadValue<Vector2>();
+					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
+					{
+						planePosition = UI_Main.instance._grid.transform.InverseTransformPoint(planePosition);
+						if(planePosition.x >= (0 - Data.battleGridOffset) && planePosition.x < (Data.gridSize + Data.battleGridOffset) && planePosition.z >= (0 - Data.battleGridOffset)  && planePosition.z < (Data.gridSize + Data.battleGridOffset));
+						{
+							WallBrushPressed(Mathf.FloorToInt(planePosition.x), Mathf.FloorToInt(planePosition.z));
+						}
+					}
+				}
+			}
+			else if(UI_Build.instance.wallBrushRemove)
+			{
+				if (UI_Main.instance.isActive || UI_WarLayout.instance.isActive)
+				{
+					Vector2 position = _inputs.Main.PointerPosition.ReadValue<Vector2>();
+					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
+					{
+						planePosition = UI_Main.instance._grid.transform.InverseTransformPoint(planePosition);
+						if(planePosition.x >= (0 - Data.battleGridOffset) && planePosition.x < (Data.gridSize + Data.battleGridOffset) && planePosition.z >= (0 - Data.battleGridOffset)  && planePosition.z < (Data.gridSize + Data.battleGridOffset));
+						{
+							WallBrushRemovePressed(Mathf.FloorToInt(planePosition.x), Mathf.FloorToInt(planePosition.z));
+						}
+					}
+				}
+			}
 		}
 
 		private void ScreenClicked()
@@ -143,10 +286,14 @@ namespace DungeonDefence
 			List<RaycastResult> results = new List<RaycastResult>();
 			EventSystem.current.RaycastAll(data, results);
 
+			
+
 			if(UI_Main.instance.isActive || UI_WarLayout.instance.isActive)
 			{
+
 				if(results.Count <= 0)
 				{
+					
 					Debug.Log("no results. unit count;" + UI_Main.instance._grid.units.Count);
 					bool found = false;
 					Vector3 planePosition = CameraScreenPositionToPlanePosition(position);
@@ -188,12 +335,29 @@ namespace DungeonDefence
 						{
 							Unit.selectedInstance.Deselected();
 						}
+						if(Building.buildInstance != null)
+						{
+							Building.buildInstance.RemovedFromGrid();
+						}
 					}
 				}
 				else
 				{
+					if(UI_Character.instance.isActive)
+					{
+						//if(results.Count )
+					}
 					if(Building.selectedInstance != null)
-					{		
+					{
+						if(Building.buildInstance != null)
+						{
+							Building.buildInstance.RemovedFromGrid();
+						}
+						if(Unit.unitInstance != null)
+						{
+							Unit.unitInstance.RemovedFromGrid();
+						}
+
 						for (int i = 0; i < results.Count; i++)
 						{
 							if(results[i].gameObject == UI_BuildingOptions.instance.infoButton.gameObject)
@@ -238,7 +402,14 @@ namespace DungeonDefence
 								normalLayout.SetActive(false);
 								UI_WarLayout.instance.SetStatus(true);
 							}
+							else if(results[i].gameObject == Ui_Debug.instance.OpenDebugButton.gameObject)
+							{
+								Debug.Log("Debug button clicked");
+								//Ui_Debug.instance.OpenDebugger();
+							}
+							Debug.Log("clicked: " + results[i].gameObject);
 						}
+						//UI_Build.instance.Cancel();
 						
 						Building.selectedInstance.Deselected();
 					}
@@ -307,8 +478,8 @@ namespace DungeonDefence
 				}
 				else
 				{
-						Building.selectedInstance.Deselected();
-						Unit.selectedInstance.Deselected();
+					Building.selectedInstance.Deselected();
+					Unit.selectedInstance.Deselected();
 					if(Building.selectedInstance != null)
 					{
 					}
@@ -328,7 +499,7 @@ namespace DungeonDefence
 			return results.Count > 0;
 		}
 
-		private void MoveStarted()
+		public void MoveStarted()
 		{
 			if((UI_Main.instance.isActive || UI_Battle.instance.isActive || UI_WarLayout.instance.isActive) && UI_Chat.instance.isActive == false && UI_Settings.instance.isActive == false)
 			{
@@ -378,8 +549,8 @@ namespace DungeonDefence
 						_replacingUnit = true;
 					}
 				}
-
-				if(_movingBuilding == false && _replacingBuilding == false && isPlacingUnit == false && _replacingUnit == false) 
+				// TOUCH PANNING 
+				if(_movingBuilding == false && _replacingBuilding == false && isPlacingUnit == false && _replacingUnit == false && UI_Build.instance.wallBrush == false && UI_Build.instance.wallBrushRemove == false) 
 				{
 					//Debug.Log("everything false");
 					_moveRootPosition = _root.position;
@@ -443,6 +614,11 @@ namespace DungeonDefence
 
 		private void Update()
 		{
+			if(Mouse.current.leftButton.isPressed)
+			{
+				ScreenPressed();
+			}
+
 			if(Input.touchSupported == false)
 			{
 				float mouseScroll = _inputs.Main.MouseScroll.ReadValue<float>();
@@ -472,10 +648,14 @@ namespace DungeonDefence
 				Vector3 zoomCenter = CameraScreenPositionToPlanePosition(_zoomPositionOnSCreen);
 				_root.position = _moveRootPosition + (_zoomPositionInWorld - zoomCenter);
 			}
+			// 
 			else if(dungeonLayout.gameObject.activeInHierarchy == true && Player.inBattle)
 			{
-				_target.position =  UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position;
-				_target.localPosition = new Vector3(UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position.x,  UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position.z * 0.70f, - 50); // Check the values "0.70f, - 100"
+				if(UI_Battle.instance.MainPlayer != null)
+				{
+					_root.position =  UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position;
+				}
+				//_target.localPosition = new Vector3(UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position.x,  UI_Battle.instance.MainPlayer.MainPlayer.gameObject.transform.position.z * 0.70f, - 50); // Check the values "0.70f, - 100"
 				_zoom = 10f;
 
 				//_pivot.localPosition = Vector3.zero;
@@ -510,6 +690,7 @@ namespace DungeonDefence
 
 			if(_building && _movingBuilding)
 			{
+
 				Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
 				Building.buildInstance.UpdateGridPosition(_buildBasePosition, pos);
 			}
@@ -533,6 +714,13 @@ namespace DungeonDefence
 			planeDownLeft = CameraScreenPositionToPlanePosition(Vector2.zero);
 			planeTopRight = CameraScreenPositionToPlanePosition(new Vector2(Screen.width, Screen.height));
 
+		}
+
+		public void UpdateBuildingPosition(Vector3 buildingPosition)
+		{
+			_buildBasePosition = buildingPosition;
+			Vector3 pos = CameraScreenPositionToPlanePosition(_inputs.Main.PointerPosition.ReadValue<Vector2>());
+			Building.buildInstance.UpdateGridPosition(buildingPosition, buildingPosition);
 		}
 
 		public Vector3 CameraScreenPositionToWorldPosition(Vector2 position)

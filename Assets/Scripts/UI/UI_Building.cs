@@ -13,6 +13,9 @@ namespace DungeonDefence
 		[SerializeField] private Data.BuildingID _id = Data.BuildingID.townhall;
 		[SerializeField] private Button _button = null;
 		public  GameObject buildingCard;
+		
+
+		private static UI_Building _instance = null; public static UI_Building instance {get {return _instance; } }
 
 		private void Start()
 		{
@@ -22,6 +25,14 @@ namespace DungeonDefence
 		
 		private void Clicked()
 		{
+			if(Building.buildInstance != null)
+            {
+                Building.buildInstance.RemovedFromGrid();
+            }
+			if(Unit.unitInstance != null)
+			{
+				Unit.unitInstance.RemovedFromGrid();
+			}
 			//buildingCard.gameObject.transform.localScale += new Vector3(1,1,0);
 			Building prefab = UI_Main.instance.GetBuildingPrefab(_id);
 			if(prefab)
@@ -32,7 +43,7 @@ namespace DungeonDefence
 
 				Vector3 position = Vector3.zero;
 				Building building = Instantiate(prefab, position, Quaternion.identity);
-				building.PlacedOnGrid(20, 20);
+				building.PlacedOnGrid(UI_WarLayout.instance.lastX, UI_WarLayout.instance.lastY);
 				building._baseArea.gameObject.SetActive(true);
 				Building.buildInstance = building;
 				CameraController.instance.isPlacingBuilding = true;
@@ -40,6 +51,11 @@ namespace DungeonDefence
 			}
 			
 		}
-	}
 
+		
+
+		
+	}
 }
+
+

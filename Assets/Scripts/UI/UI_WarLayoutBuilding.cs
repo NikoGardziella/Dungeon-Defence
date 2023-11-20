@@ -26,6 +26,10 @@ namespace DungeonDefence
 
         private void Clicked()
         {
+            if(Building.buildInstance != null)
+            {
+                Building.buildInstance.RemovedFromGrid();
+            }
             if (UI_WarLayout.instance.placingItem != null)
             {
                 UI_WarLayout.instance.placingItem.SetActive(true);

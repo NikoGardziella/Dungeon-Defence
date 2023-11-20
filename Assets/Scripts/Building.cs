@@ -4,10 +4,12 @@ namespace DungeonDefence
 	using System.Collections.Generic;
 	using UnityEngine;
 	using DevelopersHub.RealtimeNetworking.Client;
-		
 
-	public class Building : MonoBehaviour
+
+    public class Building : MonoBehaviour
 	{
+
+
 
 		public Data.BuildingID id = Data.BuildingID.townhall;
 		private static Building _buildInstance = null; public static Building buildInstance {get {return _buildInstance; } set { _buildInstance = value;} }
@@ -17,6 +19,7 @@ namespace DungeonDefence
 		[HideInInspector]public UI_Button collectButton = null;
 		[HideInInspector]public bool collecting = false;
 		[HideInInspector]public UI_Bar buildBar = null;
+		
 
 
 		[System.Serializable] public class Level
@@ -33,6 +36,8 @@ namespace DungeonDefence
 		[SerializeField] private int _columns = 1; public int columns { get { return _columns; } }
 		[SerializeField] private int _rows = 1; public int rows { get { return _rows; } }
 		[SerializeField] public MeshRenderer _baseArea = null;
+		[SerializeField] public GameObject trapTrigger;
+		[SerializeField] public GameObject trapProjectileStart;
 		[SerializeField] private Level[] _levels = null;
 		private int _currentX = 0; public int currentX { get { return _currentX; } set { currentX = value; } }
 		private int _currentY = 0; public int currentY { get { return _currentY; } set { currentY = value; } }
@@ -41,6 +46,9 @@ namespace DungeonDefence
 
 		private int _originalX = 0;
 		private int _originalY = 0;
+		private int _yRotation = 0; public int yRotation { get { return _yRotation; } set { yRotation = value; } }
+		private int _size = 0; public int size { get { return _size; } set { size = value; } }
+
 		[SerializeField] private float _BuildintTopLeft = 0.5f; public  float BuildintTopLeft { get { return _BuildintTopLeft; } }
 		[SerializeField] private float _BuildintTopRight = 0.5f; public float BuildintTopRight { get { return _BuildintTopRight; } }
 		[SerializeField] private float _BuildintDownLeft = 0.5f; public float BuildintDownLeft { get { return _BuildintDownLeft; } }
@@ -179,6 +187,7 @@ namespace DungeonDefence
 			_Y = y;
 			_originalX = x;
 			_originalY = y;
+			
 			Vector3 position = UI_Main.instance._grid.GetCenterPosition(x,y, _rows, _columns);
 			transform.position = position;
 			SetbaseColor();
@@ -193,6 +202,13 @@ namespace DungeonDefence
 			_buildInstance = null;
 			UI_Build.instance.SetStatus(false);
 			CameraController.instance.isPlacingBuilding = false;
+			/*
+			for (int i = 0; i < UI_Main.instance._grid.buildings.Count; i++)
+			{
+				if(selectedInstance.databaseID == UI_Main.instance._grid.buildings[i].databaseID)
+					UI_Main.instance._grid.buildings.Remove(UI_Main.instance._grid.buildings[i]);
+			}
+			*/
 			Destroy(gameObject);
 		}
 
@@ -208,15 +224,109 @@ namespace DungeonDefence
 				packet.Write(selectedInstance.currentY);
 				packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
 				Sender.TCP_Send(packet);
+				
+				
 				Destroy(gameObject);
 			}
 		}
+		
 
 		public void MoveToNextOnGrid(int x, int y)
 		{
 			_currentX += x;
 			_currentY += y;
+			StartMovingOnGrid();
+			//_originalX = currentX;
+			//_originalY = currentY;
+			//buildInstance._X += x;
+			//buildInstance._Y  += y;
+			gameObject.transform.position = UI_Main.instance._grid.GetCenterPosition(_currentX,_currentY, _rows, _columns);
+			SetbaseColor();
 		}
+
+		public void IncreaseSize()
+		{
+			Vector3 changeVector;
+			if(_yRotation == 90 || _yRotation == 270)
+			{
+				changeVector = new Vector3(0.35f,0,-0.35f);
+				buildInstance._rows += 1;
+			}
+			else
+			{
+				changeVector = new Vector3(0.35f,0,0.35f);
+				buildInstance._columns += 1;
+			}
+			_baseArea.transform.localScale += new Vector3(0,1,0);
+			if(trapTrigger)
+				trapTrigger.transform.position -= changeVector;
+			if(trapProjectileStart)
+				trapProjectileStart.transform.position += changeVector;
+			_buildInstance._size += 1;
+		}
+
+		public void SetBuildingSize(int size)
+		{
+			Vector3 changeVector;
+			if(size <= 0)
+				size = 1;
+			if(_yRotation == 90 || _yRotation == 270)
+			{
+				changeVector = new Vector3(0.35f * size,0,-0.35f * size);
+			}
+			else
+			{
+				changeVector = new Vector3(0.35f * size,0,0.35f * size);
+			}
+			_baseArea.transform.localScale += new Vector3(0,size,0);
+			if(trapTrigger)
+				trapTrigger.transform.position -= changeVector;
+			if(trapProjectileStart)
+				trapProjectileStart.transform.position += changeVector;
+		}
+
+
+		public void BuildingInitRotation(int yRotate)
+		{
+			gameObject.transform.RotateAround(transform.position, Vector3.up,yRotate);
+			//gameObject.transform.Rotate(Vector3.up * yRotate,Space.Self);
+			_yRotation = (int)gameObject.transform.localEulerAngles.y;
+			gameObject.transform.position = UI_Main.instance._grid.GetCenterPosition(_currentX,_currentY, _rows, _columns);
+			SetbaseColor();
+		}
+
+		public void RotateBuildingClockwise(int yRotate, Vector3 ButtonPosition)
+		{
+			int temp;
+			Vector3 newPos;
+			newPos = gameObject.transform.position;
+			//gameObject.transform.localEulerAngles += new Vector3(0,yRotate,0);
+			gameObject.transform.RotateAround(gameObject.transform.localPosition , Vector3.up, yRotate);
+			//newPos = UI_Main.instance._grid.transform.InverseTransformPoint(new Vector3(gameObject.transform.position.x,0, gameObject.transform.position.z)); 
+			temp = _rows;
+			_rows = _columns;
+			_columns = temp;
+			StartMovingOnGrid();
+			CameraController.instance.UpdateBuildingPosition(gameObject.transform.position);
+			//UpdateGridPosition(newPos,gameObject.transform.position);
+			//StartMovingOnGrid();
+			//gameObject.transform.SetPositionAndRotation
+			//gameObject.transform.Rotate(Vector3.up * yRotate,Space.World);y
+			//transform.rotation = Quaternion.identity;
+			//transform.RotateAround(transform.position + new Vector3(gameObject.transform.localScale.x / 2 , 0f, transform.localScale.z / 2), Vector3.up, yRotate);
+			_yRotation = (int)gameObject.transform.localEulerAngles.y;
+			Debug.Log("y_rotation:" + _yRotation + " " + gameObject.transform.localEulerAngles.y);
+			//if(_yRotation == 90 || _yRotation == 270)
+		//	{
+				
+		//}
+			//_currentX = (int)newPos.x;
+			//_currentY = (int)newPos.z;
+			//gameObject.transform.position = UI_Main.instance._grid.GetCenterPosition(_currentX,_currentY, _rows, _columns);
+			SetbaseColor();
+		}
+
+		
 
 		public void UpdateGridPosition(Vector3 basePosition, Vector3 currentPosition)
 		{			
@@ -237,6 +347,12 @@ namespace DungeonDefence
 				_baseArea.gameObject.SetActive(true);
 			}
 			SetbaseColor();
+
+			//Debug.Log(_originalX + " || " + _originalY);
+			UI_WarLayout.instance.lastX = _currentX;
+			UI_WarLayout.instance.lastY = _currentY;
+
+
 		}
 
 		private void SetbaseColor()
@@ -280,7 +396,9 @@ namespace DungeonDefence
 			SetbaseColor();
 			_originalX = currentX;
 			_originalY = currentY;
-			UI_BuildingOptions.instance.SetStatus(true);			
+			UI_BuildingOptions.instance.SetStatus(true);
+
+			
 		}
 
 		public void Deselected()
@@ -297,39 +415,154 @@ namespace DungeonDefence
 
 		public void SaveLocation(bool resetIfNot = true)
 		{
-			if(UI_Main.instance._grid.CanPlaceBuilding(this, currentX, currentY) && (_X != currentX || _Y != currentY) &&  !waitinReplaceRepsonce)
+			if(!UI_Build.instance.wallBrush)
 			{
-				waitinReplaceRepsonce = true;
-				Packet packet = new Packet();
-				packet.Write((int)Player.RequestId.REPLACE);
-				packet.Write(selectedInstance.databaseID);
-				packet.Write(selectedInstance.currentX);
-				packet.Write(selectedInstance.currentY);
-				packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
-
-				Sender.TCP_Send(packet);
-				_baseArea.gameObject.SetActive(false);
-			}
-			else
-			{
-				if(resetIfNot)
+				if(UI_Main.instance._grid.CanPlaceBuilding(this, currentX, currentY) && (_X != currentX || _Y != currentY) &&  !waitinReplaceRepsonce && UI_Main.instance._grid.IsPathToPlayerStart(this.data.warX, this.data.warY,selectedInstance.currentX, selectedInstance.currentY))
 				{
-					if(waitinReplaceRepsonce == false)
+					waitinReplaceRepsonce = true;
+					if(Ui_Debug.instance.IsDebugging && Ui_Debug.instance.AnotherAccountID != 0)
 					{
-						PlacedOnGrid(_originalX, _originalY);
+						
+						Debug.Log("sending REPLACEFORANOTERHACCOUNT with id: " + Ui_Debug.instance.AnotherAccountID);
+						Packet p = new Packet();
+						p.Write((int)Player.RequestId.REPLACEFORANOTERHACCOUNT);
+						p.Write(Ui_Debug.instance.AnotherAccountID);
+						p.Write(selectedInstance.databaseID);
+						p.Write(selectedInstance.currentX);
+						p.Write(selectedInstance.currentY);
+						p.Write(selectedInstance.yRotation);
+						p.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+						int temp = UI_WarLayout.instance.isActive ? 2 : 1;
+						Debug.Log("changin layout:" + temp + " ||  database id; " + selectedInstance.databaseID);
+						Sender.TCP_Send(p);
+					}
+					else
+					{
+						Packet packet = new Packet();
+						packet.Write((int)Player.RequestId.REPLACE);
+						packet.Write(selectedInstance.databaseID);
+						packet.Write(selectedInstance.currentX);
+						packet.Write(selectedInstance.currentY);
+						packet.Write(selectedInstance.yRotation);
+
+						packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+
+						Sender.TCP_Send(packet);
+
 					}
 					_baseArea.gameObject.SetActive(false);
 				}
 				else
 				{
-					if(_originalX == currentX && _originalY == currentY)
+					if(resetIfNot)
 					{
+						if(waitinReplaceRepsonce == false)
+						{
+							PlacedOnGrid(_originalX, _originalY);
+						}
 						_baseArea.gameObject.SetActive(false);
+					}
+					else
+					{
+						if(_originalX == currentX && _originalY == currentY)
+						{
+							_baseArea.gameObject.SetActive(false);
+						}
 					}
 				}
 			}
+			//UI_WarLayout.instance.lastX = selectedInstance.currentX;
+			//UI_WarLayout.instance.lastY = selectedInstance.currentY;
 		}
 
+		private float trapTimer = 1f;
+		private float timer = 0; 
+
+
+		
+		
+		public class DungeonTrap
+		{
+			public delegate void PlayerDamageCallBack(float damage);
+			public PlayerDamageCallBack _playerDamageCallBack = null;
+
+			private UI_Player _target = null;
+		// private UI_Player _Player = null;
+			private Vector3 _targetPosition = Vector3.zero;
+			private Vector3 _start = Vector3.zero;
+			public bool active = false;
+			private float time = 0;
+			private float timer = 5;
+			public Vector3 _trapTrigger = Vector3.zero;
+			private Data.Building _data;
+			
+			public UI_Projectile boulderPrefab = null;
+			public Vector3 launchPos = Vector3.zero;
+			
+
+
+		
+			public void Initialize(UI_Player target,  Data.Building data, Vector3 trapTrigger, PlayerDamageCallBack playerDamageCallBack)
+			{
+
+				if(trapTrigger == Vector3.zero)
+					Debug.Log("no trap trigger");
+				if(target == null)
+					Debug.Log("no target");
+				if (target != null && trapTrigger != Vector3.zero)
+				{
+					_trapTrigger = trapTrigger;
+					_target = target;
+					_targetPosition = target.transform.position;
+					active = true;
+					_data = data;
+					_playerDamageCallBack = playerDamageCallBack;
+					_data.damage = 10f; // REMOVE
+					//transform.position = _target.transform.position;
+					Debug.Log("trap init ok");
+				}
+			}
+
+			public void UpdateTrap()
+			{
+			
+				if(active)
+				{
+					/*
+					_targetPosition = _target.transform.position;
+					float distance = Vector3.Distance(_targetPosition, _trapTrigger);
+					//Debug.Log("distance: " + distance);
+                    if(distance < 1.5)
+                    {
+						SpringTheTrap();
+                    }
+					*/
+
+				}
+				else
+				{
+					//Debug.Log("timer" + timer + " || active: " + active);
+					if(timer <= 0)
+					{
+						active = true;
+						timer = 2f;
+					}
+					else
+					{
+						timer -= Time.deltaTime;
+					}
+				}
+
+			}
+			private void SpringTheTrap()
+			{
+				Debug.Log("calling _playerDamageCallBack from buildin");
+				_playerDamageCallBack(_data.damage);
+				active = false;
+
+			}
+		}
+		
 
 	}
 }

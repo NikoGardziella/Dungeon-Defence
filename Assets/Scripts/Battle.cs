@@ -19,7 +19,17 @@ namespace DungeonDefence
 		public float pubSwordUnitDis;
 		public float pathTraveledTime;
 		public float pathTime;
+
+		public float projectileDistance;
 		// DEBUG
+
+
+		/*
+		// BATTLE STats
+		*/
+
+		public int kills = 0;
+		public int games = 0;
 
 		private	float timer = 0f;
 		private	float newPathTime = 0.5f;
@@ -42,6 +52,8 @@ namespace DungeonDefence
 		private AStarSearch unlimitedSearch = null;
 		private List<Tile> blockedTiles = new List<Tile>();
 		public List<Projectile> projectiles = new List<Projectile>();
+		public List<Projectile> playerProjectiles = new List<Projectile>();
+
 		public double percentage = 0;
 		public bool end = false;
 		public bool surrender = false;
@@ -109,9 +121,11 @@ namespace DungeonDefence
 		public delegate void FloatCallback(long index, float value);
 		public delegate void DoubleCallback(long index, double value);
 		public delegate void BlankCallback();
-		public delegate void ProjectileCallback(int id, BattleVector2 current, BattleVector2 target);
+		public delegate void ProjectileCallback(long ProjectileId, long id, Projectile Projectile);
 		public ProjectileCallback projectileCallback = null;
-
+		
+		public delegate void PlayerProjectileCallback(long ProjectileId, long id, Projectile Projectile);
+		public PlayerProjectileCallback playerProjectileCallback = null;
 		public int GetTrophies()
 		{
 			int s = stars;
@@ -184,6 +198,7 @@ namespace DungeonDefence
 		public class BattlePlayer
 		{
 			public float health = 0;
+			public float damage = 0;
 			public UI_Player MainPlayer = null;
 			public BattleVector2 position;
 			public BattleVector2 positionOnGrid { get { return new BattleVector2(position.x - Data.battleGridOffset, position.y - Data.battleGridOffset); } }
@@ -233,7 +248,7 @@ namespace DungeonDefence
 				position.x = x;
 				position.y = y;
 				health = 2000;
-				
+				damage = 10;
 			}
 		}
 
@@ -708,11 +723,31 @@ namespace DungeonDefence
 					HandleSpell(i, Data.battleFrameRate);
 				}
 			}
+		/*	if(playerProjectiles.Count > 0)
+			{
+				for (int i = playerProjectiles.Count - 1; i >= 0; i--)
+				{
+					for (int index = 0; index < _dungeonunits.Count; index++)
+					{
+						
+						float distance1 = BattleVector2.Distance(playerProjectiles[i].position, _dungeonunits[index].position);
+						if(distance1 < 1f)
+						{
+							_dungeonunits[index].TakeDamage(10);
+							break;
+						}
+					}
+				}
+			} */
 
+
+			// THIS DOES NOT WORK ?!
 			if (projectiles.Count > 0)
 			{
+			
 				for (int i = projectiles.Count - 1; i >= 0; i--)
 				{
+					
 					projectiles[i].timer -= Data.battleFrameRate;
 					if (projectiles[i].timer <= 0)
 					{
@@ -736,9 +771,7 @@ namespace DungeonDefence
 							}
 							else
 							{
-								float distance1 = BattleVector2.Distance(projectiles[i].position, _units[projectiles[i].target].position);
 								
-								MainPlayer.TakeDamage(projectiles[i].damage);
 								//_units[projectiles[i].target].TakeDamage(projectiles[i].damage);
 								if (projectiles[i].splash > 0)
 								{
@@ -760,7 +793,7 @@ namespace DungeonDefence
 						{
 							_buildings[projectiles[i].target].TakeDamage(projectiles[i].damage, ref grid, ref blockedTiles, ref percentage, ref fiftyPercentDestroyed, ref townhallDestroyed, ref completelyDestroyed);
 						}
-						projectiles.RemoveAt(i);
+						
 					}
 				}
 			}
@@ -768,23 +801,22 @@ namespace DungeonDefence
 			frameCount++;
 		}
 
-		public void PlayerAttack()
+		public void PlayerMeleeAttack()
 		{
 			float swordAttackRange = 1.0f;
-			float playerAttackDamage = 5f;
 			BattleVector2 SwordPos;
 			
 		//	tempPos = UI_Main.instance._grid.transform.InverseTransformPoint(MainPlayer.MainPlayer.SwordCollider.gameObject.transform.position); 
 			//Sword has to be on child object so it(sword parent) can be rotated around the player correctly.
-			SwordPos.x = MainPlayer.MainPlayer.MeleeWeapon.gameObject.transform.GetChild(0).position.x;
-			SwordPos.y = MainPlayer.MainPlayer.MeleeWeapon.gameObject.transform.GetChild(0).position.z;
+			SwordPos.x = MainPlayer.MainPlayer.weaponHolder.gameObject.transform.GetChild(0).position.x;
+			SwordPos.y = MainPlayer.MainPlayer.weaponHolder.gameObject.transform.GetChild(0).position.z;
 			for (int i = 0; i < _dungeonunits.Count; i++)
 			{
 				float distance = BattleVector2.Distance( new BattleVector2(MainPlayer.MainPlayer.WeaponGridX,MainPlayer.MainPlayer.WeaponGridY),_dungeonunits[i].position);
 				pubSwordUnitDis = distance;
 				if(distance < swordAttackRange)
 				{
-					_dungeonunits[i].TakeDamage(playerAttackDamage);
+					_dungeonunits[i].TakeDamage(MainPlayer.damage);
 					_dungeonunits[i].position.x += (_dungeonunits[i].position.x - MainPlayer.position.x) * GameConstants.PLAYER_ATTACK_PUSHBACK;
 					_dungeonunits[i].position.y += (_dungeonunits[i].position.y - MainPlayer.position.y) * GameConstants.PLAYER_ATTACK_PUSHBACK;
 
@@ -793,6 +825,44 @@ namespace DungeonDefence
 
 			}
 		}
+
+		public bool CheckPlayerProjectiles(BattleVector2 ProjectilePos)
+		{
+			for (int i = 0; i < _dungeonunits.Count; i++)
+			{
+				float distance = BattleVector2.Distance(_dungeonunits[i].position ,ProjectilePos);
+				if(distance < 0.5)
+				{
+					_dungeonunits[i].TakeDamage(MainPlayer.damage);
+					return true;
+				}
+			}
+			return false;
+		}
+		
+
+		public void PlayerRangedAttack()
+		{
+			//float distance = BattleVector2.Distance(MainPlayer.position, _dungeonunits[index].position);
+			Projectile projectile = new Projectile();
+			projectile.type = TargetType.unit;
+			//projectile.timer = distance / (_dungeonunits[index].unit.rangedSpeed * Data.gridCellSize);
+			//projectile.timer = distance / (10f * Data.gridCellSize);
+			projectile.damage = 10f;
+			//projectile.splash = _dungeonunits[index].unit.splashRange;
+			projectile.follow = true;
+			projectile.position = MainPlayer.position;
+			projectileCount++;
+			projectile.id = projectileCount;
+			playerProjectiles.Add(projectile);
+			if (projectileCallback != null)
+			{
+				projectileCallback.Invoke(projectile.id, 0 , projectile);
+
+				//projectileCallback.Invoke(projectile.id,MainPlayer.position, new BattleVector2(MainPlayer.position.x + 10, MainPlayer.position.y + 10));
+			}
+		}
+
 		private void HandleDungeonUnits(int index, double deltaTime)
 		{
 			if (_dungeonunits[index].target >= 0)
@@ -819,11 +889,12 @@ namespace DungeonDefence
 							//int attacksCount = (int)Math.Floor(_dungeonunits[index].attackTimer / _dungeonunits[index].unit.attackSpeed);
 							if (_dungeonunits[index].attackTimer >= canFire)
 							{
-								if (_dungeonunits[index].unit.id == Data.UnitID.archer)
+								if (_dungeonunits[index].unit.id == Data.UnitID.dungeonarcher)
 								{
 									// FIX this
 									distance = BattleVector2.Distance(MainPlayer.position, _dungeonunits[index].position);
 									Projectile projectile = new Projectile();
+									
 									projectile.type = TargetType.unit;
 									projectile.target = _dungeonunits[index].target;
 									projectile.timer = distance / (_dungeonunits[index].unit.rangedSpeed * Data.gridCellSize);
@@ -834,10 +905,11 @@ namespace DungeonDefence
 									projectileCount++;
 									projectile.id = projectileCount;
 									projectiles.Add(projectile);
-									if (projectileCallback != null)
+									if (projectileCallback != null) // this is null
 									{
-										projectileCallback.Invoke(projectile.id, _dungeonunits[index].positionOnGrid, MainPlayer.position);
+										projectileCallback.Invoke(projectile.id, _dungeonunits[index].unit.databaseID , projectile);
 									}
+									
 								}
 								else
 								{
@@ -847,13 +919,13 @@ namespace DungeonDefence
 									{
 										//SPLAAASH
 									}
+									if (_dungeonunits[index].attackCallback != null)
+									{
+										_dungeonunits[index].attackCallback.Invoke(_dungeonunits[index].unit.databaseID , 1);
+									}
 								}
 								
 
-								if (_dungeonunits[index].attackCallback != null)
-								{
-									_dungeonunits[index].attackCallback.Invoke(_dungeonunits[index].unit.databaseID , 1);
-								}
 								_dungeonunits[index].attackTimer = 0;
 							}
 						}
@@ -985,7 +1057,7 @@ namespace DungeonDefence
 										projectiles.Add(projectile);
 										if (projectileCallback != null)
 										{
-											projectileCallback.Invoke(projectile.id, _buildings[index].worldCenterPosition, _units[_buildings[index].target].position);
+										//	projectileCallback.Invoke(projectile.id, _buildings[index].worldCenterPosition, _units[_buildings[index].target].position);
 										}
 									}
 									else
@@ -1070,11 +1142,7 @@ namespace DungeonDefence
 				
 					//_dungeonunits[index].attackTimer = _dungeonunits[index].unit.attackSpeed;
 					_dungeonunits[index].target = 1;
-				
 
-				
-
-			
 			return true;
 
 			}
@@ -1195,7 +1263,7 @@ namespace DungeonDefence
 								projectiles.Add(projectile);
 								if (projectileCallback != null)
 								{
-									projectileCallback.Invoke(projectile.id, _units[index].position, _units[_units[index].target].position);
+								//	projectileCallback.Invoke(projectile.id, _units[index].position, _units[_units[index].target].position);
 								}
 							}
 							else
@@ -1385,7 +1453,7 @@ namespace DungeonDefence
 										projectiles.Add(projectile);
 										if (projectileCallback != null)
 										{
-											projectileCallback.Invoke(projectile.id, _units[index].position, _buildings[_units[index].target].worldCenterPosition);
+											//projectileCallback.Invoke(projectile.id, _units[index].position, _buildings[_units[index].target].worldCenterPosition);
 										}
 									}
 									else
@@ -1812,8 +1880,10 @@ namespace DungeonDefence
 			Path path = new Path();
 			if (path.Create(ref search, unitGridPosition, new BattleVector2Int((int)MainPlayer.MainPlayer.GridX, (int)MainPlayer.MainPlayer.GridY)))
 			{
+		
 				path.length = GetPathLength(path.points);
 				pubpathLen = path.points.Count;
+				// REMOVE for loops
 				for (int i = 0; i < path.points.Count; i++)
 				{
 					pubBlocked = blockedTiles.Count;

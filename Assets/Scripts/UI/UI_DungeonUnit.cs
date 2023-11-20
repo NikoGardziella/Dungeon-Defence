@@ -20,6 +20,14 @@ namespace DungeonDefence
 
 		private void Clicked()
 		{
+			if(Building.buildInstance != null)
+            {
+                Building.buildInstance.RemovedFromGrid();
+            }
+			if(Unit.unitInstance != null)
+			{
+				Unit.unitInstance.RemovedFromGrid();
+			}
 			Unit prefab = UI_Main.instance.GetUnitPrefab(_id);
 			if(prefab)
 			{

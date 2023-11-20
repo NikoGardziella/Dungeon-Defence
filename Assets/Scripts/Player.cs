@@ -9,6 +9,10 @@ namespace DungeonDefence
     public class Player : MonoBehaviour
 	{
 
+		// THIS IS FOR DEBUGGING: REMOVE
+		public string device_id = "";
+			
+
 		public Data.Player data = new Data.Player();
 		private static Player _instance = null; public static Player instance {get {return _instance; } }
 	  	public Data.InitializationData initializationData = new Data.InitializationData();
@@ -59,6 +63,16 @@ namespace DungeonDefence
 			DELETEBUILDING = 42,
 			PLACEDUNGEONUNIT = 43,
 			REPLACEUNIT = 44,
+			SYNCANOTHERACCOUNT = 45,
+			REPLACEFORANOTERHACCOUNT = 46,
+			ADDBRUSHBUILDINGS = 47,
+			GETCHALLENGES = 48,
+			COMPLETECHALLENGE = 49,
+			RESETCHALLENGE = 50,
+
+
+
+
 
 		}
 
@@ -144,13 +158,17 @@ namespace DungeonDefence
 						byte[] bytes = packet.ReadBytes(bytesLenght);
 						string authData = Data.Decompress(bytes);
 						initializationData = Data.Deserialize<Data.InitializationData>(authData);
+						Debug.Log("received auth from id:" + initializationData.accountID);
+						device_id = SystemInfo.deviceUniqueIdentifier;
 						PlayerPrefs.SetString(password_key, initializationData.password);
 						SendSyncRequest();
 						break;
 					case RequestId.SYNC:
 						string playerData = packet.ReadString();
 						Data.Player playerSyncData = Data.Deserialize<Data.Player>(playerData);
+						//Debug.Log("received Sync Request for id : " + playerSyncData.id);
 						SyncData(playerSyncData);
+
 						updating = false;
 						break;
 					case RequestId.BUILD:
@@ -178,7 +196,11 @@ namespace DungeonDefence
 								break;
 							case 6:
 								Debug.Log("Maximum level reached");
-								break;						
+								break;
+							case 7:
+								//RushSyncRequest();
+								Debug.Log("brush building placed succesfully");
+								break;					
 						}
 						break;
 					case RequestId.REPLACE:
@@ -198,7 +220,11 @@ namespace DungeonDefence
 										break;
 									case 1:
 										Debug.Log("Replaced Succesfully");
-										UI_Main.instance._grid.buildings[i].PlacedOnGrid(replaceX, replaceY);			
+										UI_Main.instance._grid.buildings[i].PlacedOnGrid(replaceX, replaceY);
+
+										UI_Main.instance._grid.buildings[i].data.warX = replaceX;
+										UI_Main.instance._grid.buildings[i].data.warY = replaceY;
+
 										if(UI_Main.instance._grid.buildings[i] != Building.selectedInstance)
 										{
 											
@@ -557,14 +583,18 @@ namespace DungeonDefence
 						break;
 					case RequestId.DELETEBUILDING:
 						response = packet.ReadInt();
-						if(response == 1)
+						switch (response)
 						{
-							Debug.Log("Deleted building from database");
-							RushSyncRequest();
-						}
-						else
-						{
-							Debug.Log("ERROR: couldnt delete building from database");
+							case 0:
+								Debug.Log("unknown error");
+								break;
+							case 1:
+								Debug.Log("Deleted building from database");
+								RushSyncRequest();
+								break;
+							case 2:
+								Debug.Log("ERROR: couldnt delete building from database");
+								break;
 						}
 						break;
 					case RequestId.PLACEDUNGEONUNIT:
@@ -632,6 +662,37 @@ namespace DungeonDefence
 							UI_Main.instance._grid.buildings[i].waitinReplaceRepsonce = false;
 						}
 						break;
+
+					case RequestId.ADDBRUSHBUILDINGS:
+						replaceResponse = packet.ReadInt();
+						switch (replaceResponse)
+						{
+							case 0:
+								Debug.Log("Error adding brush buildings");
+								break;
+							case 1:
+								Debug.Log("BrushBuildings added. Clearing brushbuilding. Sync rush");
+								CameraController.instance.brushBuildings.brushBuildings.Clear();
+								RushSyncRequest();
+
+							break;
+
+						}
+						break;
+					case RequestId.GETCHALLENGES:
+						string challengeData = packet.ReadString();
+						List<Data.DailyChallenge> challengeSyncData = Data.Deserialize<List<Data.DailyChallenge>>(challengeData);
+						//Debug.Log("challengeSyncData.Count: " + challengeSyncData.Count);
+						UI_Challenges.instance.SyncChallengeData(challengeSyncData);
+						//updating = false;
+						break;
+					case RequestId.COMPLETECHALLENGE:
+						//string challengeData = packet.ReadString();
+						//List<Data.DailyChallenge> challengeSyncData = Data.Deserialize<List<Data.DailyChallenge>>(challengeData);
+						//Debug.Log("challengeSyncData.Count: " + challengeSyncData.Count);
+						UI_Challenges.instance.UpdateChallenges();
+						//updating = false;
+						break;
 				}
 			}
 			catch (System.Exception ex)
@@ -649,10 +710,25 @@ namespace DungeonDefence
 
         public void SendSyncRequest()
 		{
-			Packet p = new Packet();
-			p.Write((int)RequestId.SYNC);
-			p.Write(SystemInfo.deviceUniqueIdentifier);
-			Sender.TCP_Send(p);
+			if(Ui_Debug.instance.IsDebugging)
+			{
+				if(Ui_Debug.instance.AnotherAccountID != 0)
+				{
+					Debug.Log("sending SYNCANOTHERACCOUNT with id: " + Ui_Debug.instance.AnotherAccountID);
+					Packet p = new Packet();
+					p.Write((int)Player.RequestId.SYNCANOTHERACCOUNT);
+					p.Write(Ui_Debug.instance.AnotherAccountID);
+					Sender.TCP_Send(p);
+				}
+				
+			}
+			else
+			{
+				Packet p = new Packet();
+				p.Write((int)RequestId.SYNC);
+				p.Write(SystemInfo.deviceUniqueIdentifier); // was  SystemInfo.deviceUniqueIdentifier;
+				Sender.TCP_Send(p);
+			}
 		}
 		[HideInInspector] public int gold = 0;
 		[HideInInspector] public int maxGold = 0;
@@ -678,6 +754,7 @@ namespace DungeonDefence
 			maxDarkElixir = 0;
 
 			int gems = player.gems;
+			//UI_Challenges.instance.UpdateChallenges();
 
 			if (player.buildings != null && player.buildings.Count > 0)
 			{
@@ -713,7 +790,7 @@ namespace DungeonDefence
 			{
 
 			}
-			Debug.Log("buildings.Count: "+ player.buildings.Count +" player.buildings.dungeonUnits: " + player.dungeonUnits.Count + "player.units.Count: " + player.units.Count);
+//			Debug.Log("buildings.Count: "+ player.buildings.Count +" player.buildings.dungeonUnits: " + player.dungeonUnits.Count + "player.units.Count: " + player.units.Count);
 			UI_Main.instance._goldText.text = gold + "/" + maxGold;
 			UI_Main.instance._elixirText.text = elixir + "/" + maxElixir;
 			UI_Main.instance._gemsText.text = gems.ToString();

@@ -11,6 +11,10 @@ namespace DungeonDefence
 	{
 		[SerializeField] public GameObject _elements = null;
 
+		[SerializeField] public bool wallBrush = false;
+		[SerializeField] public bool wallBrushRemove = false;
+
+
 		public RectTransform buttonConfirm = null;
 		public RectTransform buttonCancel = null;
 		public RectTransform buttonMoveRight = null;
@@ -20,6 +24,9 @@ namespace DungeonDefence
 		public RectTransform buttonMoveLeft = null;
 
 		public RectTransform buttonMoveDown = null;
+		public RectTransform buttonRotateClockwise = null;
+		public RectTransform buttonIncreaseSize = null;
+
 
 		[HideInInspector] public Button clickConfirmButton = null;
 		[HideInInspector] public Button clickCancelButton = null;
@@ -28,9 +35,14 @@ namespace DungeonDefence
 		[HideInInspector] public Button clickMoveLeftButton = null;
 		[HideInInspector] public Button clickMoveUpButton = null;
 		[HideInInspector] public Button clickMoveDownButton = null;
+		[HideInInspector] public Button clickRotateClockwiseButton = null;
+		[HideInInspector] public Button clickIncreaseSizeButton = null;
+
+
 		private static UI_Build _instance = null; public static UI_Build instance {get {return _instance; } }
-		int moveX = 0;
-		int moveY = 0;
+		private int moveX = 1;
+		private int moveY = 0;
+
 		
 		private void Awake()
 		{
@@ -42,6 +54,9 @@ namespace DungeonDefence
 			clickMoveLeftButton = buttonMoveLeft.gameObject.GetComponent<Button>();
 			clickMoveUpButton = buttonMoveUp.gameObject.GetComponent<Button>();
 			clickMoveDownButton = buttonMoveDown.gameObject.GetComponent<Button>();
+			clickRotateClockwiseButton = buttonRotateClockwise.gameObject.GetComponent<Button>();
+			clickIncreaseSizeButton = buttonIncreaseSize.gameObject.GetComponent<Button>();
+
 
 
 		}
@@ -54,6 +69,9 @@ namespace DungeonDefence
 			buttonMoveLeft.gameObject.GetComponent<Button>().onClick.AddListener(MoveLeft);
 			buttonMoveUp.gameObject.GetComponent<Button>().onClick.AddListener(MoveUp);
 			buttonMoveDown.gameObject.GetComponent<Button>().onClick.AddListener(MoveDown);
+			buttonRotateClockwise.gameObject.GetComponent<Button>().onClick.AddListener(RotateClockwise);
+			buttonIncreaseSize.gameObject.GetComponent<Button>().onClick.AddListener(IncreaseSize);
+
 
 			buttonConfirm.anchorMin = Vector3.zero;
 			buttonConfirm.anchorMax = Vector3.zero;
@@ -67,6 +85,9 @@ namespace DungeonDefence
 			buttonMoveUp.anchorMin = Vector3.zero;
 			buttonMoveDown.anchorMin = Vector3.zero;
 			buttonMoveDown.anchorMin = Vector3.zero;
+			buttonRotateClockwise.anchorMin = Vector3.zero;
+			buttonIncreaseSize.anchorMin = Vector3.zero;
+
 
 		}
 
@@ -116,6 +137,18 @@ namespace DungeonDefence
 				downPoint.x += (buttonMoveDown.rect.width - 10f);
 				downPoint.y += (buttonMoveDown.rect.width - 90f);
 				buttonMoveDown.anchoredPosition = downPoint;
+
+				Vector2 RotatePoint = screenPoint;
+				RotatePoint.x += (buttonRotateClockwise.rect.width - 90f);
+				RotatePoint.y += (buttonRotateClockwise.rect.width - 100f);
+				buttonRotateClockwise.anchoredPosition = RotatePoint;
+
+				Vector2 IncreasePoint = screenPoint;
+				IncreasePoint.x += (buttonIncreaseSize.rect.width - 20f);
+				IncreasePoint.y += (buttonIncreaseSize.rect.width - 120f);
+				buttonIncreaseSize.anchoredPosition = IncreasePoint;
+
+
 			}
 
 		}
@@ -129,62 +162,86 @@ namespace DungeonDefence
 		{
 			if(Building.buildInstance != null && UI_Main.instance._grid.CanPlaceBuilding(Building.buildInstance, Building.buildInstance.currentX,Building.buildInstance.currentY))
 			{
-				Packet packet = new Packet();
-				packet.Write((int)Player.RequestId.BUILD);
-				packet.Write(SystemInfo.deviceUniqueIdentifier);
-				packet.Write(Building.buildInstance.id.ToString());
-				packet.Write(Building.buildInstance.currentX);
-				packet.Write(Building.buildInstance.currentY);
+				if(UI_Main.instance._grid.IsPathToPlayerStart(0, 0,Building.buildInstance.currentX, Building.buildInstance.currentY))
+				{
+					Packet packet = new Packet();
+					packet.Write((int)Player.RequestId.BUILD);
+					packet.Write(SystemInfo.deviceUniqueIdentifier);
+					packet.Write(Building.buildInstance.id.ToString());
+					packet.Write(Building.buildInstance.currentX);
+					packet.Write(Building.buildInstance.currentY);
+					packet.Write(Building.buildInstance.yRotation);
+					packet.Write(Building.buildInstance.size);
 
-				if(UI_WarLayout.instance.isActive)
-				{
-					packet.Write(3);
-				}
-				else
-				{
-					packet.Write(1);
-				}
-				//packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
-				packet.Write(UI_WarLayout.instance.placingID);
-				if(UI_WarLayout.instance.isActive && UI_WarLayout.instance.placingItem != null)
-				{
-					Destroy(UI_WarLayout.instance.placingItem);
-					UI_WarLayout.instance.placingItem = null;
-				}
+				/*
+					if(UI_WarLayout.instance.isActive)
+					{
+						packet.Write(3);
+					}
+					else
+					{
+						packet.Write(1);
+					}
+					*/
+					packet.Write(UI_WarLayout.instance.isActive ? 2 : 1);
+					packet.Write(UI_WarLayout.instance.placingID);
+					if(UI_WarLayout.instance.isActive && UI_WarLayout.instance.placingItem != null)
+					{
+						Destroy(UI_WarLayout.instance.placingItem);
+						UI_WarLayout.instance.placingItem = null;
+					}
 
-				Sender.TCP_Send(packet);
-				if(Building.buildInstance.id == Data.BuildingID.dungeonwall)
-				{
-					Building.buildInstance.MoveToNextOnGrid(moveX,moveY);
-					Building.buildInstance.PlacedOnGrid(Building.buildInstance.currentX,Building.buildInstance.currentY);
-					
+					Sender.TCP_Send(packet);
+					if(Building.buildInstance.id == Data.BuildingID.dungeonwall)
+					{
+						Building.buildInstance.MoveToNextOnGrid(moveX,moveY);
+						Building.buildInstance.PlacedOnGrid(Building.buildInstance.currentX,Building.buildInstance.currentY);
+						
+					}
+					else
+					{
+						Cancel();
+					}				
 				}
-				else
-				{
-					Cancel();
-				}				
 			}
+		}
+
+		private void IncreaseSize()
+		{
+			if(Building.buildInstance.id == Data.BuildingID.dungeonbouldertrap)
+			{
+				Building.buildInstance.IncreaseSize();
+			}
+		}
+		private void RotateClockwise()
+		{
+			Building.buildInstance.RotateBuildingClockwise(90, buttonRotateClockwise.transform.position);
 		}
 
 		private void MoveRight()
 		{
 			moveX = 1;
 			moveY = 0;
+			Building.buildInstance.MoveToNextOnGrid(moveX,moveY);
+
 		}
 		private void MoveUp()
 		{
 			moveX = 0;
 			moveY = 1;
+			Building.buildInstance.MoveToNextOnGrid(moveX,moveY);
 		}
 		private void MoveLeft()
 		{
 			moveX = -1;
 			moveY = 0;
+			Building.buildInstance.MoveToNextOnGrid(moveX,moveY);
 		}
 		private void MoveDown()
 		{
 			moveX = 0;
 			moveY = -1;
+			Building.buildInstance.MoveToNextOnGrid(moveX,moveY);
 		}
 		public void Cancel()
 		{
@@ -199,5 +256,7 @@ namespace DungeonDefence
 				}
 			}
 		}
+
+		
 	}
 }
